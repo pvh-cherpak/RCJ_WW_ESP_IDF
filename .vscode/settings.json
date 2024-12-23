@@ -1,0 +1,15 @@
+{
+    "C_Cpp.intelliSenseEngine": "default",
+    "idf.espIdfPathWin": "d:\\esp_framework\\esp\\v5.3.2\\esp-idf",
+    "idf.openOcdConfigs": [
+        "board/esp32-wrover-kit-3.3v.cfg"
+    ],
+    "idf.portWin": "COM13",
+    "idf.toolsPathWin": "d:\\esp_framework\\.espressif",
+    "idf.flashType": "UART",
+    "files.associations": {
+        "string.h": "c",
+        "regex": "cpp",
+        "string": "cpp"
+    }
+}

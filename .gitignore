@@ -1,0 +1,10 @@
+build/
+
+### VisualStudioCode ###
+.vscode/*      # Maybe .vscode/**/* instead - see comments
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+**/.history
+
+.devcontainer
