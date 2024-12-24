@@ -46,8 +46,7 @@ void app_main(void)
 	ESP_LOGI(I2C_tag, "Panel is 128x64");
 	ssd1306_init(&display, 128, 64);
 #endif // CONFIG_SSD1306_128x64
-
-    start_menu(&display);
+	
 
     esp_restart();
 }

@@ -1,2 +1,2 @@
-idf_component_register(SRCS "encoder.h"
-                    INCLUDE_DIRS ".")
+idf_component_register(SRCS "encoder.cpp" 
+                    INCLUDE_DIRS "." "encoder.h")
