@@ -13,8 +13,6 @@
 #define EXAMPLE_EC11_GPIO_A 32
 #define EXAMPLE_EC11_GPIO_B 35
 
-
-
 int encoder_pos();
 
 void encoder_init(int item_count);

@@ -1,2 +1,2 @@
-idf_component_register(SRCS "display.cpp" "display.h" "main.cpp"
-                    INCLUDE_DIRS "." "../components/encoder" "../components/button")
+idf_component_register(SRCS "display.cpp" "encoder.cpp" "main.cpp"
+                    INCLUDE_DIRS "." "../components/button")
