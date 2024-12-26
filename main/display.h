@@ -3,7 +3,7 @@
 #include "ssd1306.h"
 #include "font8x8_basic.h"
 
-#include "iot_button.h"
+#include <iot_button.h>
 #include <stdlib.h>
 #include <string.h>
 #include "esp_log.h"
@@ -16,3 +16,4 @@ void ssd1306_display_text_with_clean(SSD1306_t *dev, int page, const std::string
 void draw_menu(SSD1306_t *display, const std::vector<std::string> &menu_text, int user_pointer_pos, int menu_size);
 void button_clic(void* arg, void* event);
 void start_menu(SSD1306_t *display);
+void info_menu(SSD1306_t *display, button_handle_t &encoder_button);

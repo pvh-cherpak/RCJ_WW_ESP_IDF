@@ -1,35 +1,50 @@
 #include "encoder.h"
 
-static const char *TAG = "encoder";
-static pcnt_unit_handle_t pcnt_unit = NULL;
 static int max_pos = 0;
 
+static const char *TAG = "encoder";
+static pcnt_unit_handle_t pcnt_unit = NULL;
+static pcnt_unit_config_t unit_config = {
+        .low_limit = -(max_pos * 4 + 1),
+        .high_limit = max_pos * 4 + 1,
+    };
+
+
 int encoder_pos(){
-    int position = 0;
-    ESP_ERROR_CHECK(pcnt_unit_get_count(pcnt_unit, &position));
-    // ESP_LOGI(TAG, "Pulse count: %d", pulse_count);
-    if (position < 0)
-        return max_pos + position / 4;
-    return position / 4; 
+    int pulse_count = 0;
+    ESP_ERROR_CHECK(pcnt_unit_get_count(pcnt_unit, &pulse_count));
+    int pos = pulse_count / 4;
+    if (pos < 0)
+        pos += max_pos;
+    
+    if (pos > max_pos)
+        pos = max_pos;
+    ESP_LOGV(TAG, "encoder position: %d", pos);
+
+    return pos; 
 }
 
 void encoder_init(int item_count)
 {
+    if (pcnt_unit != NULL){
+        pcnt_unit_disable(pcnt_unit);
+        pcnt_del_unit(pcnt_unit);
+        pcnt_unit = NULL;
+    }
+
     max_pos = item_count;
-    ESP_LOGI(TAG, "install pcnt unit");
-    pcnt_unit_config_t unit_config = {
+    unit_config = {
         .low_limit = -(max_pos * 4 + 1),
         .high_limit = max_pos * 4 + 1,
     };
+
     ESP_ERROR_CHECK(pcnt_new_unit(&unit_config, &pcnt_unit));
 
-    ESP_LOGI(TAG, "set glitch filter");
     pcnt_glitch_filter_config_t filter_config = {
         .max_glitch_ns = 1000,
     };
     ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(pcnt_unit, &filter_config));
 
-    ESP_LOGI(TAG, "install pcnt channels");
     pcnt_chan_config_t chan_a_config = {
         .edge_gpio_num = EXAMPLE_EC11_GPIO_A,
         .level_gpio_num = EXAMPLE_EC11_GPIO_B,
@@ -43,7 +58,6 @@ void encoder_init(int item_count)
     pcnt_channel_handle_t pcnt_chan_b = NULL;
     ESP_ERROR_CHECK(pcnt_new_channel(pcnt_unit, &chan_b_config, &pcnt_chan_b));
 
-    ESP_LOGI(TAG, "set edge and level actions for pcnt channels");
     ESP_ERROR_CHECK(pcnt_channel_set_edge_action(pcnt_chan_a, PCNT_CHANNEL_EDGE_ACTION_DECREASE, PCNT_CHANNEL_EDGE_ACTION_INCREASE));
     ESP_ERROR_CHECK(pcnt_channel_set_level_action(pcnt_chan_a, PCNT_CHANNEL_LEVEL_ACTION_KEEP, PCNT_CHANNEL_LEVEL_ACTION_INVERSE));
     ESP_ERROR_CHECK(pcnt_channel_set_edge_action(pcnt_chan_b, PCNT_CHANNEL_EDGE_ACTION_INCREASE, PCNT_CHANNEL_EDGE_ACTION_DECREASE));
@@ -60,11 +74,8 @@ void encoder_init(int item_count)
     // QueueHandle_t queue = xQueueCreate(10, sizeof(int));
     // ESP_ERROR_CHECK(pcnt_unit_register_event_callbacks(pcnt_unit, &cbs, queue));
 
-    ESP_LOGI(TAG, "enable pcnt unit");
     ESP_ERROR_CHECK(pcnt_unit_enable(pcnt_unit));
-    ESP_LOGI(TAG, "clear pcnt unit");
     ESP_ERROR_CHECK(pcnt_unit_clear_count(pcnt_unit));
-    ESP_LOGI(TAG, "start pcnt unit");
     ESP_ERROR_CHECK(pcnt_unit_start(pcnt_unit));
 
 #if CONFIG_EXAMPLE_WAKE_UP_LIGHT_SLEEP
@@ -75,3 +86,19 @@ void encoder_init(int item_count)
 #endif
   
 }
+
+
+// void encoder_set_max_value(int new_max_value, int new_act_value){
+//     max_pos = new_max_value;
+
+//     ESP_ERROR_CHECK(pcnt_set_event_value(pcnt_unit, PCNT_EVT_L_LIM, -max_pos*4)); 
+//     ESP_ERROR_CHECK(pcnt_event_enable(pcnt_unit, PCNT_EVT_L_LIM)); // Обновляем максимальный лимит 
+    
+//     ESP_ERROR_CHECK(pcnt_set_event_value(pcnt_unit, PCNT_EVT_H_LIM, max_pos*4)); 
+    
+//     ESP_ERROR_CHECK(pcnt_event_enable(pcnt_unit, PCNT_EVT_H_LIM)); // Обновляем конфигурацию 
+
+//     ESP_ERROR_CHECK(pcnt_unit_clear_count(pcnt_unit));
+
+//     pcnt_counter_set_value(pcnt_unit, new_act_value * 4);
+// }

@@ -5,6 +5,7 @@
 #include "esp_log.h"
 #include "driver/pulse_cnt.h"
 #include "driver/gpio.h"
+// #include "driver/pcnt.h"
 #include "esp_sleep.h"
 
 #define EXAMPLE_PCNT_HIGH_LIMIT 100
@@ -16,3 +17,5 @@
 int encoder_pos();
 
 void encoder_init(int item_count);
+
+void encoder_set_max_value(int new_max_value, int new_act_value);

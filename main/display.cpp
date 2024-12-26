@@ -7,9 +7,8 @@ static const std::vector<std::string> start_menu_text =
     {"---Maine menu---", "Yellow: Play Forward", "Yellow: Play Goalkeeper", "Blue: Play Forward",
      "Blue: Play Goalkeeper", "Sensors Check", "Another", "BT"};
 
-
-
-
+static const std::vector<std::string> info_menu_text =
+    {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ","Exit"};
 
 
 void draw_menu(SSD1306_t *display, const std::vector<std::string> &menu_text, int user_pointer_pos, int menu_size)
@@ -80,6 +79,7 @@ void start_menu(SSD1306_t *display)
     int user_pointer_pos = 1;
     int menu_size = start_menu_text.size();
     ESP_LOGI(OLED_tag, "Start main menu");
+
     encoder_init(start_menu_text.size() - 1);
 
     ssd1306_clear_screen(display, false);
@@ -89,22 +89,35 @@ void start_menu(SSD1306_t *display)
     while (true)
     {
         user_pointer_pos = encoder_pos() + 1;
-        if (user_pointer_pos == menu_size)
-            user_pointer_pos = 1;
         draw_menu(display, start_menu_text, user_pointer_pos, menu_size);
 
         if(xSemaphoreTake(encoder_buttob_sem, 0) == pdTRUE)
             switch (user_pointer_pos)
             {
             case 5:
-                ESP_LOGI(OLED_tag, "Button menu 5 clic");
+                info_menu(display, encoder_button);
+                // encoder_set_max_value(start_menu_text.size() - 1, 0);
                 break;
             
             default:
                 ESP_LOGI(OLED_tag, "Button clic");
                 break;
             }
+        if (iot_button_get_event(encoder_button) == BUTTON_LONG_PRESS_HOLD)
+            ESP_LOGI(OLED_tag, "Button hold");
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+}
 
+void info_menu(SSD1306_t *display, button_handle_t &encoder_button){
+    // encoder_set_max_value(info_menu_text.size() - 1, 0);
+    ssd1306_clear_screen(display, false);
+    ssd1306_display_text(display, 0, "---Info menu---", 15, true);
+    while (true)
+    {
+        if(xSemaphoreTake(encoder_buttob_sem, 0) == pdTRUE)
+            return;
+        
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
