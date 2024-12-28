@@ -2,6 +2,7 @@
 
 static const char *OLED_tag = "SSD1106";
 static SemaphoreHandle_t encoder_buttob_sem = xSemaphoreCreateBinary();
+static SSD1306_t display;
 
 static const std::vector<std::string> start_menu_text =
     {"---Maine menu---", "Yellow: Play Forward", "Yellow: Play Goalkeeper", "Blue: Play Forward",
@@ -11,15 +12,26 @@ static const std::vector<std::string> info_menu_text =
     {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ","Exit"};
 
 
-void draw_menu(SSD1306_t *display, const std::vector<std::string> &menu_text, int user_pointer_pos, int menu_size)
+
+void init_display_legacy(){
+	display._address = I2C_ADDRESS;
+	display._flip = false;
+	display._i2c_num = I2C_NUM_0;
+
+
+	ESP_LOGI(OLED_tag, "Panel is 128x64");
+	ssd1306_init(&display, 128, 64);
+}
+
+void draw_menu(const std::vector<std::string> &menu_text, int user_pointer_pos, int menu_size)
 {
     for (int i = 1; i < user_pointer_pos; i++)
-        ssd1306_display_text_with_clean(display, i, menu_text[i], false);
+        ssd1306_display_text_with_clean(&display, i, menu_text[i], false);
 
-    ssd1306_display_text(display, user_pointer_pos, ("-->" + menu_text[user_pointer_pos]).c_str(), menu_text[user_pointer_pos].size() + 3, false);
+    ssd1306_display_text_with_clean(&display, user_pointer_pos, "-->" + menu_text[user_pointer_pos], false);
 
     for (int i = user_pointer_pos + 1; i < menu_size; i++)
-        ssd1306_display_text_with_clean(display, i, menu_text[i], false);
+        ssd1306_display_text_with_clean(&display, i, menu_text[i], false);
 }
 
 void ssd1306_display_text_with_clean(SSD1306_t *dev, int page, const std::string &text, bool invert)
@@ -55,7 +67,7 @@ void ssd1306_display_text_with_clean(SSD1306_t *dev, int page, const std::string
     }
 }
 
-void start_menu(SSD1306_t *display)
+void start_menu()
 {
     // create gpio button
     button_config_t gpio_btn_cfg = {
@@ -80,23 +92,23 @@ void start_menu(SSD1306_t *display)
     int menu_size = start_menu_text.size();
     ESP_LOGI(OLED_tag, "Start main menu");
 
-    encoder_init(start_menu_text.size() - 1);
+    encoder_init(start_menu_text.size() - 2);
 
-    ssd1306_clear_screen(display, false);
-    ssd1306_contrast(display, 0xff);
+    ssd1306_clear_screen(&display, false);
+    ssd1306_contrast(&display, 0xff);
     // ssd1306_display_text_with_clean(display, 0, start_menu_text[0], true);
-    ssd1306_display_text(display, 0, start_menu_text[0].c_str(), start_menu_text[0].size(), true);
+    ssd1306_display_text(&display, 0, start_menu_text[0].c_str(), start_menu_text[0].size(), true);
     while (true)
     {
         user_pointer_pos = encoder_pos() + 1;
-        draw_menu(display, start_menu_text, user_pointer_pos, menu_size);
+
+        draw_menu(start_menu_text, user_pointer_pos, menu_size);
 
         if(xSemaphoreTake(encoder_buttob_sem, 0) == pdTRUE)
             switch (user_pointer_pos)
             {
             case 5:
-                info_menu(display, encoder_button);
-                // encoder_set_max_value(start_menu_text.size() - 1, 0);
+                info_menu(encoder_button);
                 break;
             
             default:
@@ -109,12 +121,14 @@ void start_menu(SSD1306_t *display)
     }
 }
 
-void info_menu(SSD1306_t *display, button_handle_t &encoder_button){
+void info_menu(button_handle_t &encoder_button){
     // encoder_set_max_value(info_menu_text.size() - 1, 0);
-    ssd1306_clear_screen(display, false);
-    ssd1306_display_text(display, 0, "---Info menu---", 15, true);
+    ssd1306_clear_screen(&display, false);
+    ssd1306_display_text(&display, 0, "---Info menu---", 15, true);
     while (true)
     {
+        senser.uptdate();
+        ssd1306_display_text_with_clean(&display, 2, "MPU angle: " + std::to_string(senser.IMU.getYaw()), false);
         if(xSemaphoreTake(encoder_buttob_sem, 0) == pdTRUE)
             return;
         

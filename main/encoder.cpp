@@ -15,7 +15,7 @@ int encoder_pos(){
     ESP_ERROR_CHECK(pcnt_unit_get_count(pcnt_unit, &pulse_count));
     int pos = pulse_count / 4;
     if (pos < 0)
-        pos += max_pos;
+        pos += max_pos + 1;
     
     if (pos > max_pos)
         pos = max_pos;
@@ -34,8 +34,8 @@ void encoder_init(int item_count)
 
     max_pos = item_count;
     unit_config = {
-        .low_limit = -(max_pos * 4 + 1),
-        .high_limit = max_pos * 4 + 1,
+        .low_limit = -(max_pos * 4 + 4),
+        .high_limit = max_pos * 4 + 4,
     };
 
     ESP_ERROR_CHECK(pcnt_new_unit(&unit_config, &pcnt_unit));

@@ -15,23 +15,27 @@
 #include "esp_chip_info.h"
 #include "esp_flash.h"
 #include "esp_system.h"
+#include "esp_timer.h"
 
 #include <stdlib.h>
 #include "esp_log.h"
 #include <string>
 #include <vector>
 
-extern "C" {
-void app_main(void)
+static const char *TAG = "example";
+
+
+extern "C"
 {
-	init_i2c();
-	init_display();
-	start_menu(&display);
+	void app_main(void)
+	{
+		start_i2c_legacy();
+		senser.init();
+		init_display_legacy();
+		
 
-    esp_restart();
+		start_menu();
+		
+		esp_restart();
+	}
 }
-}
-
-
-
-
