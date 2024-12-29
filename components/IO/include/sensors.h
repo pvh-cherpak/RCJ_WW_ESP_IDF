@@ -1,5 +1,4 @@
-#pragma once
-#include "mpu6050.h"
+#include "../mpu6050.h"
 
 class sensor_t
 {
