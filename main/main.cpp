@@ -45,6 +45,19 @@ extern "C"
 			ESP_LOGW("NVS", "Erasing NVS partition...");
 			nvs_flash_erase();
 			err = nvs_flash_init();
+			if (err == ESP_OK)
+			{
+				nvs_handle_t nvs_handle;
+				nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
+				for (int i = 0; i < 16; i++)
+					ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i));
+				nvs_close(nvs_handle);
+
+				nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
+				for (int i = 0; i < 16; i++)
+					ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
+				nvs_close(nvs_handle);
+			}
 		};
 		if (err == ESP_OK)
 		{
@@ -55,7 +68,7 @@ extern "C"
 			ESP_LOGE("NVS", "NVS partition initialization error: %d (%s)", err, esp_err_to_name(err));
 		};
 
-		// nvs_handle_t nvs_handle;
+		// 
 		// ESP_LOGI("GROUP NAME: ", "%s", NVS_WHITE_VALUE_GROUP);
 		// nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
 		// for (int i = 0; i < 16; i++)
@@ -68,6 +81,14 @@ extern "C"
 		// nvs_close(nvs_handle);
 
 		senser.LineSensor.init();
+		
+		while (true)
+		{
+			senser.LineSensor.update();
+			senser.LineSensor.wrightValues();
+			vTaskDelay(100/portTICK_PERIOD_MS);
+		}
+		
 
 		// start_menu();
 		vTaskDelete(NULL);
