@@ -19,11 +19,5 @@ menu "Line sensor"
 		range 0 GPIO_RANGE_MAX
 		default 27
 
-	
-	int GPIO_MULTIPLEXER_OUT
-		int "там надо в даташит лезть"
-		range 0 0
-		default 0
-
 endmenu
 

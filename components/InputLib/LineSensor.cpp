@@ -51,6 +51,13 @@ void LineSensor_t::init()
   ESP_LOGI("Green values", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", green_value[0], green_value[1], green_value[2], green_value[3], green_value[4], green_value[5], green_value[6], green_value[7], green_value[8], green_value[9], green_value[10], green_value[11], green_value[12], green_value[13], green_value[14], green_value[15]);
 }
 
+void LineSensor_t::calibrateGreen()
+{
+  read_line_sensors();
+  for (int i = 0; i < 16; i++)
+    green_value[i] = actual_value[i];
+}
+
 void LineSensor_t::read_line_sensors()
 {
   for (int channel = 0; channel < 16; channel++)
@@ -62,12 +69,32 @@ void LineSensor_t::read_line_sensors()
 }
 
 /*
-int readMux(int channel){
+void lineCalibration(){
+  oled.clear();
+  oled.home();
+  oled.print("Waiting for click...");
+  oled.update();
+  enc.tick();
+  while (!enc.click())
+    enc.tick();
+  getGreen();
+  delay(100);
+  getGreen();
+  oled.clear();
+  oled.home();
+  oled.print("Green calibration done");
+  oled.update();
 
-  for(int i = 0; i < 4; i ++){
-    digitalWrite(controlPin[i], muxChannel[channel][i]);
+  whiteTo0();
+  
+  while (!enc.click()){
+    getWhite();
+    enc.tick();
   }
-
-  return analogRead(SIG);
+  EEPROMSaveLines();
+  oled.clear();
+  oled.home();
+  oled.print("White calibration done");
+  oled.update();
 }
 */
