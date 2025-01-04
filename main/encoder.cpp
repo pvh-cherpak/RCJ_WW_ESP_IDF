@@ -19,13 +19,14 @@ int encoder_pos(){
     
     if (pos > max_pos)
         pos = max_pos;
-    ESP_LOGV(TAG, "encoder position: %d", pos);
+    ESP_LOGW(TAG, "position: %d", pos);
 
     return pos; 
 }
 
 void encoder_init(int item_count)
 {
+    ESP_LOGI(TAG, "init item_count: %d", item_count);
     if (pcnt_unit != NULL){
         pcnt_unit_disable(pcnt_unit);
         pcnt_del_unit(pcnt_unit);

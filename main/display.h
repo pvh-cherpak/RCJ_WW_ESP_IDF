@@ -20,3 +20,5 @@ void draw_menu(const std::vector<std::string> &menu_text, int user_pointer_pos, 
 void button_clic(void* arg, void* event);
 void start_menu();
 void info_menu(button_handle_t &encoder_button);
+void another_menu(button_handle_t &encoder_button);
+void LineCalibrate(button_handle_t &encoder_button);

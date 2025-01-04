@@ -35,9 +35,8 @@ extern "C"
 	void app_main(void)
 	{
 
-		// start_i2c_legacy();
-		// senser.init();
-		// init_display_legacy();
+		start_i2c_legacy();
+		init_display_legacy();
 
 		esp_err_t err = nvs_flash_init();
 		if ((err == ESP_ERR_NVS_NO_FREE_PAGES) || (err == ESP_ERR_NVS_NEW_VERSION_FOUND))
@@ -80,17 +79,8 @@ extern "C"
 		// 	ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
 		// nvs_close(nvs_handle);
 
-		senser.LineSensor.init();
-		
-		while (true)
-		{
-			senser.LineSensor.update();
-			senser.LineSensor.wrightValues();
-			vTaskDelay(100/portTICK_PERIOD_MS);
-		}
-		
-
-		// start_menu();
+		senser.init();
+		start_menu();
 		vTaskDelete(NULL);
 		// esp_restart();
 	}

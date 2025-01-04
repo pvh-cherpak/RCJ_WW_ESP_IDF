@@ -58,6 +58,33 @@ void LineSensor_t::calibrateGreen()
     green_value[i] = actual_value[i];
 }
 
+void LineSensor_t::calibrateWhite()
+{
+  read_line_sensors();
+  for (int i = 0; i < 16; i++)
+    white_value[i] = std::max((int)white_value[i], actual_value[i]);
+}
+
+void LineSensor_t::whiteTo0()
+{
+  for (int i = 0; i < 16; i++)
+    white_value[i] = 0;
+}
+
+void LineSensor_t::saveGreenWhite()
+{
+  nvs_handle_t nvs_handle;
+  ESP_ERROR_CHECK(nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle));
+  for (int i = 0; i < 16; i++)
+    ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), white_value[i]));
+  nvs_close(nvs_handle);
+
+  ESP_ERROR_CHECK(nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle));
+  for (int i = 0; i < 16; i++)
+    ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), green_value[i]));
+  nvs_close(nvs_handle);
+}
+
 void LineSensor_t::read_line_sensors()
 {
   for (int channel = 0; channel < 16; channel++)
@@ -68,33 +95,3 @@ void LineSensor_t::read_line_sensors()
   }
 }
 
-/*
-void lineCalibration(){
-  oled.clear();
-  oled.home();
-  oled.print("Waiting for click...");
-  oled.update();
-  enc.tick();
-  while (!enc.click())
-    enc.tick();
-  getGreen();
-  delay(100);
-  getGreen();
-  oled.clear();
-  oled.home();
-  oled.print("Green calibration done");
-  oled.update();
-
-  whiteTo0();
-  
-  while (!enc.click()){
-    getWhite();
-    enc.tick();
-  }
-  EEPROMSaveLines();
-  oled.clear();
-  oled.home();
-  oled.print("White calibration done");
-  oled.update();
-}
-*/

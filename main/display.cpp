@@ -9,18 +9,19 @@ static const std::vector<std::string> start_menu_text =
      "Blue: Play Goalkeeper", "Sensors Check", "Another", "BT"};
 
 static const std::vector<std::string> info_menu_text =
-    {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ","Exit"};
+    {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Exit"};
 
+static const std::vector<std::string> another_menu_text =
+    {"-Another  menu-", "Line calib"};
 
+void init_display_legacy()
+{
+    display._address = I2C_ADDRESS;
+    display._flip = false;
+    display._i2c_num = I2C_NUM_0;
 
-void init_display_legacy(){
-	display._address = I2C_ADDRESS;
-	display._flip = false;
-	display._i2c_num = I2C_NUM_0;
-
-
-	ESP_LOGI(OLED_tag, "Panel is 128x64");
-	ssd1306_init(&display, 128, 64);
+    ESP_LOGI(OLED_tag, "Panel is 128x64");
+    ssd1306_init(&display, 128, 64);
 }
 
 void draw_menu(const std::vector<std::string> &menu_text, int user_pointer_pos, int menu_size)
@@ -104,13 +105,15 @@ void start_menu()
 
         draw_menu(start_menu_text, user_pointer_pos, menu_size);
 
-        if(xSemaphoreTake(encoder_buttob_sem, 0) == pdTRUE)
+        if (xSemaphoreTake(encoder_buttob_sem, 0) == pdTRUE)
             switch (user_pointer_pos)
             {
             case 5:
                 info_menu(encoder_button);
                 break;
-            
+            case 6:
+                another_menu(encoder_button);
+                break;
             default:
                 ESP_LOGI(OLED_tag, "Button clic");
                 break;
@@ -121,7 +124,8 @@ void start_menu()
     }
 }
 
-void info_menu(button_handle_t &encoder_button){
+void info_menu(button_handle_t &encoder_button)
+{
     // encoder_set_max_value(info_menu_text.size() - 1, 0);
     ssd1306_clear_screen(&display, false);
     ssd1306_display_text(&display, 0, "---Info menu---", 15, true);
@@ -129,13 +133,69 @@ void info_menu(button_handle_t &encoder_button){
     {
         senser.uptdate();
         ssd1306_display_text_with_clean(&display, 2, "MPU angle: " + std::to_string(senser.IMU.getYaw()), false);
-        if(xSemaphoreTake(encoder_buttob_sem, 0) == pdTRUE)
+        if (xSemaphoreTake(encoder_buttob_sem, 0) == pdTRUE)
             return;
-        
+
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
 
-void button_clic(void* arg, void* event){
+void another_menu(button_handle_t &encoder_button)
+{
+    encoder_init(another_menu_text.size() - 2);
+    ssd1306_clear_screen(&display, false);
+    ssd1306_contrast(&display, 0xff);
+    // ssd1306_display_text_with_clean(display, 0, start_menu_text[0], true);
+    ssd1306_display_text(&display, 0, another_menu_text[0].c_str(), another_menu_text[0].size(), true);
+    int user_pointer_pos = 0;
+    int menu_size = another_menu_text.size();
+    while (true)
+    {
+        user_pointer_pos = encoder_pos() + 1;
+
+        draw_menu(start_menu_text, user_pointer_pos, menu_size);
+
+        if (xSemaphoreTake(encoder_buttob_sem, 0) == pdTRUE)
+            switch (user_pointer_pos)
+            {
+            case 0:
+                info_menu(encoder_button);
+                ssd1306_display_text(&display, 0, another_menu_text[0].c_str(), another_menu_text[0].size(), true);
+                break;
+            default:
+                ESP_LOGI(OLED_tag, "Button clic");
+                break;
+            }
+        if (iot_button_get_event(encoder_button) == BUTTON_LONG_PRESS_HOLD)
+            ESP_LOGI(OLED_tag, "Button hold");
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+}
+
+void LineCalibrate(button_handle_t &encoder_button)
+{
+    ssd1306_clear_screen(&display, false);
+    ssd1306_contrast(&display, 0xff);
+    ssd1306_display_text_with_clean(&display, 0, "Waiting for", true);
+    ssd1306_display_text_with_clean(&display, 1, "click...", true);
+    xSemaphoreTake(encoder_buttob_sem, portMAX_DELAY);
+    senser.LineSensor.calibrateGreen();
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    senser.LineSensor.calibrateGreen();
+    ssd1306_display_text_with_clean(&display, 0, "Green calibrat", true);
+    ssd1306_display_text_with_clean(&display, 1, "done", true);
+    senser.LineSensor.whiteTo0();
+    ssd1306_display_text_with_clean(&display, 0, "Start white", true);
+    ssd1306_display_text_with_clean(&display, 1, "calibration", true);
+    while (xSemaphoreTake(encoder_buttob_sem, 0) != pdTRUE)
+        senser.LineSensor.calibrateWhite();
+
+    senser.LineSensor.saveGreenWhite();
+    ssd1306_clear_screen(&display, false);
+    ssd1306_contrast(&display, 0xff);
+}
+
+void button_clic(void *arg, void *event)
+{
     xSemaphoreGiveFromISR(encoder_buttob_sem, NULL);
 }
