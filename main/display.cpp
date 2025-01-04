@@ -153,13 +153,13 @@ void another_menu(button_handle_t &encoder_button)
     {
         user_pointer_pos = encoder_pos() + 1;
 
-        draw_menu(start_menu_text, user_pointer_pos, menu_size);
+        draw_menu(another_menu_text, user_pointer_pos, menu_size);
 
         if (xSemaphoreTake(encoder_buttob_sem, 0) == pdTRUE)
             switch (user_pointer_pos)
             {
-            case 0:
-                info_menu(encoder_button);
+            case 1:
+                LineCalibrate(encoder_button);
                 ssd1306_display_text(&display, 0, another_menu_text[0].c_str(), another_menu_text[0].size(), true);
                 break;
             default:
