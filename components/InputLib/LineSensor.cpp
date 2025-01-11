@@ -85,6 +85,67 @@ void LineSensor_t::saveGreenWhite()
   nvs_close(nvs_handle);
 }
 
+int LineSensor_t::getAngleDelayed()
+{
+  float x, y;
+  getLineDirection_Delayed(x, y);
+  if (x == 0 && y == 0)
+    return 360;
+  float angle = atan2(x, y) * RAD_TO_DEG;
+  return angle;
+}
+
+bool LineSensor_t::isLineOnSensor(int sensor)
+{
+  return ((actual_value[sensor] - green_value[sensor]) >= ((white_value[sensor] - green_value[sensor]) / 2));
+}
+
+void LineSensor_t::saveLineDirection()
+{
+  is_line_detected = false;
+  for (int i = 0; i < 16; i++)
+    if (isLineOnSensor(i) && (white_value[i] - green_value[i] > 700))
+    {
+      line_time[i] = xTaskGetTickCount();
+      is_line_detected = true;
+    }
+}
+
+void LineSensor_t::getLineDirection_Delayed(float &x, float &y)
+{
+  float sumX = 0;
+  float sumY = 0;
+  int k = 0;
+
+  for (int i = 0; i < 16; i++)
+    if (xTaskGetTickCount() - line_time[i] < LINE_RETENTION_TIME_TICS && line_time[i] > 0)
+    {
+      int delay = LINE_RETENTION_TIME_TICS - (xTaskGetTickCount() - line_time[i]) + 1;
+      float ang = (16 - i) * 22.5f;
+      k += delay;
+      sumX += sin(ang * DEG_TO_RAD) * delay;
+      sumY += cos(ang * DEG_TO_RAD) * delay;
+    }
+
+  if (k == 0)
+  {
+    for (int i = 0; i < 16; i++)
+    {
+      line_time[i] = 0;
+    }
+    x = 0;
+    y = 0;
+  }
+  else
+  {
+    x = sumX / k;
+    y = sumY / k;
+    float length = sqrt(x * x + y * y);
+    x /= length;
+    y /= length;
+  }
+}
+
 void LineSensor_t::read_line_sensors()
 {
   for (int channel = 0; channel < 16; channel++)
@@ -94,4 +155,3 @@ void LineSensor_t::read_line_sensors()
     ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, ADC_CHANNEL_6, &actual_value[channel]));
   }
 }
-
