@@ -1,4 +1,4 @@
-idf_component_register(SRCS "LineSensor.cpp" "sensors.cpp" "mpu6050.cpp"
+idf_component_register(SRCS "LineSensor.cpp" "sensors.cpp" "mpu6050.cpp" "locator.cpp"
                       INCLUDE_DIRS "include"
                       REQUIRES MPU6050 I2Cdev esp_driver_gpio nvs_flash esp_adc
                       PRIV_REQUIRES driver esp_timer)

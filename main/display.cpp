@@ -133,6 +133,8 @@ void info_menu(button_handle_t &encoder_button)
     {
         senser.uptdate();
         ssd1306_display_text_with_clean(&display, 2, "MPU angle: " + std::to_string(senser.IMU.getYaw()), false);
+        ssd1306_display_text_with_clean(&display, 3, "Line angle: " + std::to_string(senser.LineSensor.getAngleDelayed()), false);
+        ssd1306_display_text_with_clean(&display, 4, "Ball angle: " + std::to_string(senser.Locator.getBallAngleLocal()), false);
         if (xSemaphoreTake(encoder_buttob_sem, 0) == pdTRUE)
             return;
 

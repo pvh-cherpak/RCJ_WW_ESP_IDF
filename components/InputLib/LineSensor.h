@@ -19,13 +19,13 @@ private: // важные константы
     const float DEG_TO_RAD = acos(-1) / 180.0f;
 public:
     void init();
-    void update(){read_line_sensors(); saveLineDirection();}
+    void update(){read_line_sensors(); saveLineDirection(); calculateLineAngle();}
     // int getAngle();
     void calibrateGreen();
     void calibrateWhite();
     void whiteTo0();
     void saveGreenWhite();
-    int getAngleDelayed();
+    int getAngleDelayed(){return line_angle_delayed;};
     // void getLineAngleAvg();
     void wrightValues(){ESP_LOGI("Line values", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", actual_value[0], actual_value[1], actual_value[2], actual_value[3], actual_value[4], actual_value[5], actual_value[6], actual_value[7], actual_value[8], actual_value[9], actual_value[10], actual_value[11], actual_value[12], actual_value[13], actual_value[14], actual_value[15]);}
     LineSensor_t(/* args */) {}
@@ -36,6 +36,7 @@ private:
     bool isLineOnSensor(int sensor);
     void read_line_sensors();
     void getLineDirection_Delayed(float& x, float& y);
+    void calculateLineAngle();
 private:
     const gpio_num_t MULT_IN[4] = {(gpio_num_t)CONFIG_GPIO_MULTIPLEXER_IN_0,
                                    (gpio_num_t)CONFIG_GPIO_MULTIPLEXER_IN_1,
@@ -68,5 +69,5 @@ private:
     };
 
     bool is_line_detected = false;
-    
+    int line_angle_delayed = 0;
 };

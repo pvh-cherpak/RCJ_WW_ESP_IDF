@@ -85,14 +85,15 @@ void LineSensor_t::saveGreenWhite()
   nvs_close(nvs_handle);
 }
 
-int LineSensor_t::getAngleDelayed()
+void LineSensor_t::calculateLineAngle()
 {
   float x, y;
   getLineDirection_Delayed(x, y);
-  if (x == 0 && y == 0)
-    return 360;
-  float angle = atan2(x, y) * RAD_TO_DEG;
-  return angle;
+  if (x == 0 && y == 0){
+    line_angle_delayed = 0;
+    return;
+  }
+  line_angle_delayed = atan2(x, y) * RAD_TO_DEG;
 }
 
 bool LineSensor_t::isLineOnSensor(int sensor)
