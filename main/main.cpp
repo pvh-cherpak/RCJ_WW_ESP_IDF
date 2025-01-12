@@ -34,7 +34,7 @@ extern "C"
 {
 	void app_main(void)
 	{
-
+		
 		start_i2c_legacy();
 		init_display_legacy();
 
@@ -67,20 +67,57 @@ extern "C"
 			ESP_LOGE("NVS", "NVS partition initialization error: %d (%s)", err, esp_err_to_name(err));
 		};
 
-		// 
-		// ESP_LOGI("GROUP NAME: ", "%s", NVS_WHITE_VALUE_GROUP);
-		// nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
-		// for (int i = 0; i < 16; i++)
-		// 	ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i));
-		// nvs_close(nvs_handle);
+		OpenMVCommunication_t cam;
+		cam.init();
+		while (true)
+		{
+			cam.update();
+			ESP_LOGI("cam", "r center_angle: %d", cam.yelow.center_angle);
+			// ESP_LOGI("cam", "r clos_angle: %d", cam.yelow.clos_angle);
+			// ESP_LOGI("cam", "r distance: %d", cam.yelow.distance);
+			// ESP_LOGI("cam", "r height: %d", cam.yelow.height);
+			// ESP_LOGI("cam", "r left_angle: %d", cam.yelow.left_angle);
+			// ESP_LOGI("cam", "r right_angle: %d", cam.yelow.right_angle);
+			// ESP_LOGI("cam", "r width: %d", cam.yelow.width);
 
-		// nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
-		// for (int i = 0; i < 16; i++)
-		// 	ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
-		// nvs_close(nvs_handle);
+			// ESP_LOGI("cam", "r center_angle: %d", cam.blue.center_angle);
+			// ESP_LOGI("cam", "r clos_angle: %d", cam.blue.clos_angle);
+			// ESP_LOGI("cam", "r distance: %d", cam.blue.distance);
+			// ESP_LOGI("cam", "r height: %d", cam.blue.height);
+			// ESP_LOGI("cam", "r left_angle: %d", cam.blue.left_angle);
+			// ESP_LOGI("cam", "r right_angle: %d", cam.blue.right_angle);
+			// ESP_LOGI("cam", "r width: %d", cam.blue.width);
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+		}
 
+		vTaskDelay(5000 / portTICK_PERIOD_MS);
 		senser.init();
 		start_menu();
+
+
+		// OpenMVCommunication_t cam;
+		// cam.init();
+		// while (true)
+		// {
+		// 	cam.update();
+		// 	ESP_LOGI("cam", "r center_angle: %d", cam.yelow.center_angle);
+		// 	ESP_LOGI("cam", "r clos_angle: %d", cam.yelow.clos_angle);
+		// 	ESP_LOGI("cam", "r distance: %d", cam.yelow.distance);
+		// 	ESP_LOGI("cam", "r height: %d", cam.yelow.height);
+		// 	ESP_LOGI("cam", "r left_angle: %d", cam.yelow.left_angle);
+		// 	ESP_LOGI("cam", "r right_angle: %d", cam.yelow.right_angle);
+		// 	ESP_LOGI("cam", "r width: %d", cam.yelow.width);
+
+		// 	ESP_LOGI("cam", "r center_angle: %d", cam.blue.center_angle);
+		// 	ESP_LOGI("cam", "r clos_angle: %d", cam.blue.clos_angle);
+		// 	ESP_LOGI("cam", "r distance: %d", cam.blue.distance);
+		// 	ESP_LOGI("cam", "r height: %d", cam.blue.height);
+		// 	ESP_LOGI("cam", "r left_angle: %d", cam.blue.left_angle);
+		// 	ESP_LOGI("cam", "r right_angle: %d", cam.blue.right_angle);
+		// 	ESP_LOGI("cam", "r width: %d", cam.blue.width);
+		// 	vTaskDelay(100 / portTICK_PERIOD_MS);
+		// }
+		
 		vTaskDelete(NULL);
 		// esp_restart();
 	}

@@ -4,7 +4,7 @@ class locator_t
 {
 private:
     const uint8_t LOCATOR_ADDRESS = 0x0E;
-    const TickType_t I2C_TIMEOUT_TIME = 10;
+    const TickType_t I2C_TIMEOUT_TIME_TICS = 100 / portTICK_PERIOD_MS;
 
 public:
     void init();
