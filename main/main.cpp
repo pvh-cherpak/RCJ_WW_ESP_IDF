@@ -56,7 +56,7 @@ extern "C"
 				nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
 				// ещё одна особеность все пары ключ-значение должны быть разбиты на группы
 				// коеми являются NVS_WHITE_VALUE_GROUP, NVS_GREEN_VALUE_GROUP
-				for (int i = 0; i < 16; i++)
+				for (int i = 0; i < 16; i++) // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
 					ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i));
 				nvs_close(nvs_handle);
 
