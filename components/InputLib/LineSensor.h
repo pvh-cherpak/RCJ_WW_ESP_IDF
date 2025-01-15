@@ -13,7 +13,7 @@ extern const char *NVS_GREEN_VALUE_GROUP;
 
 class LineSensor_t
 {
-private: // важные константы
+private: // константы
     const TickType_t LINE_RETENTION_TIME_TICS  = 1000 / portTICK_PERIOD_MS;
     const float RAD_TO_DEG = 180.0f / acos(-1);
     const float DEG_TO_RAD = acos(-1) / 180.0f;
@@ -21,10 +21,15 @@ public:
     void init();
     void update(){read_line_sensors(); saveLineDirection(); calculateLineAngle();}
     // int getAngle();
+
+    // ничего лучше чем скопипастить Глебовы функции я не придумал
+    // но они мне нравятся, надо как-то передлать
     void calibrateGreen();
     void calibrateWhite();
     void whiteTo0();
     void saveGreenWhite();
+    // 
+    
     int getAngleDelayed(){return line_angle_delayed;};
     // void getLineAngleAvg();
     void wrightValues(){ESP_LOGI("Line values", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", actual_value[0], actual_value[1], actual_value[2], actual_value[3], actual_value[4], actual_value[5], actual_value[6], actual_value[7], actual_value[8], actual_value[9], actual_value[10], actual_value[11], actual_value[12], actual_value[13], actual_value[14], actual_value[15]);}
@@ -38,6 +43,8 @@ private:
     void getLineDirection_Delayed(float& x, float& y);
     void calculateLineAngle();
 private:
+    // предполагалось, что для более удобного переезда на другую платформу все датчики можно будет
+    // конфигурировать через конфиг ...
     const gpio_num_t MULT_IN[4] = {(gpio_num_t)CONFIG_GPIO_MULTIPLEXER_IN_0,
                                    (gpio_num_t)CONFIG_GPIO_MULTIPLEXER_IN_1,
                                    (gpio_num_t)CONFIG_GPIO_MULTIPLEXER_IN_2,
@@ -49,7 +56,7 @@ private:
     uint16_t white_value[16];
     int actual_value[16];
     TickType_t line_time [16];
-    uint32_t MULT_CHANEL[16][4] = {
+    const uint32_t MULT_CHANEL[16][4] = {
         {0, 0, 0, 0}, //channel 0
         {1, 0, 0, 0}, //channel 1
         {0, 1, 0, 0}, //channel 2

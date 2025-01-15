@@ -11,31 +11,39 @@ void LineSensor_t::init()
 {
   for (int i = 0; i < 4; i++)
   {
-    gpio_reset_pin(MULT_IN[i]);
+    gpio_reset_pin(MULT_IN[i]); //  ЕСП рекомендует перед использованием сбрасывать пины
     ESP_ERROR_CHECK(gpio_set_direction(MULT_IN[i], GPIO_MODE_OUTPUT));
-    ESP_ERROR_CHECK(gpio_set_pull_mode(MULT_IN[i], GPIO_FLOATING));
+    ESP_ERROR_CHECK(gpio_set_pull_mode(MULT_IN[i], GPIO_FLOATING)); // я не особо понял, надо ли настраивать подтяжку на output порты но няхай будет
     ESP_ERROR_CHECK(gpio_set_level(MULT_IN[i], 0));
   }
-  gpio_reset_pin(GPIO_NUM_25);
+  // какойто непонятный разрещаюший сигнал, гениальная трата бесценных ножек GPIO
+  gpio_reset_pin(GPIO_NUM_25); 
   ESP_ERROR_CHECK(gpio_set_direction(GPIO_NUM_25, GPIO_MODE_OUTPUT));
   ESP_ERROR_CHECK(gpio_set_pull_mode(GPIO_NUM_25, GPIO_PULLDOWN_ONLY));
   ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_25, 0));
 
+  // У есп есть 2 АЦП каждый можно комутировать на определённый диапазон прописанный в доках
+  // для нашего пина нужен 2
+  // ulp_mode это режим колибровки показаний АЦП, я думаю оно нам не надо
   adc_oneshot_unit_init_cfg_t init_config1 = {
       .unit_id = ADC_UNIT_2,
       .ulp_mode = ADC_ULP_MODE_DISABLE,
   };
   ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc_mult));
+  // atten - Атеньюатор, рабочекрестьянским языком уменьшитель сигнала (это не я вас принижаю, в душе не ебу как это работает, думается мне что это не просто делитель напряжения)
+  // bitwidth - разрядность в битах, чем больше битов тем выше точность ADC_BITWIDTH_DEFAULT должен обеспечивать максимальную точность на какую способен АЦП
   adc_oneshot_chan_cfg_t config = {
       .atten = ADC_ATTEN_DB_12,
       .bitwidth = ADC_BITWIDTH_DEFAULT,
   };
 
+  // у АЦП не ножки а каналы у нас по таблице ADC_CHANNEL_6
   ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_mult, ADC_CHANNEL_6, &config));
   // gpio_reset_pin(MULT_OUT);
   // ESP_ERROR_CHECK(gpio_set_direction(MULT_OUT, GPIO_MODE_INPUT));
   // ESP_ERROR_CHECK(gpio_set_pull_mode(MULT_OUT, GPIO_PULLDOWN_ONLY));
 
+  // Чиатаем значения белого и зелёного, что почему и как я в мейне распинался
   nvs_handle_t nvs_handle;
   ESP_ERROR_CHECK(nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle));
   for (int i = 0; i < 16; i++)
@@ -47,6 +55,7 @@ void LineSensor_t::init()
     ESP_ERROR_CHECK(nvs_get_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), &green_value[i]));
   nvs_close(nvs_handle);
 
+  // согласитесь это ШЕДЕВР
   ESP_LOGI("White values", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", white_value[0], white_value[1], white_value[2], white_value[3], white_value[4], white_value[5], white_value[6], white_value[7], white_value[8], white_value[9], white_value[10], white_value[11], white_value[12], white_value[13], white_value[14], white_value[15]);
   ESP_LOGI("Green values", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", green_value[0], green_value[1], green_value[2], green_value[3], green_value[4], green_value[5], green_value[6], green_value[7], green_value[8], green_value[9], green_value[10], green_value[11], green_value[12], green_value[13], green_value[14], green_value[15]);
 }

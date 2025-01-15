@@ -1,4 +1,5 @@
 #include <driver/i2c.h>
+#include "esp_log.h"
 
 struct OmniCamBlobInfo_t
 {
@@ -19,7 +20,7 @@ class OpenMVCommunication_t
 {
 private:
     const uint8_t CAM_ADDRESS = 0x42;
-    const TickType_t I2C_TIMEOUT_TIME_TICS = 100 / portTICK_PERIOD_MS;
+    const TickType_t I2C_TIMEOUT_TIME_TICS = 50 / portTICK_PERIOD_MS;
 
 public:
     const OmniCamData_t &camDataOmni = cam_data;
