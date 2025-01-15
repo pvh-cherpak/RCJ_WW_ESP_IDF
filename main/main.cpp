@@ -75,27 +75,27 @@ extern "C"
 			ESP_LOGE("NVS", "NVS partition initialization error: %d (%s)", err, esp_err_to_name(err));
 		};
 
-		// это тесты камеры
-		// vTaskDelay(5000 / portTICK_PERIOD_MS);
+		// // это тесты камеры
+		// vTaskDelay(1000 / portTICK_PERIOD_MS);
 		// OpenMVCommunication_t cam; 
-		// // cam.init();
+		// cam.init();
 		// while (true)
 		// {
-		// 	// cam.update();
-			// ESP_LOGI("cam", "r center_angle: %d", cam.yelow.center_angle);
-			// ESP_LOGI("cam", "r clos_angle: %d", cam.yelow.clos_angle);
-			// ESP_LOGI("cam", "r distance: %d", cam.yelow.distance);
-			// ESP_LOGI("cam", "r height: %d", cam.yelow.height);
-			// ESP_LOGI("cam", "r left_angle: %d", cam.yelow.left_angle);
-			// ESP_LOGI("cam", "r right_angle: %d", cam.yelow.right_angle);
-			// ESP_LOGI("cam", "r width: %d", cam.yelow.width);
+		// 	cam.update();
+		// 	ESP_LOGI("cam", "r center_angle: %d", cam.yelow.center_angle);
+		// 	// ESP_LOGI("cam", "r clos_angle: %d", cam.yelow.clos_angle);
+		// 	// ESP_LOGI("cam", "r distance: %d", cam.yelow.distance);
+		// 	// ESP_LOGI("cam", "r height: %d", cam.yelow.height);
+		// 	// ESP_LOGI("cam", "r left_angle: %d", cam.yelow.left_angle);
+		// 	// ESP_LOGI("cam", "r right_angle: %d", cam.yelow.right_angle);
+		// 	// ESP_LOGI("cam", "r width: %d", cam.yelow.width);
 
-			// ESP_LOGI("cam", "r center_angle: %d", cam.blue.center_angle);
-			// ESP_LOGI("cam", "r clos_angle: %d", cam.blue.clos_angle);
-			// ESP_LOGI("cam", "r distance: %d", cam.blue.distance);
-			// ESP_LOGI("cam", "r height: %d", cam.blue.height);
-			// ESP_LOGI("cam", "r left_angle: %d", cam.blue.left_angle);
-			// ESP_LOGI("cam", "r right_angle: %d", cam.blue.right_angle);
+		// 	// ESP_LOGI("cam", "r center_angle: %d", cam.blue.center_angle);
+		// 	// ESP_LOGI("cam", "r clos_angle: %d", cam.blue.clos_angle);
+		// 	// ESP_LOGI("cam", "r distance: %d", cam.blue.distance);
+		// 	// ESP_LOGI("cam", "r height: %d", cam.blue.height);
+		// 	// ESP_LOGI("cam", "r left_angle: %d", cam.blue.left_angle);
+		// 	// ESP_LOGI("cam", "r right_angle: %d", cam.blue.right_angle);
 		// 	// ESP_LOGI("cam", "r width: %d", cam.blue.width);
 		// 	vTaskDelay(50 / portTICK_PERIOD_MS);
 		// }
