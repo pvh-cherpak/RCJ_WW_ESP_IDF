@@ -1,21 +1,7 @@
 // #include <driver/i2c.h>
 #include "driver/uart.h"
 #include "esp_log.h"
-
-struct OmniCamBlobInfo_t
-{
-    int16_t left_angle = 0;
-    int16_t right_angle = 0;
-    int16_t center_angle = 0;
-    int16_t width = 0;
-    int16_t clos_angle = 0;
-    int16_t distance = 0;
-    int16_t height = 0;
-};
-struct OmniCamData_t
-{
-    OmniCamBlobInfo_t gates[2];
-};
+#include "cam_types.h"
 
 class OpenMVCommunication_t
 {

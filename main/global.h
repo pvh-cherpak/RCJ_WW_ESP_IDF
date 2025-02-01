@@ -9,7 +9,7 @@
 
 
 // extern i2c_master_bus_handle_t i2c_bus_handle;
-extern sensor_t senser;
+extern sensor_t sensor;
 
 // void init_i2c();
 void start_i2c_legacy(void);

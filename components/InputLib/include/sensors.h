@@ -6,7 +6,7 @@
 class sensor_t
 {
 private:
-
+    
 public:
     IMU_t IMU;
     LineSensor_t LineSensor;

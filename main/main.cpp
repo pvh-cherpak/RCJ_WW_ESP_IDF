@@ -1,5 +1,7 @@
 #include "display.h"
 #include "global.h"
+#include "air_debug.h"
+#include "debug_data.h"
 
 /*
  * SPDX-FileCopyrightText: 2010-2022 Espressif Systems (Shanghai) CO LTD
@@ -17,6 +19,7 @@
 #include "esp_system.h"
 #include "esp_timer.h"
 
+
 #include <stdlib.h>
 #include "esp_log.h"
 #include <string>
@@ -30,16 +33,18 @@ static const char *TAG = "example";
 extern const char *NVS_WHITE_VALUE_GROUP;
 extern const char *NVS_GREEN_VALUE_GROUP;
 
+extern QueueHandle_t bt_queue;
+
 extern "C"
 {
 	void app_main(void)
 	{
-		
-		start_i2c_legacy();
-		init_display_legacy();
 
-		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется 
-		// флеш память, её количество можно менять поэтому существует вероятность что место зарезервиролванное под 
+		// start_i2c_legacy();
+		// init_display_legacy();
+
+		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
+		// флеш память, её количество можно менять поэтому существует вероятность что место зарезервиролванное под
 		// данные не размечено нижестоящий код проверяет, размечена ли память под NVS и если нет пробует разметить
 		// после заполняя значениями, из-за особенностей работы NVS мы работаем не с адресами а с парами ключ-значение
 		// в случае если пары не созданные то при попытке чтения это вызовет ошибку которую я не хочу обрабатывать
@@ -77,7 +82,7 @@ extern "C"
 
 		// // это тесты камеры
 		// vTaskDelay(1000 / portTICK_PERIOD_MS);
-		// OpenMVCommunication_t cam; 
+		// OpenMVCommunication_t cam;
 		// cam.init();
 		// while (true)
 		// {
@@ -100,10 +105,38 @@ extern "C"
 		// 	vTaskDelay(50 / portTICK_PERIOD_MS);
 		// }
 
-		vTaskDelay(5000 / portTICK_PERIOD_MS);
-		senser.init();
-		start_menu();
-		
+		bt_queue = xQueueCreate(10, sizeof(gebug_data_t));
+		if (bt_queue == NULL)
+		{
+			ESP_LOGE(TAG, "Failed to create queue");
+			return;
+		}
+
+		// Инициализация Bluetooth
+		init_bluetooth();
+
+		// Запуск задачи Bluetooth на Core 1
+		xTaskCreatePinnedToCore(bt_task, "Bluetooth Task", 4096, NULL, 5, NULL, 0);
+
+		gebug_data_t msg;
+		msg.ball_angle = 260;
+		msg.is_ball = false;
+		while (1)
+		{
+			msg.ball_angle++;
+			if (msg.ball_angle > 360)
+				msg.ball_angle = -100;
+			for(int i =0 ; i < 16; i++)
+				msg.line_sensor[i] = rand() % 2;
+			// snprintf(msg.message, sizeof(msg.message), "Data: %d", esp_random() % 100);
+			xQueueSend(bt_queue, &msg, portMAX_DELAY);
+
+			vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
+		}
+		// vTaskDelay(5000 / portTICK_PERIOD_MS);
+		// sensor.init();
+		// start_menu();
+
 		vTaskDelete(NULL);
 		// esp_restart();
 	}

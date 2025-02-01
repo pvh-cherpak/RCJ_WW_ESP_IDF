@@ -131,10 +131,10 @@ void info_menu(button_handle_t &encoder_button)
     ssd1306_display_text(&display, 0, "---Info menu---", 15, true);
     while (true)
     {
-        senser.uptdate();
-        ssd1306_display_text_with_clean(&display, 2, "MPU angle: " + std::to_string(senser.IMU.getYaw()), false);
-        ssd1306_display_text_with_clean(&display, 3, "Line angle: " + std::to_string(senser.LineSensor.getAngleDelayed()), false);
-        ssd1306_display_text_with_clean(&display, 4, "Ball angle: " + std::to_string(senser.Locator.getBallAngleLocal()), false);
+        sensor.uptdate();
+        ssd1306_display_text_with_clean(&display, 2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
+        ssd1306_display_text_with_clean(&display, 3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
+        ssd1306_display_text_with_clean(&display, 4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
         if (xSemaphoreTake(encoder_buttob_sem, 0) == pdTRUE)
             return;
 
@@ -181,18 +181,18 @@ void LineCalibrate(button_handle_t &encoder_button)
     ssd1306_display_text_with_clean(&display, 0, "Waiting for", true);
     ssd1306_display_text_with_clean(&display, 1, "click...", true);
     xSemaphoreTake(encoder_buttob_sem, portMAX_DELAY);
-    senser.LineSensor.calibrateGreen();
+    sensor.LineSensor.calibrateGreen();
     vTaskDelay(100 / portTICK_PERIOD_MS);
-    senser.LineSensor.calibrateGreen();
+    sensor.LineSensor.calibrateGreen();
     ssd1306_display_text_with_clean(&display, 0, "Green calibrat", true);
     ssd1306_display_text_with_clean(&display, 1, "done", true);
-    senser.LineSensor.whiteTo0();
+    sensor.LineSensor.whiteTo0();
     ssd1306_display_text_with_clean(&display, 0, "Start white", true);
     ssd1306_display_text_with_clean(&display, 1, "calibration", true);
     while (xSemaphoreTake(encoder_buttob_sem, 0) != pdTRUE)
-        senser.LineSensor.calibrateWhite();
+        sensor.LineSensor.calibrateWhite();
 
-    senser.LineSensor.saveGreenWhite();
+    sensor.LineSensor.saveGreenWhite();
     ssd1306_clear_screen(&display, false);
     ssd1306_contrast(&display, 0xff);
 }
