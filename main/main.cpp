@@ -81,58 +81,64 @@ extern "C"
 		};
 
 		// // это тесты камеры
-		// vTaskDelay(1000 / portTICK_PERIOD_MS);
-		// OpenMVCommunication_t cam;
-		// cam.init();
-		// while (true)
-		// {
-		// 	cam.update();
-		// 	ESP_LOGI("cam", "r center_angle: %d", cam.yelow.center_angle);
-		// 	// ESP_LOGI("cam", "r clos_angle: %d", cam.yelow.clos_angle);
-		// 	// ESP_LOGI("cam", "r distance: %d", cam.yelow.distance);
-		// 	// ESP_LOGI("cam", "r height: %d", cam.yelow.height);
-		// 	// ESP_LOGI("cam", "r left_angle: %d", cam.yelow.left_angle);
-		// 	// ESP_LOGI("cam", "r right_angle: %d", cam.yelow.right_angle);
-		// 	// ESP_LOGI("cam", "r width: %d", cam.yelow.width);
+		vTaskDelay(1000 / portTICK_PERIOD_MS);
+		OpenMVCommunication_t cam;
+		cam.init();
+		while (true)
+		{
+			cam.update();
+			ESP_LOGI("cam", "r center_angle: %d", cam.yelow.center_angle);
+			ESP_LOGI("cam", "r clos_angle: %d", cam.yelow.clos_angle);
+			ESP_LOGI("cam", "r distance: %d", cam.yelow.distance);
+			ESP_LOGI("cam", "r height: %d", cam.yelow.height);
+			ESP_LOGI("cam", "r left_angle: %d", cam.yelow.left_angle);
+			ESP_LOGI("cam", "r right_angle: %d", cam.yelow.right_angle);
+			ESP_LOGI("cam", "r width: %d", cam.yelow.width);
 
-		// 	// ESP_LOGI("cam", "r center_angle: %d", cam.blue.center_angle);
-		// 	// ESP_LOGI("cam", "r clos_angle: %d", cam.blue.clos_angle);
-		// 	// ESP_LOGI("cam", "r distance: %d", cam.blue.distance);
-		// 	// ESP_LOGI("cam", "r height: %d", cam.blue.height);
-		// 	// ESP_LOGI("cam", "r left_angle: %d", cam.blue.left_angle);
-		// 	// ESP_LOGI("cam", "r right_angle: %d", cam.blue.right_angle);
-		// 	// ESP_LOGI("cam", "r width: %d", cam.blue.width);
-		// 	vTaskDelay(50 / portTICK_PERIOD_MS);
+			ESP_LOGI("cam", "r center_angle: %d", cam.blue.center_angle);
+			ESP_LOGI("cam", "r clos_angle: %d", cam.blue.clos_angle);
+			ESP_LOGI("cam", "r distance: %d", cam.blue.distance);
+			ESP_LOGI("cam", "r height: %d", cam.blue.height);
+			ESP_LOGI("cam", "r left_angle: %d", cam.blue.left_angle);
+			ESP_LOGI("cam", "r right_angle: %d", cam.blue.right_angle);
+			ESP_LOGI("cam", "r width: %d", cam.blue.width);
+			vTaskDelay(500 / portTICK_PERIOD_MS);
+		}
+
+
+		// тест блютуза
+		// bt_queue = xQueueCreate(10, sizeof(gebug_data_t));
+		// if (bt_queue == NULL)
+		// {
+		// 	ESP_LOGE(TAG, "Failed to create queue");
+		// 	return;
 		// }
 
-		bt_queue = xQueueCreate(10, sizeof(gebug_data_t));
-		if (bt_queue == NULL)
-		{
-			ESP_LOGE(TAG, "Failed to create queue");
-			return;
-		}
+		// // Инициализация Bluetooth
+		// init_bluetooth();
 
-		// Инициализация Bluetooth
-		init_bluetooth();
+		// // Запуск задачи Bluetooth на Core 1
+		// xTaskCreatePinnedToCore(bt_task, "Bluetooth Task", 4096, NULL, 5, NULL, 0);
 
-		// Запуск задачи Bluetooth на Core 1
-		xTaskCreatePinnedToCore(bt_task, "Bluetooth Task", 4096, NULL, 5, NULL, 0);
+		// gebug_data_t msg;
+		// msg.ball_angle = 260;
+		// msg.is_ball = false;
+		// while (1)
+		// {
+		// 	msg.ball_angle++;
+		// 	if (msg.ball_angle > 360)
+		// 		msg.ball_angle = -100;
+		// 	for(int i =0 ; i < 16; i++)
+		// 		msg.line_sensor[i] = rand() % 2;
+		// 	// snprintf(msg.message, sizeof(msg.message), "Data: %d", esp_random() % 100);
+		// 	xQueueSend(bt_queue, &msg, portMAX_DELAY);
 
-		gebug_data_t msg;
-		msg.ball_angle = 260;
-		msg.is_ball = false;
-		while (1)
-		{
-			msg.ball_angle++;
-			if (msg.ball_angle > 360)
-				msg.ball_angle = -100;
-			for(int i =0 ; i < 16; i++)
-				msg.line_sensor[i] = rand() % 2;
-			// snprintf(msg.message, sizeof(msg.message), "Data: %d", esp_random() % 100);
-			xQueueSend(bt_queue, &msg, portMAX_DELAY);
+		// 	vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
+		// }
 
-			vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
-		}
+
+
+
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
 		// sensor.init();
 		// start_menu();

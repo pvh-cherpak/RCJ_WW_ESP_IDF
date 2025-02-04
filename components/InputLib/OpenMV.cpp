@@ -58,7 +58,7 @@ void OpenMVCommunication_t::init()
     ESP_ERROR_CHECK(uart_param_config(uart_num, &uart_config));
 
     // Set UART pins(TX: IO4, RX: IO5, RTS: IO18, CTS: IO19)
-    ESP_ERROR_CHECK(uart_set_pin(uart_num, 1, 3, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(uart_set_pin(uart_num, UART_PIN_NO_CHANGE, 36, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     // Setup UART buffered IO with event queue
     const int uart_buffer_size = (1024);
     // Install UART driver using an event queue here
