@@ -13,7 +13,7 @@ private:
     const TickType_t UART_READ_TIMEOUT_TIME_TICS = 50 / portTICK_PERIOD_MS;
 public:
     const OmniCamData_t &camDataOmni = cam_data;
-    const OmniCamBlobInfo_t &yelow = cam_data.gates[0];
+    const OmniCamBlobInfo_t &yellow = cam_data.gates[0];
     const OmniCamBlobInfo_t &blue = cam_data.gates[1];
 
 public:

@@ -1,5 +1,5 @@
 #include "air_debug.h"
-#include "spp_calbags.h"
+#include "spp_callbacks.h"
 
 #include "esp_timer.h"
 
@@ -166,7 +166,7 @@ void prepair_buff(gebug_data_t &msg)
     outbuf[12] = msg.speed_x;
     outbuf[13] = msg.speed_y;
 
-    outbuf[14] = msg.dribl_speed;
+    outbuf[14] = msg.dribble_speed;
 
     //Байт состояний
     outbuf[15] = msg.state;

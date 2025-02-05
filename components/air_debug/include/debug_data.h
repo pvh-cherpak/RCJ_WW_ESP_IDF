@@ -12,7 +12,7 @@ struct gebug_data_t
     int8_t speed_rotate;
     int8_t speed_x;
     int8_t speed_y;
-    uint8_t dribl_speed;
+    uint8_t dribble_speed;
     uint8_t state;
     bool is_ball = false;
 };

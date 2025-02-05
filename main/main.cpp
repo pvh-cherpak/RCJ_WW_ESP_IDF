@@ -87,13 +87,13 @@ extern "C"
 		while (true)
 		{
 			cam.update();
-			ESP_LOGI("cam", "r center_angle: %d", cam.yelow.center_angle);
-			ESP_LOGI("cam", "r clos_angle: %d", cam.yelow.clos_angle);
-			ESP_LOGI("cam", "r distance: %d", cam.yelow.distance);
-			ESP_LOGI("cam", "r height: %d", cam.yelow.height);
-			ESP_LOGI("cam", "r left_angle: %d", cam.yelow.left_angle);
-			ESP_LOGI("cam", "r right_angle: %d", cam.yelow.right_angle);
-			ESP_LOGI("cam", "r width: %d", cam.yelow.width);
+			ESP_LOGI("cam", "r center_angle: %d", cam.yellow.center_angle);
+			ESP_LOGI("cam", "r clos_angle: %d", cam.yellow.clos_angle);
+			ESP_LOGI("cam", "r distance: %d", cam.yellow.distance);
+			ESP_LOGI("cam", "r height: %d", cam.yellow.height);
+			ESP_LOGI("cam", "r left_angle: %d", cam.yellow.left_angle);
+			ESP_LOGI("cam", "r right_angle: %d", cam.yellow.right_angle);
+			ESP_LOGI("cam", "r width: %d", cam.yellow.width);
 
 			ESP_LOGI("cam", "r center_angle: %d", cam.blue.center_angle);
 			ESP_LOGI("cam", "r clos_angle: %d", cam.blue.clos_angle);

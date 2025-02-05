@@ -1,4 +1,4 @@
-#include "spp_calbags.h"
+#include "spp_callbacks.h"
 
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
@@ -6,7 +6,7 @@
 
 #define SPP_SERVER_NAME "SPP_SERVER"
 
-static const char *SPP_TAG = "SSP callbag: ";
+static const char *SPP_TAG = "SSP callback: ";
 
 static const esp_spp_sec_t sec_mask = ESP_SPP_SEC_AUTHENTICATE;
 static const esp_spp_role_t role_slave = ESP_SPP_ROLE_SLAVE;
