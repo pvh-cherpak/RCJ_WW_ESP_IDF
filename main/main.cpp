@@ -40,8 +40,8 @@ extern "C"
 	void app_main(void)
 	{
 
-		// start_i2c_legacy();
-		// init_display_legacy();
+		start_i2c_legacy();
+		init_display_legacy();
 
 		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
 		// флеш память, её количество можно менять поэтому существует вероятность что место зарезервиролванное под
@@ -82,7 +82,7 @@ extern "C"
 
 		// // это тесты камеры
 		vTaskDelay(1000 / portTICK_PERIOD_MS);
-		OpenMVCommunication_t cam;
+		/*OpenMVCommunication_t cam;
 		cam.init();
 		while (true)
 		{
@@ -103,7 +103,7 @@ extern "C"
 			ESP_LOGI("cam", "r right_angle: %d", cam.blue.right_angle);
 			ESP_LOGI("cam", "r width: %d", cam.blue.width);
 			vTaskDelay(500 / portTICK_PERIOD_MS);
-		}
+		}*/
 
 
 		// тест блютуза
@@ -141,7 +141,7 @@ extern "C"
 
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
 		// sensor.init();
-		// start_menu();
+		start_menu();
 
 		vTaskDelete(NULL);
 		// esp_restart();

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _GLOBAL_H_
+#define _GLOBAL_H_
+
 #include "ssd1306.h"
 
 // #include "driver/i2c_master.h"
@@ -17,3 +19,4 @@ void init_display_legacy();
 
 // void init_display();
 
+#endif

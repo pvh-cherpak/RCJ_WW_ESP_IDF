@@ -1,42 +1,66 @@
 #include "encoder.h"
 
-static int max_pos = 0;
-
 static const char *TAG = "encoder";
-static pcnt_unit_handle_t pcnt_unit = NULL;
-static pcnt_unit_config_t unit_config = {
-        .low_limit = -(max_pos * 4 + 1),
-        .high_limit = max_pos * 4 + 1,
-    };
 
+int Encoder_t::get_cur_value(){
+    int cur_pcnt = 0;
+    ESP_ERROR_CHECK(pcnt_unit_get_count(pcnt_unit, &cur_pcnt));
 
-int encoder_pos(){
-    int pulse_count = 0;
-    ESP_ERROR_CHECK(pcnt_unit_get_count(pcnt_unit, &pulse_count));
-    int pos = pulse_count / 4;
-    if (pos < 0)
-        pos += max_pos + 1;
+    // prev_pcnt меняется только на число, кратное 4, чтобы избежать проблем из-за шума
+
+    // если cur_pcnt больше максимального значения, двигаем prev_pcnt вверх
+    int max_possible_pcnt = prev_pcnt + (max_value - cur_value) / step * 4;
+    if (cur_pcnt > max_possible_pcnt)
+        prev_pcnt += (cur_pcnt - max_possible_pcnt) / 4 * 4;
     
-    if (pos > max_pos)
-        pos = max_pos;
-    ESP_LOGW(TAG, "position: %d", pos);
+    // если cur_pcnt меньше минимального значения, двигаем prev_pcnt вниз
+    int min_possible_pcnt = prev_pcnt - (cur_value - min_value) / step * 4;
+    if (cur_pcnt < min_possible_pcnt)
+        prev_pcnt -= (min_possible_pcnt - cur_pcnt) / 4 * 4;
 
-    return pos; 
+    int complete = (cur_pcnt - prev_pcnt) / 4; // количество накопленных сдвигов энкодера
+
+    // значение меняется не более чем на 1 за кадр
+    if (complete >= 1)
+        ++cur_value;
+    if (complete <= -1)
+        --cur_value;
+
+    ESP_LOGI(TAG, "cur_value: %d (+ %d * %d)", cur_value, complete, step);
+
+    prev_pcnt += complete * 4;
+    
+    return cur_value;
 }
 
-void encoder_init(int item_count)
+void Encoder_t::set_new_limits(int new_min, int new_max, int new_step, int start_value){
+    ESP_LOGI(TAG, "set_new_limits(min=%d, max=%d, step=%d, start=%d)", new_min, new_max, new_step, start_value);
+
+    min_value = new_min;
+    max_value = new_max;
+    step = new_step;
+
+    ESP_ERROR_CHECK(pcnt_unit_clear_count(pcnt_unit));
+
+    prev_pcnt = 0;
+    cur_value = start_value;
+}
+
+void Encoder_t::init()
 {
-    ESP_LOGI(TAG, "init item_count: %d", item_count);
     if (pcnt_unit != NULL){
         pcnt_unit_disable(pcnt_unit);
         pcnt_del_unit(pcnt_unit);
         pcnt_unit = NULL;
     }
 
-    max_pos = item_count;
+    min_value = 0;
+    max_value = 0;
+    step = 0;
+
     unit_config = {
-        .low_limit = -(max_pos * 4 + 4),
-        .high_limit = max_pos * 4 + 4,
+        .low_limit = PCNT_LOW_LIMIT,
+        .high_limit = PCNT_HIGH_LIMIT,
     };
 
     ESP_ERROR_CHECK(pcnt_new_unit(&unit_config, &pcnt_unit));
