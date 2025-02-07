@@ -3,7 +3,7 @@
 static const char *OLED_tag = "SSD1106";
 static SemaphoreHandle_t encoder_button_sem = xSemaphoreCreateBinary();
 static SSD1306_t display;
-static Encoder_t *encoder;
+static Encoder_t encoder;
 
 static const std::vector<std::string> start_menu_text =
     {"---Main menu---", "Yellow: Play Forward", "Yellow: Play Goalkeeper", "Blue: Play Forward",
@@ -94,9 +94,8 @@ void start_menu()
     int menu_size = start_menu_text.size();
     ESP_LOGI(OLED_tag, "Start main menu");
 
-    encoder = (Encoder_t*) calloc(1, sizeof(Encoder_t));
-    encoder->init();
-    encoder->set_new_limits(0, start_menu_text.size() - 2, 1, 0);
+    encoder.init();
+    encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 0);
 
     ssd1306_clear_screen(&display, false);
     ssd1306_contrast(&display, 0xff);
@@ -104,7 +103,7 @@ void start_menu()
     ssd1306_display_text(&display, 0, start_menu_text[0].c_str(), start_menu_text[0].size(), true);
     while (true)
     {
-        user_pointer_pos = encoder->get_cur_value() + 1;
+        user_pointer_pos = encoder.getCurValue() + 1;
 
         draw_menu(start_menu_text, user_pointer_pos, menu_size);
 
@@ -138,7 +137,7 @@ void info_menu(button_handle_t &encoder_button)
         ssd1306_display_text_with_clean(&display, 3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
         ssd1306_display_text_with_clean(&display, 4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
-            encoder->set_new_limits(0, start_menu_text.size() - 2, 1, 0);
+            encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 0);
             return;
         }
 
@@ -148,7 +147,7 @@ void info_menu(button_handle_t &encoder_button)
 
 void another_menu(button_handle_t &encoder_button)
 {
-    encoder->set_new_limits(0, another_menu_text.size() - 2, 1, 0);
+    encoder.setNewLimits(0, another_menu_text.size() - 2, 1, 0);
 
     ssd1306_clear_screen(&display, false);
     ssd1306_contrast(&display, 0xff);
@@ -158,7 +157,7 @@ void another_menu(button_handle_t &encoder_button)
     int menu_size = another_menu_text.size();
     while (true)
     {
-        user_pointer_pos = encoder->get_cur_value() + 1;
+        user_pointer_pos = encoder.getCurValue() + 1;
 
         draw_menu(another_menu_text, user_pointer_pos, menu_size);
 
@@ -174,7 +173,7 @@ void another_menu(button_handle_t &encoder_button)
                 break;
             }
         if (iot_button_get_event(encoder_button) == BUTTON_LONG_PRESS_HOLD){
-            encoder->set_new_limits(0, start_menu_text.size() - 2, 1, 0);
+            encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 0);
             ESP_LOGI(OLED_tag, "Button hold");
             return;
         }

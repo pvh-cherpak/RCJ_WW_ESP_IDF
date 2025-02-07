@@ -28,13 +28,14 @@ private:
             .high_limit = PCNT_HIGH_LIMIT,
         };
     
+    bool can_skip = false;
     int cur_value = 0;
     int prev_pcnt = 0;
 
 public:
     void init();
-    int get_cur_value();
-    void set_new_limits(int new_min, int new_max, int new_step, int start_value);
+    int getCurValue();
+    void setNewLimits(int new_min, int new_max, int new_step, int start_value, bool skip = false);
 };
 
 #endif

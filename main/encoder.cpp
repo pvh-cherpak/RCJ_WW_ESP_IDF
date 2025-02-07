@@ -2,7 +2,7 @@
 
 static const char *TAG = "encoder";
 
-int Encoder_t::get_cur_value(){
+int Encoder_t::getCurValue(){
     int cur_pcnt = 0;
     ESP_ERROR_CHECK(pcnt_unit_get_count(pcnt_unit, &cur_pcnt));
 
@@ -20,11 +20,17 @@ int Encoder_t::get_cur_value(){
 
     int complete = (cur_pcnt - prev_pcnt) / 4; // количество накопленных сдвигов энкодера
 
-    // значение меняется не более чем на 1 за кадр
-    if (complete >= 1)
-        ++cur_value;
-    if (complete <= -1)
-        --cur_value;
+    if (can_skip){
+        // можно пропускать значения при быстрой перемотке
+        cur_value += complete * step;
+    }
+    else{
+        // значение меняется не более чем на 1 за кадр
+        if (complete >= 1)
+            cur_value += step;
+        if (complete <= -1)
+            cur_value -= step;
+    }
 
     ESP_LOGI(TAG, "cur_value: %d (+ %d * %d)", cur_value, complete, step);
 
@@ -33,12 +39,13 @@ int Encoder_t::get_cur_value(){
     return cur_value;
 }
 
-void Encoder_t::set_new_limits(int new_min, int new_max, int new_step, int start_value){
-    ESP_LOGI(TAG, "set_new_limits(min=%d, max=%d, step=%d, start=%d)", new_min, new_max, new_step, start_value);
+void Encoder_t::setNewLimits(int new_min, int new_max, int new_step, int start_value, bool skip){
+    ESP_LOGI(TAG, "setNewLimits(min=%d, max=%d, step=%d, start=%d)", new_min, new_max, new_step, start_value);
 
     min_value = new_min;
     max_value = new_max;
     step = new_step;
+    can_skip = skip;
 
     ESP_ERROR_CHECK(pcnt_unit_clear_count(pcnt_unit));
 
