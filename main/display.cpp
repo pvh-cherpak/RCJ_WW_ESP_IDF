@@ -4,6 +4,7 @@ static const char *OLED_tag = "SSD1106";
 static SemaphoreHandle_t encoder_button_sem = xSemaphoreCreateBinary();
 static SSD1306_t display;
 static Encoder_t encoder;
+static DisplayMenu_t menu;
 
 static const std::vector<std::string> start_menu_text =
     {"---Main menu---", "Yellow: Play Forward", "Yellow: Play Goalkeeper", "Blue: Play Forward",
@@ -13,7 +14,9 @@ static const std::vector<std::string> info_menu_text =
     {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Exit"};
 
 static const std::vector<std::string> another_menu_text =
-    {"-Another  menu-", "Line calib"};
+    {"-Another  menu-", "Line calib", "Dribbler: "};
+    
+static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 
 void init_display_legacy()
 {
@@ -22,21 +25,21 @@ void init_display_legacy()
     display._i2c_num = I2C_NUM_0;
 
     ESP_LOGI(OLED_tag, "Panel is 128x64");
+    menu.init(&display, 128, 64);
+}
+
+void DisplayMenu_t::init(SSD1306_t *source_dev, int width, int height){
     ssd1306_init(&display, 128, 64);
+    dev = source_dev;
 }
 
-void draw_menu(const std::vector<std::string> &menu_text, int user_pointer_pos, int menu_size)
-{
-    for (int i = 1; i < user_pointer_pos; i++)
-        ssd1306_display_text_with_clean(&display, i, menu_text[i], false);
-
-    ssd1306_display_text_with_clean(&display, user_pointer_pos, "-->" + menu_text[user_pointer_pos], false);
-
-    for (int i = user_pointer_pos + 1; i < menu_size; i++)
-        ssd1306_display_text_with_clean(&display, i, menu_text[i], false);
+void DisplayMenu_t::clearDisplay(){
+    ssd1306_clear_screen(&display, false);
+    ssd1306_contrast(&display, 0xff);
 }
 
-void ssd1306_display_text_with_clean(SSD1306_t *dev, int page, const std::string &text, bool invert)
+// бывшая ssd1306_display_text_with_clean
+void DisplayMenu_t::writeLine(int page, const std::string &text, bool invert)
 {
     if (page >= dev->_pages)
         return;
@@ -69,6 +72,32 @@ void ssd1306_display_text_with_clean(SSD1306_t *dev, int page, const std::string
     }
 }
 
+// если выбрали другую строку, перерисовываем
+void DisplayMenu_t::updateChosen(const std::vector<std::string> &menu_text, int item_index){
+    if (item_index != chosen_item){
+        writeLine(chosen_item, " " + menu_text[chosen_item], false);
+        writeLine(item_index, ">" + menu_text[item_index], false);
+        chosen_item = item_index;
+    }
+}
+
+// обновляем текст строки с учётом того, нужно ли выводить стрелочку слева
+void DisplayMenu_t::updateLine(const std::vector<std::string> &menu_text, int line_index){
+    if (line_index == chosen_item){
+        writeLine(line_index, ">" + menu_text[line_index], false);
+    }
+    else{
+        writeLine(line_index, " " + menu_text[line_index], false);
+    }
+}
+
+// чистим экран и отрисовываем меню полностью
+void DisplayMenu_t::drawFullMenu(const std::vector<std::string> &menu_text){
+    clearDisplay();
+    for (int i = 0; i < menu_text.size(); i++)
+        writeLine(i, " " + menu_text[i], false);
+}
+
 void start_menu()
 {
     // create gpio button
@@ -97,15 +126,15 @@ void start_menu()
     encoder.init();
     encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 0);
 
-    ssd1306_clear_screen(&display, false);
-    ssd1306_contrast(&display, 0xff);
-    // ssd1306_display_text_with_clean(display, 0, start_menu_text[0], true);
-    ssd1306_display_text(&display, 0, start_menu_text[0].c_str(), start_menu_text[0].size(), true);
+    // отрисовываем стартовое меню
+    menu.drawFullMenu(start_menu_text);
+
     while (true)
     {
         user_pointer_pos = encoder.getCurValue() + 1;
 
-        draw_menu(start_menu_text, user_pointer_pos, menu_size);
+        // обновляем выбранную строку и перерисовываем, если нужно
+        menu.updateChosen(start_menu_text, user_pointer_pos);
 
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
             switch (user_pointer_pos)
@@ -114,6 +143,7 @@ void start_menu()
                 info_menu(encoder_button);
                 break;
             case 6:
+                menu.updateChosen(start_menu_text, 0); // сбрасываем выбранную строку на 0, чтобы не улетать за границы массива
                 another_menu(encoder_button);
                 break;
             default:
@@ -128,15 +158,17 @@ void start_menu()
 
 void info_menu(button_handle_t &encoder_button)
 {
-    ssd1306_clear_screen(&display, false);
-    ssd1306_display_text(&display, 0, "---Info menu---", 15, true);
+    menu.clearDisplay();
+    menu.writeLine(0, "---Info menu---", true);
     while (true)
     {
-        sensor.uptdate();
-        ssd1306_display_text_with_clean(&display, 2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
-        ssd1306_display_text_with_clean(&display, 3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
-        ssd1306_display_text_with_clean(&display, 4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
+        sensor.update();
+        menu.writeLine(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
+        menu.writeLine(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
+        menu.writeLine(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
+            // возвращаемся в стартовое меню
+            menu.drawFullMenu(start_menu_text);
             encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 0);
             return;
         }
@@ -145,63 +177,108 @@ void info_menu(button_handle_t &encoder_button)
     }
 }
 
+int dribbler_speed = 0;
+
 void another_menu(button_handle_t &encoder_button)
 {
     encoder.setNewLimits(0, another_menu_text.size() - 2, 1, 0);
 
-    ssd1306_clear_screen(&display, false);
-    ssd1306_contrast(&display, 0xff);
-    // ssd1306_display_text_with_clean(display, 0, start_menu_text[0], true);
-    ssd1306_display_text(&display, 0, another_menu_text[0].c_str(), another_menu_text[0].size(), true);
+    another_menu_output_text[2] = another_menu_text[2] + std::to_string(dribbler_speed);
+
+    // рисуем новое меню вместо стартового
+    menu.drawFullMenu(another_menu_output_text);
+
     int user_pointer_pos = 0;
     int menu_size = another_menu_text.size();
     while (true)
     {
         user_pointer_pos = encoder.getCurValue() + 1;
 
-        draw_menu(another_menu_text, user_pointer_pos, menu_size);
+        // обновляем выбранную строку и перерисовываем, если нужно
+        menu.updateChosen(another_menu_output_text, user_pointer_pos);
 
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
             switch (user_pointer_pos)
             {
             case 1:
                 LineCalibrate(encoder_button);
-                ssd1306_display_text(&display, 0, another_menu_text[0].c_str(), another_menu_text[0].size(), true);
+                menu.drawFullMenu(another_menu_output_text);
                 break;
             default:
                 ESP_LOGI(OLED_tag, "Button click");
                 break;
             }
+            
         if (iot_button_get_event(encoder_button) == BUTTON_LONG_PRESS_HOLD){
-            encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 0);
+            switch (user_pointer_pos)
+            {
+            case 2:
+                // редактируем переменную
+                edit_dribbler_speed(encoder_button);
+                break;
+            
+            default:
+                // возвращаемся в стартовое меню
+                menu.updateChosen(another_menu_output_text, 0);
+                encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 5);
+                menu.drawFullMenu(start_menu_text);
+                return;
+            }
             ESP_LOGI(OLED_tag, "Button hold");
-            return;
         }
+
+        if (iot_button_get_event(encoder_button) == BUTTON_DOUBLE_CLICK){
+            switch (user_pointer_pos)
+            {
+            case 2:
+                dribbler_speed = 0;
+                another_menu_output_text[2] = another_menu_text[2] + std::to_string(dribbler_speed);
+                menu.updateLine(another_menu_output_text, 2);
+                break;
+            }
+        }
+        
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
 
+void edit_dribbler_speed(button_handle_t &encoder_button){
+    encoder.setNewLimits(0, 180, 5, dribbler_speed, true);
+
+    // пока не отпустили энкодер, обновляем переменную
+    while (iot_button_get_event(encoder_button) == BUTTON_LONG_PRESS_HOLD){
+        dribbler_speed = encoder.getCurValue();
+        another_menu_output_text[2] = another_menu_text[2] + std::to_string(dribbler_speed);
+        menu.writeLine(2, "*" + another_menu_output_text[2], false);
+        
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+    
+    menu.writeLine(2, ">" + another_menu_output_text[2], false);
+    encoder.setNewLimits(0, another_menu_output_text.size() - 2, 1, 1);
+}
+
 void LineCalibrate(button_handle_t &encoder_button)
 {
-    ssd1306_clear_screen(&display, false);
-    ssd1306_contrast(&display, 0xff);
-    ssd1306_display_text_with_clean(&display, 0, "Waiting for", true);
-    ssd1306_display_text_with_clean(&display, 1, "click...", true);
+    menu.clearDisplay();
+
+    menu.writeLine(0, "Waiting for", true);
+    menu.writeLine(1, "click...", true);
     xSemaphoreTake(encoder_button_sem, portMAX_DELAY);
     sensor.LineSensor.calibrateGreen();
     vTaskDelay(100 / portTICK_PERIOD_MS);
     sensor.LineSensor.calibrateGreen();
-    ssd1306_display_text_with_clean(&display, 0, "Green calibrat", true);
-    ssd1306_display_text_with_clean(&display, 1, "done", true);
+    menu.writeLine(0, "Green calibrat", true);
+    menu.writeLine(1, "done", true);
     sensor.LineSensor.whiteTo0();
-    ssd1306_display_text_with_clean(&display, 0, "Start white", true);
-    ssd1306_display_text_with_clean(&display, 1, "calibration", true);
+    menu.writeLine(0, "Start white", true);
+    menu.writeLine(1, "calibration", true);
     while (xSemaphoreTake(encoder_button_sem, 0) != pdTRUE)
         sensor.LineSensor.calibrateWhite();
 
     sensor.LineSensor.saveGreenWhite();
-    ssd1306_clear_screen(&display, false);
-    ssd1306_contrast(&display, 0xff);
+    
+    menu.clearDisplay();
 }
 
 void button_click(void *arg, void *event)

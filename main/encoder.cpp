@@ -45,7 +45,7 @@ void Encoder_t::setNewLimits(int new_min, int new_max, int new_step, int start_v
     min_value = new_min;
     max_value = new_max;
     step = new_step;
-    can_skip = skip;
+    can_skip = skip; // можно ли пропускать значения (для быстрой перемотки)
 
     ESP_ERROR_CHECK(pcnt_unit_clear_count(pcnt_unit));
 

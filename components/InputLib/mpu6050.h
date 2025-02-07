@@ -63,7 +63,7 @@
     public:
         int getYaw(){return yaw;} 
         void init(){mpu6050_init();}
-        void uptdate(){mpu6050();}
+        void update(){mpu6050();}
         IMU_t(){}
     };
 

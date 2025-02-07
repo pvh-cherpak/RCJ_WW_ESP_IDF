@@ -17,5 +17,5 @@ public:
     ~sensor_t(){}
     
     void init(){IMU.init(); LineSensor.init(); Locator.init(); Cam.init();}
-    void uptdate(){IMU.uptdate(); LineSensor.update(); Locator.update(); Cam.update();}
+    void update(){IMU.update(); LineSensor.update(); Locator.update(); Cam.update();}
 };

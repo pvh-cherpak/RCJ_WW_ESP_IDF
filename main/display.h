@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _DISPLAY_H_
+#define _DISPLAY_H_
+
 #include "encoder.h"
 #include "ssd1306.h"
 #include "font8x8_basic.h"
@@ -15,10 +17,26 @@
 
 
 void init_display_legacy();
-void ssd1306_display_text_with_clean(SSD1306_t *dev, int page, const std::string &text, bool invert);
-void draw_menu(const std::vector<std::string> &menu_text, int user_pointer_pos, int menu_size);
+//void ssd1306_display_text_with_clean(SSD1306_t *dev, int page, const std::string &text, bool invert);
+//void draw_menu(const std::vector<std::string> &menu_text, int user_pointer_pos, int menu_size);
 void button_click(void* arg, void* event);
 void start_menu();
 void info_menu(button_handle_t &encoder_button);
 void another_menu(button_handle_t &encoder_button);
+void edit_dribbler_speed(button_handle_t &encoder_button);
 void LineCalibrate(button_handle_t &encoder_button);
+
+class DisplayMenu_t{
+private:
+    SSD1306_t * dev;
+    int chosen_item = 0;
+public:
+    void init(SSD1306_t * source_dev, int width, int height);
+    void clearDisplay();
+    void writeLine(int page, const std::string &text, bool invert);
+    void updateChosen(const std::vector<std::string> &menu_text, int item_index);
+    void updateLine(const std::vector<std::string> &menu_text, int line_index);
+    void drawFullMenu(const std::vector<std::string> &menu_text);
+};
+
+#endif
