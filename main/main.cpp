@@ -2,6 +2,7 @@
 #include "global.h"
 #include "air_debug.h"
 #include "debug_data.h"
+#include "motorControl.h"
 
 /*
  * SPDX-FileCopyrightText: 2010-2022 Espressif Systems (Shanghai) CO LTD
@@ -141,6 +142,7 @@ extern "C"
 
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
 		// sensor.init();
+		motor_drv8833_task();
 		start_menu();
 
 		vTaskDelete(NULL);
