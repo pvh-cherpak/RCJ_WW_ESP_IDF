@@ -1,11 +1,12 @@
 #include "display.h"
+#include "global.h"
 
 static const char *OLED_tag = "SSD1106";
 static SemaphoreHandle_t encoder_button_sem = xSemaphoreCreateBinary();
 static SemaphoreHandle_t encoder_double_click_sem = xSemaphoreCreateBinary();
 static SSD1306_t display;
 static Encoder_t encoder;
-static DisplayMenu_t menu;
+DisplayMenu_t menu;
 
 static const std::vector<std::string> start_menu_text =
     {"---Main menu---", "Yellow: Play Forward", "Yellow: Play Goalkeeper", "Blue: Play Forward",

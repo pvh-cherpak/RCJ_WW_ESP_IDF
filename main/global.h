@@ -8,10 +8,14 @@
 #include "sdkconfig.h"
 #include "driver/gpio.h"
 #include "sensors.h"
+#include "motorControl.h"
+#include "display.h"
 
 
 // extern i2c_master_bus_handle_t i2c_bus_handle;
 extern sensor_t sensor;
+extern DisplayMenu_t menu;
+extern MotorControl drv;
 
 // void init_i2c();
 void start_i2c_legacy(void);

@@ -4,7 +4,6 @@
 #include "encoder.h"
 #include "ssd1306.h"
 #include "font8x8_basic.h"
-#include "global.h"
 
 #include <iot_button.h>
 #include <stdlib.h>

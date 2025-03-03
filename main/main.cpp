@@ -137,11 +137,21 @@ extern "C"
 		// 	vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
 		// }
 
+		sensor.init();
+		drv.init();
 
+		int speed = 30;
+		menu.clearDisplay();
+		while (true){
+			drv.drive(0, speed);
+			menu.writeLineClean(0, std::to_string(speed), false);
+
+			vTaskDelay(2000 / portTICK_PERIOD_MS);
+			speed = -speed;
+		}
 
 
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
-		// sensor.init();
 		motor_drv8833_task();
 		start_menu();
 

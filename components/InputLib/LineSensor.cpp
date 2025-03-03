@@ -99,7 +99,7 @@ void LineSensor_t::calculateLineAngle()
   float x, y;
   getLineDirection_Delayed(x, y);
   if (x == 0 && y == 0){
-    line_angle_delayed = 0;
+    line_angle_delayed = 360;
     return;
   }
   line_angle_delayed = atan2(x, y) * RAD_TO_DEG;
