@@ -82,29 +82,29 @@ extern "C"
 		};
 
 		// // это тесты камеры
-		vTaskDelay(1000 / portTICK_PERIOD_MS);
-		/*OpenMVCommunication_t cam;
-		cam.init();
-		while (true)
-		{
-			cam.update();
-			ESP_LOGI("cam", "r center_angle: %d", cam.yellow.center_angle);
-			ESP_LOGI("cam", "r clos_angle: %d", cam.yellow.clos_angle);
-			ESP_LOGI("cam", "r distance: %d", cam.yellow.distance);
-			ESP_LOGI("cam", "r height: %d", cam.yellow.height);
-			ESP_LOGI("cam", "r left_angle: %d", cam.yellow.left_angle);
-			ESP_LOGI("cam", "r right_angle: %d", cam.yellow.right_angle);
-			ESP_LOGI("cam", "r width: %d", cam.yellow.width);
+		// vTaskDelay(1000 / portTICK_PERIOD_MS);
+		// OpenMVCommunication_t cam;
+		// cam.init();
+		// while (true)
+		// {
+		// 	cam.update();
+		// 	ESP_LOGI("cam", "r center_angle: %d", cam.yellow.center_angle);
+		// 	ESP_LOGI("cam", "r clos_angle: %d", cam.yellow.clos_angle);
+		// 	ESP_LOGI("cam", "r distance: %d", cam.yellow.distance);
+		// 	ESP_LOGI("cam", "r height: %d", cam.yellow.height);
+		// 	ESP_LOGI("cam", "r left_angle: %d", cam.yellow.left_angle);
+		// 	ESP_LOGI("cam", "r right_angle: %d", cam.yellow.right_angle);
+		// 	ESP_LOGI("cam", "r width: %d", cam.yellow.width);
 
-			ESP_LOGI("cam", "r center_angle: %d", cam.blue.center_angle);
-			ESP_LOGI("cam", "r clos_angle: %d", cam.blue.clos_angle);
-			ESP_LOGI("cam", "r distance: %d", cam.blue.distance);
-			ESP_LOGI("cam", "r height: %d", cam.blue.height);
-			ESP_LOGI("cam", "r left_angle: %d", cam.blue.left_angle);
-			ESP_LOGI("cam", "r right_angle: %d", cam.blue.right_angle);
-			ESP_LOGI("cam", "r width: %d", cam.blue.width);
-			vTaskDelay(500 / portTICK_PERIOD_MS);
-		}*/
+		// 	ESP_LOGI("cam", "r center_angle: %d", cam.blue.center_angle);
+		// 	ESP_LOGI("cam", "r clos_angle: %d", cam.blue.clos_angle);
+		// 	ESP_LOGI("cam", "r distance: %d", cam.blue.distance);
+		// 	ESP_LOGI("cam", "r height: %d", cam.blue.height);
+		// 	ESP_LOGI("cam", "r left_angle: %d", cam.blue.left_angle);
+		// 	ESP_LOGI("cam", "r right_angle: %d", cam.blue.right_angle);
+		// 	ESP_LOGI("cam", "r width: %d", cam.blue.width);
+		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
+		// }
 
 
 		// тест блютуза
@@ -143,11 +143,16 @@ extern "C"
 		int speed = 30;
 		menu.clearDisplay();
 		while (true){
-			drv.drive(0, speed);
-			menu.writeLineClean(0, std::to_string(speed), false);
+			//drv.drive(0, speed);
+			//menu.writeLineClean(0, std::to_string(speed), false);
+			sensor.update();
+			menu.writeLineClean(0, "blue: " + std::to_string(sensor.Cam.blue.center_angle));
+			menu.writeLineClean(1, "yellow: " + std::to_string(sensor.Cam.yellow.center_angle));
+			ESP_LOGI("cam", "yellow: %d", sensor.Cam.yellow.center_angle);
+			ESP_LOGI("cam", "blue: %d", sensor.Cam.yellow.center_angle);
 
-			vTaskDelay(2000 / portTICK_PERIOD_MS);
-			speed = -speed;
+			vTaskDelay(50 / portTICK_PERIOD_MS);
+			//speed = -speed;
 		}
 
 

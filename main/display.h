@@ -31,7 +31,7 @@ private:
 public:
     void init(SSD1306_t * source_dev, int width, int height);
     void clearDisplay();
-    void writeLineClean(int page, const std::string &text, bool invert);
+    void writeLineClean(int page, const std::string &text, bool invert = false);
     void writeLine(int page, const std::string &text, bool invert);
     void updateChosen(const std::vector<std::string> &menu_text, int item_index);
     void updateLine(const std::vector<std::string> &menu_text, int line_index);
