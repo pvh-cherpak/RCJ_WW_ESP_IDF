@@ -145,30 +145,23 @@ extern "C"
 		while (true){
 			//drv.drive(0, speed);
 			//menu.writeLineClean(0, std::to_string(speed), false);
+			int start = esp_timer_get_time();
 			sensor.update();
+			int end = esp_timer_get_time();
+			ESP_LOGI("cam", "Update time: %d", end - start);
+			
 			menu.writeLineClean(0, "blue: " + std::to_string(sensor.Cam.blue.center_angle));
 			menu.writeLineClean(1, "yellow: " + std::to_string(sensor.Cam.yellow.center_angle));
-			// ESP_LOGI("cam", "yellow: %d", sensor.Cam.yellow.center_angle);
-			// ESP_LOGI("cam", "blue: %d", sensor.Cam.yellow.center_angle);
 			
 			ESP_LOGI("cam", "r center_angle: %d", sensor.Cam.yellow.center_angle);
-			ESP_LOGI("cam", "r clos_angle: %d", sensor.Cam.yellow.clos_angle);
-			ESP_LOGI("cam", "r distance: %d", sensor.Cam.yellow.distance);
 			ESP_LOGI("cam", "r height: %d", sensor.Cam.yellow.height);
-			ESP_LOGI("cam", "r left_angle: %d", sensor.Cam.yellow.left_angle);
-			ESP_LOGI("cam", "r right_angle: %d", sensor.Cam.yellow.right_angle);
 			ESP_LOGI("cam", "r width: %d", sensor.Cam.yellow.width);
 
 			ESP_LOGI("cam", "r center_angle: %d", sensor.Cam.blue.center_angle);
-			ESP_LOGI("cam", "r clos_angle: %d", sensor.Cam.blue.clos_angle);
-			ESP_LOGI("cam", "r distance: %d", sensor.Cam.blue.distance);
 			ESP_LOGI("cam", "r height: %d", sensor.Cam.blue.height);
-			ESP_LOGI("cam", "r left_angle: %d", sensor.Cam.blue.left_angle);
-			ESP_LOGI("cam", "r right_angle: %d", sensor.Cam.blue.right_angle);
 			ESP_LOGI("cam", "r width: %d", sensor.Cam.blue.width);
-			vTaskDelay(500 / portTICK_PERIOD_MS);
 
-			vTaskDelay(50 / portTICK_PERIOD_MS);
+			vTaskDelay(30 / portTICK_PERIOD_MS);
 			//speed = -speed;
 		}
 
