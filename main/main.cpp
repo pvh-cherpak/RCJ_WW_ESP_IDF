@@ -145,10 +145,7 @@ extern "C"
 		while (true){
 			//drv.drive(0, speed);
 			//menu.writeLineClean(0, std::to_string(speed), false);
-			int start = esp_timer_get_time();
 			sensor.update();
-			int end = esp_timer_get_time();
-			ESP_LOGI("cam", "Update time: %d", end - start);
 			
 			menu.writeLineClean(0, "blue: " + std::to_string(sensor.Cam.blue.center_angle));
 			menu.writeLineClean(1, "yellow: " + std::to_string(sensor.Cam.yellow.center_angle));

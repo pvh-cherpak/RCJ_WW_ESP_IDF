@@ -124,7 +124,7 @@ void OpenMVCommunication_t::update()
     //ESP_LOGI("OpenMV", "pos_write = %d, pos_start = %d", pos_write, pos_start);
     
     if (pos_start != -1 && fit(pos_write - pos_start) >= CAM_MSG_SIZE){
-        //ESP_LOGI("OpenMV", "READ DATA, pos_start = %d", pos_start);
+        ESP_LOGI("OpenMV", "READ DATA, pos_start = %d", pos_start);
 
         // сохраняем нужные данные в массив для сообщения и парсим
         pos_start = fit(pos_start + 2);
@@ -135,7 +135,7 @@ void OpenMVCommunication_t::update()
 
         // ищем, не было ли уже обнаружено новое начало сообщения
         for (int i = pos_start; i != pos_write; i = fit(i + 1)){
-            if (data[i] == 255 && data[i + 1] == 255){
+            if (data[i] == 255 && data[fit(i + 1)] == 255){
                 pos_start = i;
                 break;
             }
@@ -153,21 +153,27 @@ OpenMVCommunication_t::~OpenMVCommunication_t()
 {
 }
 
+int16_t from_direct_code(int16_t num){
+    if ((num >> 15) & 1)
+        num = -(num & ~(1 << 15));
+    return num;
+}
+
 void OpenMVCommunication_t::parseData(uint8_t *data)
 {
-    cam_data.gates[0].left_angle = (data[0]<<8) |  data[1];
-    cam_data.gates[0].center_angle = (data[2]<<8) |  data[3];
-    cam_data.gates[0].right_angle = (data[4]<<8) |  data[5];
-    cam_data.gates[0].clos_angle = (data[6]<<8) |  data[7];
-    cam_data.gates[0].distance = (data[8]<<8) |  data[9];
-    cam_data.gates[0].width = (data[10]<<8) |  data[11];
-    cam_data.gates[0].height = (data[12]<<8) |  data[13];
+    cam_data.gates[0].left_angle = from_direct_code((data[0]<<8) |  data[1]);
+    cam_data.gates[0].center_angle = from_direct_code((data[2]<<8) |  data[3]);
+    cam_data.gates[0].right_angle = from_direct_code((data[4]<<8) |  data[5]);
+    cam_data.gates[0].clos_angle = from_direct_code((data[6]<<8) |  data[7]);
+    cam_data.gates[0].distance = from_direct_code((data[8]<<8) |  data[9]);
+    cam_data.gates[0].width = from_direct_code((data[10]<<8) |  data[11]);
+    cam_data.gates[0].height = from_direct_code((data[12]<<8) |  data[13]);
 
-    cam_data.gates[1].left_angle = (data[0 + 14]<<8) |  data[1 + 14];
-    cam_data.gates[1].center_angle = (data[2 + 14]<<8) |  data[3 + 14];
-    cam_data.gates[1].right_angle = (data[4 + 14]<<8) |  data[5 + 14];
-    cam_data.gates[1].clos_angle = (data[6 + 14]<<8) |  data[7 + 14];
-    cam_data.gates[1].distance = (data[8 + 14]<<8) |  data[9 + 14];
-    cam_data.gates[1].width = (data[10 + 14]<<8) |  data[11 + 14];
-    cam_data.gates[1].height = (data[12 + 14]<<8) |  data[13 + 14];
+    cam_data.gates[1].left_angle = from_direct_code((data[0 + 14]<<8) |  data[1 + 14]);
+    cam_data.gates[1].center_angle = from_direct_code((data[2 + 14]<<8) |  data[3 + 14]);
+    cam_data.gates[1].right_angle = from_direct_code((data[4 + 14]<<8) |  data[5 + 14]);
+    cam_data.gates[1].clos_angle = from_direct_code((data[6 + 14]<<8) |  data[7 + 14]);
+    cam_data.gates[1].distance = from_direct_code((data[8 + 14]<<8) |  data[9 + 14]);
+    cam_data.gates[1].width = from_direct_code((data[10 + 14]<<8) |  data[11 + 14]);
+    cam_data.gates[1].height = from_direct_code((data[12 + 14]<<8) |  data[13 + 14]);
 }
