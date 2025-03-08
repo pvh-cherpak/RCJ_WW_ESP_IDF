@@ -3,6 +3,7 @@
 #include "air_debug.h"
 #include "debug_data.h"
 #include "motorControl.h"
+#include "debug_log.h"
 
 /*
  * SPDX-FileCopyrightText: 2010-2022 Espressif Systems (Shanghai) CO LTD
@@ -139,33 +140,35 @@ extern "C"
 
 		sensor.init();
 		drv.init();
+		
+		init_debug_log();
 
-		int speed = 30;
-		menu.clearDisplay();
-		while (true){
-			//drv.drive(0, speed);
-			//menu.writeLineClean(0, std::to_string(speed), false);
-			sensor.update();
+		// int speed = 30;
+		// menu.clearDisplay();
+		// while (true){
+		// 	//drv.drive(0, speed);
+		// 	//menu.writeLineClean(0, std::to_string(speed), false);
+		// 	sensor.update();
 			
-			menu.writeLineClean(0, "blue: " + std::to_string(sensor.Cam.blue.center_angle));
-			menu.writeLineClean(1, "yellow: " + std::to_string(sensor.Cam.yellow.center_angle));
+		// 	menu.writeLineClean(0, "blue: " + std::to_string(sensor.Cam.blue.center_angle));
+		// 	menu.writeLineClean(1, "yellow: " + std::to_string(sensor.Cam.yellow.center_angle));
 			
-			ESP_LOGI("cam", "r center_angle: %d", sensor.Cam.yellow.center_angle);
-			ESP_LOGI("cam", "r height: %d", sensor.Cam.yellow.height);
-			ESP_LOGI("cam", "r width: %d", sensor.Cam.yellow.width);
+		// 	ESP_LOGI("cam", "r center_angle: %d", sensor.Cam.yellow.center_angle);
+		// 	ESP_LOGI("cam", "r height: %d", sensor.Cam.yellow.height);
+		// 	ESP_LOGI("cam", "r width: %d", sensor.Cam.yellow.width);
 
-			ESP_LOGI("cam", "r center_angle: %d", sensor.Cam.blue.center_angle);
-			ESP_LOGI("cam", "r height: %d", sensor.Cam.blue.height);
-			ESP_LOGI("cam", "r width: %d", sensor.Cam.blue.width);
+		// 	ESP_LOGI("cam", "r center_angle: %d", sensor.Cam.blue.center_angle);
+		// 	ESP_LOGI("cam", "r height: %d", sensor.Cam.blue.height);
+		// 	ESP_LOGI("cam", "r width: %d", sensor.Cam.blue.width);
 
-			vTaskDelay(30 / portTICK_PERIOD_MS);
-			//speed = -speed;
-		}
+		// 	vTaskDelay(30 / portTICK_PERIOD_MS);
+		// 	//speed = -speed;
+		// }
 
 
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
-		motor_drv8833_task();
-		start_menu();
+		// motor_drv8833_task();
+		// start_menu();
 
 		vTaskDelete(NULL);
 		// esp_restart();
