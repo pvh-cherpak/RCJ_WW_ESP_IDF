@@ -20,19 +20,14 @@ static const std::vector<std::string> another_menu_text =
     
 static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 
-void init_display_legacy()
-{
+void DisplayMenu_t::init(){
     display._address = I2C_ADDRESS;
     display._flip = false;
     display._i2c_num = I2C_NUM_0;
 
     ESP_LOGI(OLED_tag, "Panel is 128x64");
-    menu.init(&display, 128, 64);
-}
-
-void DisplayMenu_t::init(SSD1306_t *source_dev, int width, int height){
     ssd1306_init(&display, 128, 64);
-    dev = source_dev;
+    dev = &display;
 }
 
 void DisplayMenu_t::clearDisplay(){

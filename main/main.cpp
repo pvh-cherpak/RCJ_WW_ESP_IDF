@@ -43,7 +43,7 @@ extern "C"
 	{
 
 		start_i2c_legacy();
-		init_display_legacy();
+		menu.init();
 
 		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
 		// флеш память, её количество можно менять поэтому существует вероятность что место зарезервиролванное под
@@ -140,8 +140,9 @@ extern "C"
 
 		sensor.init();
 		drv.init();
-		
-		init_debug_log();
+		err_log.init();
+
+		err_log.print_all_errors();
 
 		// int speed = 30;
 		// menu.clearDisplay();
@@ -152,6 +153,7 @@ extern "C"
 			
 		// 	menu.writeLineClean(0, "blue: " + std::to_string(sensor.Cam.blue.center_angle));
 		// 	menu.writeLineClean(1, "yellow: " + std::to_string(sensor.Cam.yellow.center_angle));
+		// 	menu.writeLineClean(2, "errors: " + std::to_string(err_count));
 			
 		// 	ESP_LOGI("cam", "r center_angle: %d", sensor.Cam.yellow.center_angle);
 		// 	ESP_LOGI("cam", "r height: %d", sensor.Cam.yellow.height);

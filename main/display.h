@@ -15,7 +15,6 @@
 #include <vector>
 
 
-void init_display_legacy();
 void button_click(void* arg, void* event);
 void button_double_click(void* arg, void* event);
 void start_menu();
@@ -29,7 +28,7 @@ private:
     SSD1306_t * dev;
     int chosen_item = 0;
 public:
-    void init(SSD1306_t * source_dev, int width, int height);
+    void init();
     void clearDisplay();
     void writeLineClean(int page, const std::string &text, bool invert = false);
     void writeLine(int page, const std::string &text, bool invert);
