@@ -21,6 +21,7 @@ public:
     void update();
     OpenMVCommunication_t(/* args */);
     ~OpenMVCommunication_t();
+    const OmniCamBlobInfo_t& gate(int color) { return (color ? blue : yellow); };
 private:
     void parseData(uint8_t *data);
 private:

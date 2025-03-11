@@ -10,12 +10,14 @@ public:
     void init();
     void update();
     int getBallAngleLocal() { return ball_angle; }
+    int getStrength() { return strength; }
 
     locator_t(/* args */);
     ~locator_t();
 
 private:
     int ball_angle = 0;
+    int strength = 0;
 
 private:
     uint8_t ReadHeading_1200();

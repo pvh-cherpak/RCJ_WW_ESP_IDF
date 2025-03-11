@@ -96,13 +96,12 @@ void LineSensor_t::saveGreenWhite()
 
 void LineSensor_t::calculateLineAngle()
 {
-  float x, y;
-  getLineDirection_Delayed(x, y);
-  if (x == 0 && y == 0){
+  getLineDirection_Delayed(line_dir_x, line_dir_y);
+  if (line_dir_x == 0 && line_dir_y == 0){
     line_angle_delayed = 360;
     return;
   }
-  line_angle_delayed = atan2(x, y) * RAD_TO_DEG;
+  line_angle_delayed = atan2(line_dir_x, line_dir_y) * RAD_TO_DEG;
 }
 
 bool LineSensor_t::isLineOnSensor(int sensor)

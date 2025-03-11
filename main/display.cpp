@@ -1,5 +1,6 @@
 #include "display.h"
 #include "global.h"
+#include "logics.h"
 
 static const char *OLED_tag = "SSD1106";
 static SemaphoreHandle_t encoder_button_sem = xSemaphoreCreateBinary();
@@ -13,7 +14,7 @@ static const std::vector<std::string> start_menu_text =
      "Blue: Play Goalkeeper", "Sensors Check", "Another", "BT"};
 
 static const std::vector<std::string> info_menu_text =
-    {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Exit"};
+    {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Ball str:", "Line X:", "Exit"};
 
 static const std::vector<std::string> another_menu_text =
     {"-Another  menu-", "Line calib", "Dribbler: "};
@@ -147,6 +148,12 @@ void start_menu()
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
             switch (user_pointer_pos)
             {
+            case 2:
+                playGoalkeeperCamera(1);
+                break;
+            case 4:
+                playGoalkeeperCamera(0);
+                break;
             case 5:
                 info_menu(encoder_button);
                 break;
@@ -174,6 +181,10 @@ void info_menu(button_handle_t &encoder_button)
         menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
         menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
         menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
+        menu.writeLineClean(5, "Ball strng: " + std::to_string(sensor.Locator.getStrength()), false);
+        float x, y;
+        sensor.LineSensor.getDirectionDelayed(x, y);
+        menu.writeLineClean(6, "Line X: " + std::to_string(x), false);
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
             // возвращаемся в стартовое меню
             menu.drawFullMenu(start_menu_text);

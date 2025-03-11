@@ -31,6 +31,7 @@ public:
     // 
     
     int getAngleDelayed(){return line_angle_delayed;};
+    void getDirectionDelayed(float& x, float& y) { x = line_dir_x; y = line_dir_y; }
     // void getLineAngleAvg();
     void writeValues(){ESP_LOGI("Line values", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", actual_value[0], actual_value[1], actual_value[2], actual_value[3], actual_value[4], actual_value[5], actual_value[6], actual_value[7], actual_value[8], actual_value[9], actual_value[10], actual_value[11], actual_value[12], actual_value[13], actual_value[14], actual_value[15]);}
     LineSensor_t(/* args */) {}
@@ -77,4 +78,5 @@ private:
 
     bool is_line_detected = false;
     int line_angle_delayed = 0;
+    float line_dir_x = 0, line_dir_y = 0;
 };

@@ -9,10 +9,14 @@ void locator_t::init()
 void locator_t::update()
 {
     int angle;
-    if (ReadStrenght_600() < 15)
+    if (ReadStrenght_600() < 15){
         angle = ReadHeading_1200();
-    else
+        strength = ReadStrenght_1200();
+    }
+    else{
         angle = ReadHeading_600();
+        strength = ReadStrenght_1200();
+    }
     int dir = 360 - (5 * angle);
     if (dir > 180)
         dir = dir - 360;

@@ -142,7 +142,7 @@ extern "C"
 		drv.init();
 		err_log.init();
 
-		err_log.print_all_errors();
+		//err_log.print_all_errors();
 
 		// int speed = 30;
 		// menu.clearDisplay();
@@ -170,7 +170,7 @@ extern "C"
 
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
 		// motor_drv8833_task();
-		// start_menu();
+		start_menu();
 
 		vTaskDelete(NULL);
 		// esp_restart();
