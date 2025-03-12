@@ -122,6 +122,11 @@ void LineSensor_t::saveLineDirection()
 
 void LineSensor_t::getLineDirection_Delayed(float &x, float &y)
 {
+  if (!is_line_detected){
+    x = 0;
+    y = 0;
+    return;
+  }
   float sumX = 0;
   float sumY = 0;
   int k = 0;

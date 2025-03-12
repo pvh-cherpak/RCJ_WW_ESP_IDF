@@ -126,7 +126,7 @@ void MotorControl::driveXY(int speedX, int speedY, int rotationSpeed)
 
 void motor_drv8833_task()
 {
-    drv.init();
+    // drv.init();
 
     int speed = 60;
     int angle = 0;

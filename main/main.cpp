@@ -1,7 +1,7 @@
 #include "display.h"
 #include "global.h"
-#include "air_debug.h"
-#include "debug_data.h"
+// #include "air_debug.h"
+// #include "debug_data.h"
 #include "motorControl.h"
 #include "debug_log.h"
 
@@ -81,6 +81,21 @@ extern "C"
 		{
 			ESP_LOGE("NVS", "NVS partition initialization error: %d (%s)", err, esp_err_to_name(err));
 		};
+
+////////////////////////////////////////////////////////инициализация  NVS переменных
+ 		// nvs_handle_t nvs_handle;
+		// 		nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
+		// 		// ещё одна особеность все пары ключ-значение должны быть разбиты на группы
+		// 		// коеми являются NVS_WHITE_VALUE_GROUP, NVS_GREEN_VALUE_GROUP
+		// 		for (int i = 0; i < 16; i++) // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
+		// 			ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i));
+		// 		nvs_close(nvs_handle);
+
+		// 		nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
+		// 		for (int i = 0; i < 16; i++)
+		// 			ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
+		// 		nvs_close(nvs_handle);
+////////////////////////////////////////////////////////////////
 
 		// // это тесты камеры
 		// vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -170,6 +185,8 @@ extern "C"
 
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
 		// motor_drv8833_task();
+		drv.driveXY(20, 20, 0);
+		// drv.drive(45, 20);
 		start_menu();
 
 		vTaskDelete(NULL);

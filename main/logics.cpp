@@ -67,7 +67,7 @@ float considerLineTime = 10;
 float lineSensorPriority[16] = {0, 0.8, 0.2, 0.2, 0.2, 0.6, 0.8, 0, 0, 0.8, 0.6, 0.2, 0.2, 0.2, 0.8, 0};
 int activeSensors = 8;
 int maxGoalkeeperAngle = 80;
-float goRoundBallCoefGk = 0.5f;
+float goRoundBallCoefGk = 0.62f;
 
 float g_kp = 50;
 float g_ki = 0;
@@ -91,7 +91,7 @@ int lastGateAngle = 180;
 int lastGateTime = 0;
 int lastGateReset = 5000;
 
-float gate_kp = 0.5;
+float gate_kp = 1;
 float gate_kp_neg = 0.5;
 float gate_kd = 0;
 float gate_ki = 0;
@@ -172,6 +172,8 @@ void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, 
 void killerFeature(int color)
 {
     while (true){
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+
         if (stateGame != 1){
             break;
             // playGoalkeeperCamera(1 ^ color);
@@ -198,9 +200,6 @@ void killerFeature(int color)
         else
         {
             drv.driveXY(0, 0, 20);
-            #if DebugInfo
-                Debug.SendInfo();
-            #endif
             continue;
             gateAngle = (int)goodAngle(180 - robotAngle);
         }
@@ -255,8 +254,6 @@ void killerFeature(int color)
         //     stateGame = 0;
         //     continue;
         // }
-
-        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
 
@@ -264,6 +261,8 @@ void playGoalkeeperCamera(int color)
 {
     menu.clearDisplay();
     while (true){
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+
         //killerFeature(1 ^ color);
         //continue;
         
@@ -273,7 +272,6 @@ void playGoalkeeperCamera(int color)
         {
             menu.writeLineClean(1, "No ball");
             drv.drive(0, 0, 0, 0);
-            vTaskDelay(10 / portTICK_PERIOD_MS);
             continue;
         }
 
@@ -292,36 +290,35 @@ void playGoalkeeperCamera(int color)
         //getLineDirection_Delayed(lineX, lineY, true);
         sensor.LineSensor.getDirectionDelayed(lineX, lineY);
 
-        int gateAngle = sensor.Cam.gate(color).center_angle;
+        int gateAngle = goodAngle(sensor.Cam.gate(color).center_angle + 180);        
+        int globalGateAngle = goodAngle(gateAngle + robotAngle);
         int cam_height = sensor.Cam.gate(color).height;
+        
+        menu.writeLineClean(1, "GK " + std::to_string(gateAngle) + "  " + std::to_string(cam_height));
+
         if (cam_height > 0)
         {
-            gateAngle = (int)goodAngle(gateAngle + 180);
-            lastGateAngle = (int)goodAngle(gateAngle + robotAngle);
+            lastGateAngle = globalGateAngle;
             lastGateTime = millis();
         }
         else
         {
             drv.driveXY(0, 0, 20);
+            menu.writeLineClean(1, "No gates");
             continue;
             // gateAngle = lastGateAngle - robotAngle;
             // cam_height = 110;
         }
 
-        lineAngle = sensor.LineSensor.getAngleDelayed(); // getLineAngle_Delayed(true);
+        lineAngle = sensor.LineSensor.getAngleDelayed();
 
         int ball_strength = sensor.Locator.getStrength();
 
-        if (abs(ballAngle + robotAngle - lastBallAngle) > ballNoMotionDiap)
+        if (abs(goodAngle(ballAngle + robotAngle - lastBallAngle)) > ballNoMotionDiap)
         {
             lastBallAngle = ballAngle + robotAngle;
             lastMoveBallStrength = ball_strength;
             ballMoveTime = millis();
-            // Serial.print("angle changed: ");
-            // Serial.print(lastBallAngle);
-            // Serial.print(" -> ");
-            // Serial.print(ballAngle);
-            // Serial.println();
         }
 
         if (abs(ball_strength - lastMoveBallStrength) > ballNoMotionStrength)
@@ -329,56 +326,37 @@ void playGoalkeeperCamera(int color)
             lastBallAngle = ballAngle + robotAngle;
             lastMoveBallStrength = ball_strength;
             ballMoveTime = millis();
-            // Serial.print("strength changed: ");
-            // Serial.print(lastMoveBallStrength);
-            // Serial.print(" -> ");
-            // Serial.print(ball_strength);
-            // Serial.println();
         }
-
-        // Serial.print("ballAngle:   ");
-        // Serial.println(ballAngle);
-        // Serial.print("gateAngle:   ");
-        // Serial.println(gateAngle);
-        // Serial.print("cam_height:   ");
-        // Serial.println(cam_height);
-        // Serial.print("robotAngle:   ");
-        // Serial.println(robotAngle);
-        // Serial.print("lineAngle:   ");
-        // Serial.println(lineAngle);
-        // Serial.println(millis() - ballMoveTime);
 
         if (millis() - ballMoveTime >= 5000)
         {
             drv.driveXY(0, 70, 0);
             make_pause(100);
             stateGame = 1;
-            // Serial.println("state 1!!!");
             continue;
         }
 
-        if (lineAngle != 360 && (abs(goodAngle(robotAngle + gateAngle)) <= 135))
+        if (lineAngle != 360 && (abs(globalGateAngle)) <= 135)
         {
+            menu.writeLineClean(2, "Line");
             // speedX = (int)(-lineX * 80);
             // speedY = (int)(-lineY * 80);
             deltaAngle = (gateAngle == 360) ? -robotAngle : -(int)goodAngle(180 - gateAngle);
             drv.drive(goodAngle(lineAngle + 180), deltaAngle, 80);
-            #if DebugInfo
-                Debug.SendInfo();
-            #endif
             continue;
         }
         else
         {
+            menu.writeLineClean(2, "");
             speedX = 0;
-            int err = cam_height - 100;
+            int err = cam_height - 90;
             speedY = (int)(err * gate_kp + (err - gatePrev) * gate_kd + gateIntegral);
             speedY = (int)constrain(speedY, -limitGateSpeed, 100);
             gatePrev = err;
             gateIntegral += (err * gate_ki);
             gateIntegral = constrain(gateIntegral, -limitGateIntegral, limitGateIntegral);
 
-            if (abs(ballAngle) > 90 && err < 0)
+            if (abs(ballAngle) > 80 && err < 0)
             {
                 deltaAngle = (gateAngle == 360) ? -robotAngle * 0.5 : -(int)goodAngle(180 - gateAngle) * 0.25;
                 ball_strength = sensor.Locator.getStrength();
@@ -395,7 +373,6 @@ void playGoalkeeperCamera(int color)
             }
         }
 
-        //Serial.println(speedY);
         ESP_LOGI("playGoalkeeperCamera", "speedY = %d", speedY);
 
         ballAngle = constrain(ballAngle, -maxGoalkeeperAngle - robotAngle, maxGoalkeeperAngle - robotAngle);
@@ -409,7 +386,7 @@ void playGoalkeeperCamera(int color)
 
         deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
 
-        prevBallStrength = ball_strength;
+        // prevBallStrength = ball_strength;
 
         // speedX = constrain(speedX, -50, 50);
         // speedY = constrain(speedY, -50, 50);
@@ -420,9 +397,6 @@ void playGoalkeeperCamera(int color)
         }
 
         drv.driveXY(speedX, speedY, (int)deltaAngle);
-        // Serial.println(millis());
     }
-    
-    vTaskDelay(10 / portTICK_PERIOD_MS);
 }
 
