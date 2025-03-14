@@ -149,10 +149,10 @@ void start_menu()
             switch (user_pointer_pos)
             {
             case 2:
-                playGoalkeeperCamera(1);
+                playGoalkeeperCamera(0);
                 break;
             case 4:
-                playGoalkeeperCamera(0);
+                playGoalkeeperCamera(1);
                 break;
             case 5:
                 info_menu(encoder_button);
@@ -181,10 +181,9 @@ void info_menu(button_handle_t &encoder_button)
         menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
         menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
         menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
-        menu.writeLineClean(5, "Ball strng: " + std::to_string(sensor.Locator.getStrength()), false);
-        float x, y;
-        sensor.LineSensor.getDirectionDelayed(x, y);
-        menu.writeLineClean(6, "Line X: " + std::to_string(x), false);
+        menu.writeLineClean(5, "B gate: " + std::to_string(sensor.Cam.blue.center_angle), false);
+        menu.writeLineClean(6, "Y gate: " + std::to_string(sensor.Cam.yellow.center_angle), false);
+        
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
             // возвращаемся в стартовое меню
             menu.drawFullMenu(start_menu_text);

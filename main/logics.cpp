@@ -78,9 +78,9 @@ float leftPrev = 0;
 float rightIntegral = 0;
 float rightPrev = 0;
 
-float gb_kp = 1.;
+float gb_kp = 2.;
 float gb_ki = 0;
-float gb_kd = 15;
+float gb_kd = 6;
 float gkBallIntegral = 0;
 float gkBallPrev = 0;
 
@@ -91,7 +91,7 @@ int lastGateAngle = 180;
 int lastGateTime = 0;
 int lastGateReset = 5000;
 
-float gate_kp = 1;
+float gate_kp = 1.6;
 float gate_kp_neg = 0.5;
 float gate_kd = 0;
 float gate_ki = 0;
@@ -193,7 +193,7 @@ void killerFeature(int color)
 
         if (gateAngle != 360)
         {
-            gateAngle = (int)goodAngle(gateAngle + 180);
+            gateAngle = (int)goodAngle(-gateAngle /*+ 180*/);
             //lastGateAngle = (int)goodAngle(gateAngle + robotAngle);
             //lastGateTime = millis();
         }
@@ -290,11 +290,12 @@ void playGoalkeeperCamera(int color)
         //getLineDirection_Delayed(lineX, lineY, true);
         sensor.LineSensor.getDirectionDelayed(lineX, lineY);
 
-        int gateAngle = goodAngle(sensor.Cam.gate(color).center_angle + 180);        
+        int gateAngle = goodAngle(-sensor.Cam.gate(color).center_angle/* + 180*/);
         int globalGateAngle = goodAngle(gateAngle + robotAngle);
         int cam_height = sensor.Cam.gate(color).height;
+        int cam_dist = sensor.Cam.gate(color).distance;
         
-        menu.writeLineClean(1, "GK " + std::to_string(gateAngle) + "  " + std::to_string(cam_height));
+        menu.writeLineClean(1, "GK " + std::to_string(gateAngle) + "  " + std::to_string(cam_dist));
 
         if (cam_height > 0)
         {
@@ -349,8 +350,14 @@ void playGoalkeeperCamera(int color)
         {
             menu.writeLineClean(2, "");
             speedX = 0;
-            int err = cam_height - 90;
-            speedY = (int)(err * gate_kp + (err - gatePrev) * gate_kd + gateIntegral);
+            int err = 13 - cam_dist; //cam_height - 10;
+            // speedY = (int)(err * gate_kp + (err - gatePrev) * gate_kd + gateIntegral);
+            if (err < -2)
+                speedY = 0.07 * err * err + 5 * err - 3.5;
+            else if (err < 2)
+                speedY = 0;
+            else
+                speedY = 40 + err * 7;
             speedY = (int)constrain(speedY, -limitGateSpeed, 100);
             gatePrev = err;
             gateIntegral += (err * gate_ki);
@@ -375,14 +382,21 @@ void playGoalkeeperCamera(int color)
 
         ESP_LOGI("playGoalkeeperCamera", "speedY = %d", speedY);
 
+        // if (abs(ballAngle) < 15)
+        //     ballAngle *= 2;
+
         ballAngle = constrain(ballAngle, -maxGoalkeeperAngle - robotAngle, maxGoalkeeperAngle - robotAngle);
-        float ballSpeed = gb_kp * ballAngle + gkBallIntegral + gb_kd * (ballAngle - gkBallPrev);
+        
+        float ball_err = ballAngle;
+
+        float ballSpeed = gb_kp * ball_err + gkBallIntegral + gb_kd * (ball_err - gkBallPrev);
         // if (ball_strength > prevBallStrength){
         //     ballSpeed += constrain((ball_strength - prevBallStrength) * gk_st_kd, -50, 50);
         // }
-        gkBallIntegral += (ballAngle) * gb_ki;
-        gkBallPrev = ballAngle;
+        gkBallIntegral += (ball_err) * gb_ki;
+        gkBallPrev = ball_err;
         speedX += (int)(ballSpeed);
+        // speedX = 0;
 
         deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
 
