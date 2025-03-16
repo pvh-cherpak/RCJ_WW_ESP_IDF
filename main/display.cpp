@@ -163,9 +163,12 @@ void info_menu(button_handle_t &encoder_button)
     while (true)
     {
         sensor.update();
+        int64_t end_time = esp_timer_get_time();
+        int64_t elapsed_time = end_time - start_time;
         menu.writeLine(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
         menu.writeLine(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
         menu.writeLine(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
+        menu.writeLine(5, std::to_string(elapsed_time), false);
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
             // возвращаемся в стартовое меню
             menu.drawFullMenu(start_menu_text);

@@ -9,7 +9,8 @@ private:
 public:
     void init();
     void update();
-    int getBallAngleLocal() { return ball_angle; }
+    int getBallAngleLocal() { return ball_angle;}
+    const int& BallAngleLocal = ball_angle; 
 
     locator_t(/* args */);
     ~locator_t();

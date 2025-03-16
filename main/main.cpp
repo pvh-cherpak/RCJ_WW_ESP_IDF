@@ -55,21 +55,6 @@ extern "C"
 			ESP_LOGW("NVS", "Erasing NVS partition...");
 			nvs_flash_erase();
 			err = nvs_flash_init();
-			if (err == ESP_OK)
-			{
-				nvs_handle_t nvs_handle;
-				nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
-				// ещё одна особеность все пары ключ-значение должны быть разбиты на группы
-				// коеми являются NVS_WHITE_VALUE_GROUP, NVS_GREEN_VALUE_GROUP
-				for (int i = 0; i < 16; i++) // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
-					ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i));
-				nvs_close(nvs_handle);
-
-				nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
-				for (int i = 0; i < 16; i++)
-					ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
-				nvs_close(nvs_handle);
-			}
 		};
 		if (err == ESP_OK)
 		{
@@ -77,7 +62,7 @@ extern "C"
 		}
 		else
 		{
-			ESP_LOGE("NVS", "NVS partition initialization error: %d (%s)", err, esp_err_to_name(err));
+			esp_restart();
 		};
 
 		// // это тесты камеры
@@ -107,41 +92,47 @@ extern "C"
 
 
 		// тест блютуза
-		// bt_queue = xQueueCreate(10, sizeof(gebug_data_t));
-		// if (bt_queue == NULL)
-		// {
-		// 	ESP_LOGE(TAG, "Failed to create queue");
-		// 	return;
-		// }
+		bt_queue = xQueueCreate(10, sizeof(gebug_data_t));
+		if (bt_queue == NULL)
+		{
+			ESP_LOGE(TAG, "Failed to create queue");
+			return;
+		}
 
-		// // Инициализация Bluetooth
-		// init_bluetooth();
+		// Инициализация Bluetooth
+		init_bluetooth();
 
-		// // Запуск задачи Bluetooth на Core 1
-		// xTaskCreatePinnedToCore(bt_task, "Bluetooth Task", 4096, NULL, 5, NULL, 0);
+		// Запуск задачи Bluetooth на Core 1
+		xTaskCreatePinnedToCore(bt_task, "Bluetooth Task", 4096, NULL, 5, NULL, 0);
 
-		// gebug_data_t msg;
-		// msg.ball_angle = 260;
-		// msg.is_ball = false;
-		// while (1)
-		// {
-		// 	msg.ball_angle++;
-		// 	if (msg.ball_angle > 360)
-		// 		msg.ball_angle = -100;
-		// 	for(int i =0 ; i < 16; i++)
-		// 		msg.line_sensor[i] = rand() % 2;
-		// 	// snprintf(msg.message, sizeof(msg.message), "Data: %d", esp_random() % 100);
-		// 	xQueueSend(bt_queue, &msg, portMAX_DELAY);
+		gebug_data_t msg;
+		msg.ball_angle = 260;
+		msg.is_ball = false;
+		while (1)
+		{
+			msg.ball_angle++;
+			msg.speed_x =  rand() % 128;
+			msg.speed_y =  rand() % 128;
+			if (msg.ball_angle > 360)
+				msg.ball_angle = -100;
+			for(int i =0 ; i < 16; i++)
+				msg.line_sensor[i] = rand() % 2;
+			
+			int64_t start_time = esp_timer_get_time();
+			xQueueSend(bt_queue, &msg, 0);
+			int64_t end_time = esp_timer_get_time();
+            int64_t elapsed_time = end_time - start_time;
+            ESP_LOGI(TAG, "Vrema dobavlenia v ochered %llu", elapsed_time);
 
-		// 	vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
-		// }
+			vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
+		}
 
 
 
 
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
 		// sensor.init();
-		start_menu();
+		// start_menu();
 
 		vTaskDelete(NULL);
 		// esp_restart();

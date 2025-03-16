@@ -55,6 +55,7 @@ private:
     uint16_t green_value[16];
     uint16_t white_value[16];
     int actual_value[16];
+    bool is_line_on_sensor[16];
     TickType_t line_time [16];
     const uint32_t MULT_CHANEL[16][4] = {
         {0, 0, 0, 0}, //channel 0

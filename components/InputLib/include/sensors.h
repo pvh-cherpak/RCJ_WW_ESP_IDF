@@ -3,10 +3,12 @@
 #include "../locator.h"
 #include "../OpenMV.h"
 
+#include "debug_data.h"
+
 class sensor_t
 {
 private:
-    
+    gebug_data_t air_debug_data;
 public:
     IMU_t IMU;
     LineSensor_t LineSensor;
@@ -18,4 +20,5 @@ public:
     
     void init(){IMU.init(); LineSensor.init(); Locator.init(); Cam.init();}
     void update(){IMU.update(); LineSensor.update(); Locator.update(); Cam.update();}
+    void sendInfo();
 };
