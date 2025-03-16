@@ -1,36 +1,34 @@
 #include "display.h"
+#include "global.h"
+#include "logics.h"
 
 static const char *OLED_tag = "SSD1106";
 static SemaphoreHandle_t encoder_button_sem = xSemaphoreCreateBinary();
+static SemaphoreHandle_t encoder_double_click_sem = xSemaphoreCreateBinary();
 static SSD1306_t display;
 static Encoder_t encoder;
-static DisplayMenu_t menu;
+DisplayMenu_t menu;
 
 static const std::vector<std::string> start_menu_text =
     {"---Main menu---", "Yellow: Play Forward", "Yellow: Play Goalkeeper", "Blue: Play Forward",
      "Blue: Play Goalkeeper", "Sensors Check", "Another", "BT"};
 
 static const std::vector<std::string> info_menu_text =
-    {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Exit"};
+    {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Ball str:", "Line X:", "Exit"};
 
 static const std::vector<std::string> another_menu_text =
     {"-Another  menu-", "Line calib", "Dribbler: "};
     
 static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 
-void init_display_legacy()
-{
+void DisplayMenu_t::init(){
     display._address = I2C_ADDRESS;
     display._flip = false;
     display._i2c_num = I2C_NUM_0;
 
     ESP_LOGI(OLED_tag, "Panel is 128x64");
-    menu.init(&display, 128, 64);
-}
-
-void DisplayMenu_t::init(SSD1306_t *source_dev, int width, int height){
     ssd1306_init(&display, 128, 64);
-    dev = source_dev;
+    dev = &display;
 }
 
 void DisplayMenu_t::clearDisplay(){
@@ -39,7 +37,7 @@ void DisplayMenu_t::clearDisplay(){
 }
 
 // бывшая ssd1306_display_text_with_clean
-void DisplayMenu_t::writeLine(int page, const std::string &text, bool invert)
+void DisplayMenu_t::writeLineClean(int page, const std::string &text, bool invert)
 {
     if (page >= dev->_pages)
         return;
@@ -72,11 +70,17 @@ void DisplayMenu_t::writeLine(int page, const std::string &text, bool invert)
     }
 }
 
+void DisplayMenu_t::writeLine(int page, const std::string &text, bool invert){
+    ssd1306_display_text(dev, page, text.c_str(), text.size(), invert);
+}
+
 // если выбрали другую строку, перерисовываем
 void DisplayMenu_t::updateChosen(const std::vector<std::string> &menu_text, int item_index){
     if (item_index != chosen_item){
-        writeLine(chosen_item, " " + menu_text[chosen_item], false);
-        writeLine(item_index, ">" + menu_text[item_index], false);
+        //writeLineClean(chosen_item, " " + menu_text[chosen_item], false);
+        //writeLineClean(item_index, ">" + menu_text[item_index], false);
+        writeLine(chosen_item, " ", false);
+        writeLine(item_index, ">", false);
         chosen_item = item_index;
     }
 }
@@ -84,10 +88,10 @@ void DisplayMenu_t::updateChosen(const std::vector<std::string> &menu_text, int 
 // обновляем текст строки с учётом того, нужно ли выводить стрелочку слева
 void DisplayMenu_t::updateLine(const std::vector<std::string> &menu_text, int line_index){
     if (line_index == chosen_item){
-        writeLine(line_index, ">" + menu_text[line_index], false);
+        writeLineClean(line_index, ">" + menu_text[line_index], false);
     }
     else{
-        writeLine(line_index, " " + menu_text[line_index], false);
+        writeLineClean(line_index, " " + menu_text[line_index], false);
     }
 }
 
@@ -95,7 +99,11 @@ void DisplayMenu_t::updateLine(const std::vector<std::string> &menu_text, int li
 void DisplayMenu_t::drawFullMenu(const std::vector<std::string> &menu_text){
     clearDisplay();
     for (int i = 0; i < menu_text.size(); i++)
-        writeLine(i, " " + menu_text[i], false);
+        writeLineClean(i, " " + menu_text[i], false);
+}
+
+void DisplayMenu_t::setChosenItem(int new_item){
+    chosen_item = new_item;
 }
 
 void start_menu()
@@ -118,6 +126,7 @@ void start_menu()
     }
 
     iot_button_register_cb(encoder_button, BUTTON_SINGLE_CLICK, button_click, NULL);
+    iot_button_register_cb(encoder_button, BUTTON_DOUBLE_CLICK, button_double_click, NULL);
 
     int user_pointer_pos = 1;
     int menu_size = start_menu_text.size();
@@ -139,11 +148,17 @@ void start_menu()
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
             switch (user_pointer_pos)
             {
+            case 2:
+                playGoalkeeperCamera(0);
+                break;
+            case 4:
+                playGoalkeeperCamera(1);
+                break;
             case 5:
                 info_menu(encoder_button);
                 break;
             case 6:
-                menu.updateChosen(start_menu_text, 0); // сбрасываем выбранную строку на 0, чтобы не улетать за границы массива
+                menu.setChosenItem(0);
                 another_menu(encoder_button);
                 break;
             default:
@@ -159,16 +174,16 @@ void start_menu()
 void info_menu(button_handle_t &encoder_button)
 {
     menu.clearDisplay();
-    menu.writeLine(0, "---Info menu---", true);
+    menu.writeLineClean(0, "---Info menu---", true);
     while (true)
     {
         sensor.update();
-        int64_t end_time = esp_timer_get_time();
-        int64_t elapsed_time = end_time - start_time;
-        menu.writeLine(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
-        menu.writeLine(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
-        menu.writeLine(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
-        menu.writeLine(5, std::to_string(elapsed_time), false);
+        menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
+        menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
+        menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
+        menu.writeLineClean(5, "B gate: " + std::to_string(sensor.Cam.blue.center_angle), false);
+        menu.writeLineClean(6, "Y gate: " + std::to_string(sensor.Cam.yellow.center_angle), false);
+        
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
             // возвращаемся в стартовое меню
             menu.drawFullMenu(start_menu_text);
@@ -222,15 +237,15 @@ void another_menu(button_handle_t &encoder_button)
             
             default:
                 // возвращаемся в стартовое меню
-                menu.updateChosen(another_menu_output_text, 0);
                 encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 5);
                 menu.drawFullMenu(start_menu_text);
+                menu.setChosenItem(5);
                 return;
             }
             ESP_LOGI(OLED_tag, "Button hold");
         }
 
-        if (iot_button_get_event(encoder_button) == BUTTON_DOUBLE_CLICK){
+        if (xSemaphoreTake(encoder_double_click_sem, 0) == pdTRUE){
             switch (user_pointer_pos)
             {
             case 2:
@@ -239,6 +254,7 @@ void another_menu(button_handle_t &encoder_button)
                 menu.updateLine(another_menu_output_text, 2);
                 break;
             }
+            ESP_LOGI(OLED_tag, "Button double click");
         }
         
         vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -252,12 +268,12 @@ void edit_dribbler_speed(button_handle_t &encoder_button){
     while (iot_button_get_event(encoder_button) == BUTTON_LONG_PRESS_HOLD){
         dribbler_speed = encoder.getCurValue();
         another_menu_output_text[2] = another_menu_text[2] + std::to_string(dribbler_speed);
-        menu.writeLine(2, "*" + another_menu_output_text[2], false);
+        menu.writeLineClean(2, "*" + another_menu_output_text[2], false);
         
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
     
-    menu.writeLine(2, ">" + another_menu_output_text[2], false);
+    menu.writeLineClean(2, ">" + another_menu_output_text[2], false);
     encoder.setNewLimits(0, another_menu_output_text.size() - 2, 1, 1);
 }
 
@@ -265,17 +281,17 @@ void LineCalibrate(button_handle_t &encoder_button)
 {
     menu.clearDisplay();
 
-    menu.writeLine(0, "Waiting for", true);
-    menu.writeLine(1, "click...", true);
+    menu.writeLineClean(0, "Waiting for", true);
+    menu.writeLineClean(1, "click...", true);
     xSemaphoreTake(encoder_button_sem, portMAX_DELAY);
     sensor.LineSensor.calibrateGreen();
     vTaskDelay(100 / portTICK_PERIOD_MS);
     sensor.LineSensor.calibrateGreen();
-    menu.writeLine(0, "Green calibrat", true);
-    menu.writeLine(1, "done", true);
+    menu.writeLineClean(0, "Green calibrat", true);
+    menu.writeLineClean(1, "done", true);
     sensor.LineSensor.whiteTo0();
-    menu.writeLine(0, "Start white", true);
-    menu.writeLine(1, "calibration", true);
+    menu.writeLineClean(0, "Start white", true);
+    menu.writeLineClean(1, "calibration", true);
     while (xSemaphoreTake(encoder_button_sem, 0) != pdTRUE)
         sensor.LineSensor.calibrateWhite();
 
@@ -287,4 +303,9 @@ void LineCalibrate(button_handle_t &encoder_button)
 void button_click(void *arg, void *event)
 {
     xSemaphoreGiveFromISR(encoder_button_sem, NULL);
+}
+
+void button_double_click(void *arg, void *event)
+{
+    xSemaphoreGiveFromISR(encoder_double_click_sem, NULL);
 }
