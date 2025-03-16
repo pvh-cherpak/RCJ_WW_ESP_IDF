@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../mpu6050.h"
 #include "../LineSensor.h"
 #include "../locator.h"

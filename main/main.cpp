@@ -35,8 +35,6 @@ static const char *TAG = "example";
 extern const char *NVS_WHITE_VALUE_GROUP;
 extern const char *NVS_GREEN_VALUE_GROUP;
 
-extern QueueHandle_t bt_queue;
-
 extern "C"
 {
 	void app_main(void)
@@ -109,37 +107,12 @@ extern "C"
 
 
 		// тест блютуза
-		bt_queue = xQueueCreate(10, sizeof(gebug_data_t));
-		if (bt_queue == NULL)
-		{
-			ESP_LOGE(TAG, "Failed to create queue");
-			return;
-		}
+		BTDebug_t BTDebug(sensor);
+		BTDebug.init();
 
-		// Инициализация Bluetooth
-		init_bluetooth();
-
-		// Запуск задачи Bluetooth на Core 1
-		xTaskCreatePinnedToCore(bt_task, "Bluetooth Task", 4096, NULL, 5, NULL, 0);
-
-		gebug_data_t msg;
-		msg.ball_angle = 260;
-		msg.is_ball = false;
 		while (1)
 		{
-			msg.ball_angle++;
-			msg.speed_x =  rand() % 128;
-			msg.speed_y =  rand() % 128;
-			if (msg.ball_angle > 360)
-				msg.ball_angle = -100;
-			for(int i =0 ; i < 16; i++)
-				msg.line_sensor[i] = rand() % 2;
-			
-			int64_t start_time = esp_timer_get_time();
-			xQueueSend(bt_queue, &msg, 0);
-			int64_t end_time = esp_timer_get_time();
-            int64_t elapsed_time = end_time - start_time;
-            ESP_LOGI(TAG, "Vrema dobavlenia v ochered %llu", elapsed_time);
+			BTDebug.send();
 
 			vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
 		}
