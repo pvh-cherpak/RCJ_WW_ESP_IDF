@@ -20,6 +20,7 @@ private: // константы
 public:
     void init();
     void update(){read_line_sensors(); saveLineDirection(); calculateLineAngle();}
+    void testUpdate(){line_angle_delayed = rand() % 360; is_line_on_sensor[12]=!is_line_on_sensor[12]; ESP_LOGI("LineSensor TEST", "Angle: %d", line_angle_delayed);}
     // int getAngle();
 
     // ничего лучше чем скопипастить Глебовы функции я не придумал
@@ -36,7 +37,9 @@ public:
     void writeValues(){ESP_LOGI("Line values", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", actual_value[0], actual_value[1], actual_value[2], actual_value[3], actual_value[4], actual_value[5], actual_value[6], actual_value[7], actual_value[8], actual_value[9], actual_value[10], actual_value[11], actual_value[12], actual_value[13], actual_value[14], actual_value[15]);}
     LineSensor_t(/* args */) {}
     ~LineSensor_t() {}
-
+public:
+    bool is_line_on_sensor[16];
+    int &LineAngleDelayed = line_angle_delayed;
 private:
     void saveLineDirection();
     bool isLineOnSensor(int sensor);
@@ -56,7 +59,7 @@ private:
     uint16_t green_value[16];
     uint16_t white_value[16];
     int actual_value[16];
-    bool is_line_on_sensor[16];
+    
     TickType_t line_time [16];
     const uint32_t MULT_CHANEL[16][4] = {
         {0, 0, 0, 0}, //channel 0

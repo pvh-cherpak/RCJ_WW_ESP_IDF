@@ -14,9 +14,9 @@ uint8_t outbuf[40];
 const int16_t mask1 = 0b1111111100000000;
 const int16_t mask2 = 0b0000000011111111;
 
-BTDebug_t::BTDebug_t(sensor_t &sensors);
+BTDebug_t::BTDebug_t(sensor_t &sensors):sensor(sensors)
 {
-    sensor = sensors;
+
 }
 
 BTDebug_t::~BTDebug_t()
@@ -134,9 +134,8 @@ void BTDebug_t::send()
     ESP_LOGI(TAG, "Vrema otprevky %llu", elapsed_time);
 }
 
-void BTDebug_t::prepair_buff()
+void BTDebug_t::prepair_sensor_buff()
 {
-    /*
     outbuf[0] = 255;
     outbuf[1] = 255;
     outbuf[2] = 255;
@@ -146,65 +145,64 @@ void BTDebug_t::prepair_buff()
     outbuf[4] = 0;
     for (int i = 0; i < 8; ++i)
     {
-        outbuf[3] |= sensor.L << i;
-        outbuf[4] |= msg.line_sensor[i + 8] << i;
+        outbuf[3] |= sensor.LineSensor.is_line_on_sensor[i] << i;
+        outbuf[4] |= sensor.LineSensor.is_line_on_sensor[i + 8] << i;
     }
 
-    outbuf[5] = (msg.line_angle & mask1) >> 8;
-    outbuf[6] = msg.line_angle & mask2;
+    outbuf[5] = (sensor.LineSensor.LineAngleDelayed & mask1) >> 8;
+    outbuf[6] = sensor.LineSensor.LineAngleDelayed & mask2;
 
-    outbuf[7] = (msg.ball_angle & mask1) >> 8;
-    outbuf[8] = msg.ball_angle & mask2;
+    outbuf[7] = (sensor.Locator.BallAngleLocal & mask1) >> 8;
+    outbuf[8] = sensor.Locator.BallAngleLocal & mask2;
 
-    outbuf[9] = (msg.gyroskope_angle & mask1) >> 8;
-    outbuf[10] = msg.gyroskope_angle & mask2;
+    outbuf[9] = (sensor.IMU.Yaw & mask1) >> 8;
+    outbuf[10] = sensor.IMU.Yaw & mask2;
 
-    outbuf[11] = msg.speed_rotate;
-    outbuf[12] = msg.speed_x;
-    outbuf[13] = msg.speed_y;
+    outbuf[11] = 0;
+    outbuf[12] = 0;
+    outbuf[13] = 0;
 
-    outbuf[14] = msg.dribble_speed;
+    outbuf[14] = 0;
 
     //Байт состояний
-    outbuf[15] = msg.state;
+    outbuf[15] = state;
 
     // Данные камеры
-    outbuf[16] = ((msg.camDataOmni.gates[0].left_angle) & mask1) >> 8;
-    outbuf[17] = (msg.camDataOmni.gates[0].left_angle) & mask2;
+    outbuf[16] = ((sensor.Cam.camDataOmni.gates[0].left_angle) & mask1) >> 8;
+    outbuf[17] = (sensor.Cam.camDataOmni.gates[0].left_angle) & mask2;
     // Serial.print(outbuf [16]);
     // Serial.print(outbuf [17]);
 
-    outbuf[18] = (msg.camDataOmni.gates[0].right_angle & mask1) >> 8;
-    outbuf[19] = msg.camDataOmni.gates[0].right_angle & mask2;
+    outbuf[18] = (sensor.Cam.camDataOmni.gates[0].right_angle & mask1) >> 8;
+    outbuf[19] = sensor.Cam.camDataOmni.gates[0].right_angle & mask2;
 
-    outbuf[20] = (msg.camDataOmni.gates[0].center_angle & mask1) >> 8;
-    outbuf[21] = msg.camDataOmni.gates[0].center_angle & mask2;
+    outbuf[20] = (sensor.Cam.camDataOmni.gates[0].center_angle & mask1) >> 8;
+    outbuf[21] = sensor.Cam.camDataOmni.gates[0].center_angle & mask2;
 
-    outbuf[22] = (msg.camDataOmni.gates[0].width & mask1) >> 8;
-    outbuf[23] = msg.camDataOmni.gates[0].width & mask2;
+    outbuf[22] = (sensor.Cam.camDataOmni.gates[0].width & mask1) >> 8;
+    outbuf[23] = sensor.Cam.camDataOmni.gates[0].width & mask2;
 
-    outbuf[24] = (msg.camDataOmni.gates[0].distance & mask1) >> 8;
-    outbuf[25] = msg.camDataOmni.gates[0].distance & mask2;
+    outbuf[24] = (sensor.Cam.camDataOmni.gates[0].distance & mask1) >> 8;
+    outbuf[25] = sensor.Cam.camDataOmni.gates[0].distance & mask2;
 
-    outbuf[26] = (msg.camDataOmni.gates[0].height & mask1) >> 8;
-    outbuf[27] = msg.camDataOmni.gates[0].height & mask2;
+    outbuf[26] = (sensor.Cam.camDataOmni.gates[0].height & mask1) >> 8;
+    outbuf[27] = sensor.Cam.camDataOmni.gates[0].height & mask2;
     // голубые ворота
-    outbuf[28] = (msg.camDataOmni.gates[1].left_angle & mask1) >> 8;
-    outbuf[29] = msg.camDataOmni.gates[1].left_angle & mask2;
+    outbuf[28] = (sensor.Cam.camDataOmni.gates[1].left_angle & mask1) >> 8;
+    outbuf[29] = sensor.Cam.camDataOmni.gates[1].left_angle & mask2;
 
-    outbuf[30] = (msg.camDataOmni.gates[1].right_angle & mask1) >> 8;
-    outbuf[31] = msg.camDataOmni.gates[1].right_angle & mask2;
+    outbuf[30] = (sensor.Cam.camDataOmni.gates[1].right_angle & mask1) >> 8;
+    outbuf[31] = sensor.Cam.camDataOmni.gates[1].right_angle & mask2;
 
-    outbuf[32] = (msg.camDataOmni.gates[1].center_angle & mask1) >> 8;
-    outbuf[33] = msg.camDataOmni.gates[1].center_angle & mask2;
+    outbuf[32] = (sensor.Cam.camDataOmni.gates[1].center_angle & mask1) >> 8;
+    outbuf[33] = sensor.Cam.camDataOmni.gates[1].center_angle & mask2;
 
-    outbuf[34] = (msg.camDataOmni.gates[1].width & mask1) >> 8;
-    outbuf[35] = msg.camDataOmni.gates[1].width & mask2;
+    outbuf[34] = (sensor.Cam.camDataOmni.gates[1].width & mask1) >> 8;
+    outbuf[35] = sensor.Cam.camDataOmni.gates[1].width & mask2;
 
-    outbuf[36] = (msg.camDataOmni.gates[1].distance & mask1) >> 8;
-    outbuf[37] = msg.camDataOmni.gates[1].distance & mask2;
+    outbuf[36] = (sensor.Cam.camDataOmni.gates[1].distance & mask1) >> 8;
+    outbuf[37] = sensor.Cam.camDataOmni.gates[1].distance & mask2;
 
-    outbuf[38] = (msg.camDataOmni.gates[1].height & mask1) >> 8;
-    outbuf[39] = msg.camDataOmni.gates[1].height & mask2;
-    */
+    outbuf[38] = (sensor.Cam.camDataOmni.gates[1].height & mask1) >> 8;
+    outbuf[39] = sensor.Cam.camDataOmni.gates[1].height & mask2;
 }

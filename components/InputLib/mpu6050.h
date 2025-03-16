@@ -3,6 +3,7 @@
 // I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
 // for both classes must be in the include path of your project
 #include "I2Cdev.h"
+#include "esp_log.h"
 
 //#include "MPU6050.h" // not necessary if using MotionApps include file
 #include "MPU6050_6Axis_MotionApps20.h"
@@ -21,6 +22,7 @@ private:
     float roll;
     float pitch;
     float yaw = 0;
+    int i_yaw = 0;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     //я не разбирался зачем нужны эти переменные но пусть будут
@@ -60,9 +62,10 @@ private:
     void getYawPitchRoll();
 
 public:
-    int getYaw() { return yaw; }
-    const float &Yaw = yaw;
-    void init() { mpu6050_init(); }
+    int getYaw() { return i_yaw; }
+    const int &Yaw = i_yaw;
+    void init() { mpu6050_init();}
     void update() { mpu6050(); }
+    void testUpdate(){i_yaw = rand() % 360; ESP_LOGI("MPU6050 TEST", "Yaw: %d", i_yaw);}
     IMU_t() {}
 };

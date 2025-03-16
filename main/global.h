@@ -19,7 +19,7 @@ extern sensor_t sensor;
 extern DisplayMenu_t menu;
 extern MotorControl drv;
 extern ErrLog_t err_log;
-extern BTDebug_t BTDebug;
+// extern BTDebug_t BTDebug;
 
 // void init_i2c();
 void start_i2c_legacy(void);

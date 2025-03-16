@@ -37,7 +37,7 @@ THE SOFTWARE.
 #include <freertos/task.h>
 #include "sdkconfig.h"
 
-#include "include/I2Cdev.h"
+#include "I2Cdev.h"
 
 #define I2C_NUM I2C_NUM_0
 

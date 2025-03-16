@@ -105,7 +105,7 @@ extern "C"
 		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
 		// }
 
-
+	
 		// тест блютуза
 		BTDebug_t BTDebug(sensor);
 		BTDebug.init();
@@ -113,10 +113,10 @@ extern "C"
 		while (1)
 		{
 			BTDebug.send();
-
+			sensor.testUpdate();
 			vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
 		}
-
+		
 		sensor.init();
 		drv.init();
 		err_log.init();

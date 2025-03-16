@@ -22,5 +22,6 @@ public:
     
     void init(){IMU.init(); LineSensor.init(); Locator.init(); Cam.init();}
     void update(){IMU.update(); LineSensor.update(); Locator.update(); Cam.update();}
+    void testUpdate() {IMU.testUpdate(); LineSensor.testUpdate(); Locator.testUpdate();}
     void sendInfo();
 };
