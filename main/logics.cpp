@@ -136,11 +136,12 @@ int goodAngle(int angle) {
 }
 
 void make_pause(int ms){
-    int start = millis();
-    while (millis() - start > 0){
-        sensor.update();
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-    }
+    vTaskDelay(ms / portTICK_PERIOD_MS);
+    // int start = millis();
+    // while (millis() - start > 0){
+    //     sensor.update();
+    //     vTaskDelay(10 / portTICK_PERIOD_MS);
+    // }
 }
 
 void projectSpeedOnLineXY(int speedX, int speedY, float lineX, float lineY, float& resSpeedX, float& resSpeedY)
@@ -167,6 +168,10 @@ void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, 
     int speedX = (int)(speed * sin(moveAngle * DEG_TO_RAD));
     int speedY = (int)(speed * cos(moveAngle * DEG_TO_RAD));
     projectSpeedOnLineXY(speedX, speedY, lineX, lineY, resSpeedX, resSpeedY);
+}
+
+bool isBall(){
+    return (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10);
 }
 
 void killerFeature(int color)
@@ -414,3 +419,344 @@ void playGoalkeeperCamera(int color)
     }
 }
 
+void playForwardGoyda(int color){
+    color ^= 1;
+    menu.clearDisplay();
+    while (true){
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+
+        sensor.update();
+  
+        int cam_angle = -sensor.Cam.gate(color).center_angle;
+        int cam_dist = sensor.Cam.gate(color).distance;
+        
+        int st = sensor.Locator.getStrength();
+        int ballAngle = sensor.Locator.getBallAngleLocal();
+        int lineAngle = sensor.LineSensor.getAngleDelayed();
+
+        int robotAngle = sensor.IMU.getYaw();
+    
+        if (abs(robotAngle) > 80){
+            menu.writeLineClean(0, "rotate");
+            menu.writeLineClean(1, "");
+            menu.writeLineClean(2, "");
+            drv.drive(0, -robotAngle * 0.3, 0);
+        }
+    
+        else if (!isBall()){
+            //dribble((abs(ballAngle) < 40) ? 30 : 0);
+            int deltaAngle = -robotAngle; //ballAngle * 0.3;
+            if (lineAngle == 360){
+                moveAngle = ballAngle + (ballAngle > 0) ? 15 : -15;
+                if (abs(ballAngle) < 25){
+                    moveAngle = ballAngle;
+                }
+                else
+                    moveAngle = ballAngle + constrain(st * goRoundBallCoefGk, 0, 90);
+                // double k = 0.5;
+    
+                // int delta = 0;
+                // // if (abs(angle) <= 45){
+                // //   k = 3;
+                // // }
+                // if (ballAngle >= 30) {
+                //     //delta = sqrt(st) * k;
+                //     delta = st * k;
+                //     //speed = 150;
+                // }
+                // else if (ballAngle <= -30) {
+                //     //delta = -sqrt(st) * k;
+                //     delta = -st * k;
+                //     // speed = 150;
+                // }
+                // else {
+                //     delta = 0;
+                //     // speed = 230;
+                // }
+    
+                // moveAngle = ballAngle + delta;
+
+                menu.writeLineClean(0, "drive2ball");
+                menu.writeLineClean(1, std::to_string(st));
+                menu.writeLineClean(2, std::to_string(ballAngle));
+    
+                drv.drive(moveAngle , (int)deltaAngle, 50);
+            }
+            else{
+                drv.drive(goodAngle(lineAngle + 180), deltaAngle, 60);
+                menu.writeLineClean(0, "LINE 1");
+                menu.writeLineClean(1, std::to_string(lineAngle));
+                menu.writeLineClean(2, "");
+            }
+        }
+        else{
+            make_pause(0);
+            
+            while (isBall()){
+                sensor.update();
+        
+                cam_angle = -sensor.Cam.gate(color).center_angle;
+                cam_dist = sensor.Cam.gate(color).distance;
+                
+                st = sensor.Locator.getStrength();
+                ballAngle = sensor.Locator.getBallAngleLocal();
+                lineAngle = sensor.LineSensor.getAngleDelayed();
+
+                robotAngle = sensor.IMU.getYaw();
+                
+                if (lineAngle == 360) {
+                    int delta_angle = constrain(cam_angle * 0.5, -20, 20);
+                    drv.drive(cam_angle, delta_angle, 60);
+                    menu.writeLineClean(0, "move2gate");
+                    menu.writeLineClean(1, std::to_string(cam_angle));
+                    menu.writeLineClean(2, std::to_string(cam_dist));
+                    if (abs(cam_angle) < 10 && cam_dist < 35){
+                        drv.drive(0, 0, 0, 0);
+                        menu.writeLineClean(0, "WAIT");
+                        menu.writeLineClean(1, "");
+                        menu.writeLineClean(2, "");
+                        // make_pause(1000);
+                    }
+                }
+                else{
+                    drv.drive(goodAngle(lineAngle + 180), 0, 60);
+                    menu.writeLineClean(0, "LINE 2");
+                    menu.writeLineClean(1, std::to_string(lineAngle));
+                    menu.writeLineClean(2, "");
+                }
+            }
+        }
+    }
+}
+
+// void playForwardDribble2(int color){
+//     while (true){
+//       fwDribbleBegin:
+
+//       vTaskDelay(10 / portTICK_PERIOD_MS);
+
+//       sensor.update();
+  
+//       int cam_angle = -sensor.Cam.gate(color).center_angle;
+//       int cam_dist = sensor.Cam.gate(color).distance;
+      
+//       int st = sensor.Locator.getStrength();
+//       int ballAngle = sensor.Locator.getBallAngleLocal();
+//       int lineAngle = sensor.LineSensor.getAngleDelayed();
+  
+//       if (!isBall()){
+//           dribble((abs(ballAngle) < 40) ? 40 : 0);
+//           int deltaAngle = ballAngle * 0.6;
+//           if (lineAngle == 360){
+//               // moveAngle = ballAngle + (ballAngle > 0) ? 15 : -15;
+//               // if (abs(ballAngle) < 25){
+//               //     moveAngle = ballAngle;
+//               // }
+//               // double k = 0.5;
+  
+//               // int delta = 0;
+//               // // if (abs(angle) <= 45){
+//               // //   k = 3;
+//               // // }
+//               // if (ballAngle >= 30) {
+//               // //delta = sqrt(st) * k;
+//               // delta = st * k;
+//               // //speed = 150;
+//               // }
+//               // else if (ballAngle <= -30) {
+//               // //delta = -sqrt(st) * k;
+//               // delta = -st * k;
+//               // // speed = 150;
+//               // }
+//               // else {
+//               // delta = 0;
+//               // // speed = 230;
+//               // }
+  
+//               moveAngle = ballAngle * 0.5; // + delta;
+//               Serial.print("Move to ball:  ");
+//               Serial.println(ballAngle);
+  
+//               drive(moveAngle , (int)(deltaAngle * 0.5), 60);
+//           }
+//           else{
+//               Serial.print("Line (m2b):  ");
+//               Serial.println(lineAngle);
+//             drive(goodAngle(lineAngle + 180), (int)(deltaAngle * 0.5), 80);
+//           }
+//       }
+//       else{
+//           dribble(50);
+//           drive(0, 0, 0, 0);
+//           int tt = millis();
+//           make_pause(500);
+//           while (isBall()){
+//               getOpenMVDataOmni();
+//               saveLineDirection();
+//               return_kick();
+//               getBallAngle();
+//               #if DebugInfo
+//                   mpuGetDegree();
+//               #endif
+  
+//               cam_angle = -omnicam().gates[color].center_angle;
+//               cam_dist = omnicam().gates[color].distance;
+//               lineAngle = getLineAngle_Delayed(false);
+//               dribble((abs(cam_angle) > 10 || cam_dist > 50) ? 50 : 0);
+              
+//               if (lineAngle == 360) {
+//                   while (abs(cam_angle) < 130 && isBall()){
+//                       getOpenMVDataOmni();
+//                       saveLineDirection();
+//                       getBallAngle();
+//                       return_kick();
+//                       lineAngle = getLineAngle_Delayed(false);
+//                       moveAngle = goodAngle(lineAngle + 180);
+//                       speed = (lineAngle == 360) ? 0 : 60;
+//                       cam_angle = -omnicam().gates[color].center_angle;
+//                       deltaAngle = ((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+//                       deltaAngle = constrain(deltaAngle, -20, 20);
+//                       drive(moveAngle, (int)(deltaAngle * 0.5), speed);
+//                       Serial.print("Rot to gate:  ");
+//                       Serial.println(cam_angle);
+//                       #if DebugInfo
+//                           Debug.SendInfo();
+//                       #endif
+//                   }
+//                   Serial.println(mpuGetDegree());
+  
+//                   if (!isBall()){
+//                       goto fwDribbleBegin;
+//                   }
+                  
+//                   // return;
+//                   int delta_angle = ((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+//                   delta_angle = constrain(delta_angle, -20, 20);
+//                   drive(cam_angle, delta_angle, 80);
+//                   Serial.print("Move to gate:  ");
+//                   Serial.print(cam_angle);
+//                   Serial.print("  ");
+//                   Serial.println(cam_dist);
+  
+//                   saveLineDirection();
+//                   lineAngle = getLineAngle_Delayed(false);
+//                   if (lineAngle != 360){
+//                       drive(goodAngle(lineAngle + 180), delta_angle, 80);
+//                       Serial.print("is ball + line:  ");
+//                       Serial.println();
+//                       continue;
+//                   }
+//                   // Serial.println(cam_dist);
+//                   if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist < 90){
+//                       // return;
+//                       drive(0, 0, 0, 0);
+//                       getOpenMVDataOmni();
+//                       saveLineDirection();
+//                       return_kick();
+//                       dribble(80);
+  
+//                       make_pause(100);
+  
+//                       cam_angle = -omnicam().gates[color].center_angle;
+                      
+//                       while (abs(cam_angle) < 130 && isBall()){
+//                           Serial.print("Final rot to gate:  ");
+//                           Serial.println(cam_angle);
+//                           getOpenMVDataOmni();
+//                           saveLineDirection();
+//                           getBallAngle();
+//                           return_kick();
+//                           cam_angle = -omnicam().gates[color].center_angle;
+//                           deltaAngle = ((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+//                           deltaAngle = constrain(deltaAngle, -40, 40);
+//                           drive(0, (int)(deltaAngle * 0.5), 0);
+//                           Serial.println(cam_angle);
+//                           #if DebugInfo
+//                               Debug.SendInfo();
+//                           #endif
+//                       }
+  
+//                       if (!isBall()){
+//                           goto fwDribbleBegin;
+//                       }
+  
+//                       make_pause(200);
+//                       Serial.print("Attack!!  ");
+//                       Serial.println();
+  
+//                       if (abs(mpuGetDegree()) < 150 || cam_dist < 60)
+//                           goalRotate(color);
+//                       else
+//                           goalDriveBack(color);
+                      
+//                       Serial.println("Zakrut zakonchen");
+//                       goto fwDribbleBegin;
+//                   }
+//               }
+//               else{
+//                   drive(goodAngle(lineAngle + 180), 0, 80);
+//               }
+  
+//               #if DebugInfo
+//                   Debug.SendInfo();
+//               #endif
+//           }
+//       }
+//       #if DebugInfo
+//           Debug.SendInfo();
+//       #endif
+//     }
+//   }
+  
+//   void goalRotate(int color){
+//       int sign = (mpuGetDegree() < 0) ? -1 : 1;
+//       while (isBall()){
+//           getOpenMVDataOmni();
+//           getBallAngle();
+//           saveLineDirection();
+//           return_kick();
+//           int rotateSpeed = abs(omnicam().gates[color].center_angle) > 140 ? 42 : 80; // 42 : 100
+//           dribble(abs(omnicam().gates[color].center_angle) > 120 ? 110 : 60); // 110
+//           drive(0, rotateSpeed * sign, 0);
+          
+//           #if DebugInfo
+//               Debug.SendInfo();
+//           #endif
+//           // if (omnicam().gates[color].center_angle > 0){
+//           //     drive(0, -40, 0);
+//           // }
+//           // else {
+//           //     drive(0, 40, 0);
+//           // }
+//           // Debug.SendInfo();
+//       }
+//   }
+  
+//   void goalDriveBack(int color){
+//       dribble(0);
+//       while (isBall()){
+//           getOpenMVDataOmni();
+//           getBallAngle();
+//           saveLineDirection();
+//           return_kick();
+//           driveXY(0, -100, 0);
+//           #if DebugInfo
+//               Debug.SendInfo();
+//           #endif
+//       }
+      
+//       ballAngle = getBallAngle();
+//       int sign = (mpuGetDegree() < 0) ? -1 : 1;
+//       while (abs(ballAngle) < 40 && !isBall()){
+//           getOpenMVDataOmni();
+//           getBallAngle();
+//           saveLineDirection();
+//           return_kick();
+//           ballAngle = getBallAngle();
+//           driveXY(40 * sign, 0, 0);
+//           #if DebugInfo
+//               Debug.SendInfo();
+//           #endif
+//       }
+//   }
+  

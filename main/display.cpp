@@ -10,8 +10,8 @@ static Encoder_t encoder;
 DisplayMenu_t menu;
 
 static const std::vector<std::string> start_menu_text =
-    {"---Main menu---", "Yellow: Play Forward", "Yellow: Play Goalkeeper", "Blue: Play Forward",
-     "Blue: Play Goalkeeper", "Sensors Check", "Another", "BT"};
+    {"---Main menu---", "Yellow Forward", "Yellow Goalkeeper", "Blue Forward",
+     "Blue Goalkeeper", "Sensors Check", "Another", "BT"};
 
 static const std::vector<std::string> info_menu_text =
     {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Ball str:", "Line X:", "Exit"};
@@ -148,8 +148,14 @@ void start_menu()
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
             switch (user_pointer_pos)
             {
+            case 1:
+                playForwardGoyda(0);
+                break;
             case 2:
                 playGoalkeeperCamera(0);
+                break;
+            case 3:
+                playForwardGoyda(1);
                 break;
             case 4:
                 playGoalkeeperCamera(1);
@@ -182,7 +188,7 @@ void info_menu(button_handle_t &encoder_button)
         menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
         menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
         menu.writeLineClean(5, "B gate: " + std::to_string(sensor.Cam.blue.center_angle), false);
-        menu.writeLineClean(6, "Y gate: " + std::to_string(sensor.Cam.yellow.center_angle), false);
+        menu.writeLineClean(6, "Ball str: " + std::to_string(sensor.Locator.getStrength()), false);
         
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
             // возвращаемся в стартовое меню
