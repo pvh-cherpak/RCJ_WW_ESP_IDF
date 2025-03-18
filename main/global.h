@@ -11,6 +11,7 @@
 #include "motorControl.h"
 #include "display.h"
 #include "debug_log.h"
+#include "BTDebug.h"
 
 
 // extern i2c_master_bus_handle_t i2c_bus_handle;
@@ -18,6 +19,7 @@ extern sensor_t sensor;
 extern DisplayMenu_t menu;
 extern MotorControl drv;
 extern ErrLog_t err_log;
+// extern BTDebug_t BTDebug;
 
 // void init_i2c();
 void start_i2c_legacy(void);

@@ -17,7 +17,7 @@ void LineSensor_t::init()
     ESP_ERROR_CHECK(gpio_set_level(MULT_IN[i], 0));
   }
   // какойто непонятный разрещаюший сигнал, гениальная трата бесценных ножек GPIO
-  gpio_reset_pin(GPIO_NUM_25); 
+  gpio_reset_pin(GPIO_NUM_25);
   ESP_ERROR_CHECK(gpio_set_direction(GPIO_NUM_25, GPIO_MODE_OUTPUT));
   ESP_ERROR_CHECK(gpio_set_pull_mode(GPIO_NUM_25, GPIO_PULLDOWN_ONLY));
   ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_25, 0));
@@ -44,20 +44,53 @@ void LineSensor_t::init()
   // ESP_ERROR_CHECK(gpio_set_pull_mode(MULT_OUT, GPIO_PULLDOWN_ONLY));
 
   // Чиатаем значения белого и зелёного, что почему и как я в мейне распинался
+  int corection_counter = 0;
   nvs_handle_t nvs_handle;
   ESP_ERROR_CHECK(nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle));
   for (int i = 0; i < 16; i++)
-    ESP_ERROR_CHECK(nvs_get_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), &white_value[i]));
+  {
+    esp_err_t err = nvs_get_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), &white_value[i]);
+
+    if (err == ESP_OK)
+      continue;
+
+    if (err == ESP_ERR_NVS_NOT_FOUND)
+    {
+      err = nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i);
+      if (err == ESP_OK)
+        corection_counter++;
+      else
+        ESP_LOGE("LineSensor NVS", "NVS nvs_set_u16 error: %d (%s)", err, esp_err_to_name(err));
+    }
+  }
   nvs_close(nvs_handle);
 
   ESP_ERROR_CHECK(nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle));
   for (int i = 0; i < 16; i++)
-    ESP_ERROR_CHECK(nvs_get_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), &green_value[i]));
+  {
+    esp_err_t err = nvs_get_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), &green_value[i]);
+
+    if (err == ESP_OK)
+      continue;
+
+    if (err == ESP_ERR_NVS_NOT_FOUND)
+    {
+      err = nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i);
+      if (err == ESP_OK)
+        corection_counter++;
+      else
+        ESP_LOGE("LineSensor NVS", "NVS nvs_set_u16 error: %d (%s)", err, esp_err_to_name(err));
+    }
+  }
   nvs_close(nvs_handle);
+
+  if (corection_counter)
+    ESP_LOGW("LineSensor NVS", "corected errors %d", corection_counter);
 
   // согласитесь это ШЕДЕВР
   ESP_LOGI("White values", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", white_value[0], white_value[1], white_value[2], white_value[3], white_value[4], white_value[5], white_value[6], white_value[7], white_value[8], white_value[9], white_value[10], white_value[11], white_value[12], white_value[13], white_value[14], white_value[15]);
   ESP_LOGI("Green values", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", green_value[0], green_value[1], green_value[2], green_value[3], green_value[4], green_value[5], green_value[6], green_value[7], green_value[8], green_value[9], green_value[10], green_value[11], green_value[12], green_value[13], green_value[14], green_value[15]);
+  // return corection_counter;
 }
 
 void LineSensor_t::calibrateGreen()
@@ -117,7 +150,7 @@ void LineSensor_t::saveLineDirection()
     {
       line_time[i] = xTaskGetTickCount();
       is_line_detected = true;
-    }
+  }
 }
 
 void LineSensor_t::getLineDirection_Delayed(float &x, float &y)

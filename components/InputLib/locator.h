@@ -1,4 +1,5 @@
 #include <driver/i2c.h>
+#include "esp_log.h"
 
 class locator_t
 {
@@ -9,11 +10,14 @@ private:
 public:
     void init();
     void update();
-    int getBallAngleLocal() { return ball_angle; }
+    void testUpdate(){ball_angle = rand() % 360; ESP_LOGI("Locator", "r center_angle: %d", ball_angle);}
+    int getBallAngleLocal() { return ball_angle;}
     int getStrength() { return strength; }
 
     locator_t(/* args */);
     ~locator_t();
+public:
+    const int& BallAngleLocal = ball_angle;
 
 private:
     int ball_angle = 0;

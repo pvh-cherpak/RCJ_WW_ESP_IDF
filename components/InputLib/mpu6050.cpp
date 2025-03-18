@@ -47,7 +47,6 @@ THE SOFTWARE.
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/message_buffer.h"
-#include "esp_log.h"
 #include "esp_err.h"
 #include "driver/i2c.h"
 
@@ -99,6 +98,7 @@ void IMU_t::mpu6050(){
 		roll = ypr[2] * RAD_TO_DEG;
 		pitch = ypr[1] * RAD_TO_DEG;
 		yaw = ypr[0] * RAD_TO_DEG;
+		i_yaw = yaw;
 			//getQuaternion();
 			//getEuler();
 			//getRealAccel();

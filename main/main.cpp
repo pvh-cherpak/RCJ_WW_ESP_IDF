@@ -35,8 +35,6 @@ static const char *TAG = "example";
 extern const char *NVS_WHITE_VALUE_GROUP;
 extern const char *NVS_GREEN_VALUE_GROUP;
 
-extern QueueHandle_t bt_queue;
-
 extern "C"
 {
 	void app_main(void)
@@ -57,21 +55,6 @@ extern "C"
 			ESP_LOGW("NVS", "Erasing NVS partition...");
 			nvs_flash_erase();
 			err = nvs_flash_init();
-			if (err == ESP_OK)
-			{
-				nvs_handle_t nvs_handle;
-				nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
-				// ещё одна особеность все пары ключ-значение должны быть разбиты на группы
-				// коеми являются NVS_WHITE_VALUE_GROUP, NVS_GREEN_VALUE_GROUP
-				for (int i = 0; i < 16; i++) // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
-					ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i));
-				nvs_close(nvs_handle);
-
-				nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
-				for (int i = 0; i < 16; i++)
-					ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
-				nvs_close(nvs_handle);
-			}
 		};
 		if (err == ESP_OK)
 		{
@@ -79,7 +62,7 @@ extern "C"
 		}
 		else
 		{
-			ESP_LOGE("NVS", "NVS partition initialization error: %d (%s)", err, esp_err_to_name(err));
+			esp_restart();
 		};
 
 ////////////////////////////////////////////////////////инициализация  NVS переменных
@@ -122,37 +105,18 @@ extern "C"
 		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
 		// }
 
-
+	
 		// тест блютуза
-		// bt_queue = xQueueCreate(10, sizeof(gebug_data_t));
-		// if (bt_queue == NULL)
-		// {
-		// 	ESP_LOGE(TAG, "Failed to create queue");
-		// 	return;
-		// }
+		BTDebug_t BTDebug(sensor);
+		BTDebug.init();
 
-		// // Инициализация Bluetooth
-		// init_bluetooth();
-
-		// // Запуск задачи Bluetooth на Core 1
-		// xTaskCreatePinnedToCore(bt_task, "Bluetooth Task", 4096, NULL, 5, NULL, 0);
-
-		// gebug_data_t msg;
-		// msg.ball_angle = 260;
-		// msg.is_ball = false;
-		// while (1)
-		// {
-		// 	msg.ball_angle++;
-		// 	if (msg.ball_angle > 360)
-		// 		msg.ball_angle = -100;
-		// 	for(int i =0 ; i < 16; i++)
-		// 		msg.line_sensor[i] = rand() % 2;
-		// 	// snprintf(msg.message, sizeof(msg.message), "Data: %d", esp_random() % 100);
-		// 	xQueueSend(bt_queue, &msg, portMAX_DELAY);
-
-		// 	vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
-		// }
-
+		while (1)
+		{
+			BTDebug.send();
+			sensor.testUpdate();
+			vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
+		}
+		
 		sensor.init();
 		drv.init();
 		err_log.init();
@@ -184,10 +148,8 @@ extern "C"
 
 
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
-		// motor_drv8833_task();
-		drv.driveXY(20, 20, 0);
-		// drv.drive(45, 20);
-		start_menu();
+		// sensor.init();
+		// start_menu();
 
 		vTaskDelete(NULL);
 		// esp_restart();
