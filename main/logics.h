@@ -18,6 +18,8 @@ void projectSpeedOnLineXY(int speedX, int speedY, float lineX, float lineY, floa
 
 void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, float &resSpeedX, float &resSpeedY);
 
+bool getGlobalPosition(float &x, float &y, int color);
+
 void killerFeature(int color);
 
 bool isBall();

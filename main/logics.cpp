@@ -170,6 +170,33 @@ void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, 
     projectSpeedOnLineXY(speedX, speedY, lineX, lineY, resSpeedX, resSpeedY);
 }
 
+bool getGlobalPosition(float &x, float &y, int color){
+    int our_gate = sensor.Cam.blue.center_angle;
+    int other_gate = sensor.Cam.yellow.center_angle;
+    if (color == 0)
+        std::swap(our_gate, other_gate);
+
+    if (our_gate == 360 || other_gate == 360)
+        return false;
+    
+    int our_x = 0, our_y = -50;
+    int other_x = 0, other_y = 50;
+
+    float a1 = sin(our_gate * DEG_TO_RAD);
+    float b1 = -cos(our_gate * DEG_TO_RAD);
+    float c1 = -a1 * our_x - b1 * our_y;
+
+    float a2 = sin(other_gate * DEG_TO_RAD);
+    float b2 = -cos(other_gate * DEG_TO_RAD);
+    float c2 = -a2 * other_x - b2 * other_y;
+
+    if (a1 * b2 == a2 * b1)
+        return false;
+    
+    x = -(c1 * b2 - c2 * b1) / (a1 * b2 - a2 * b1);
+    y = -(a1 * c2 - a2 * c1) / (a1 * b2 - a2 * b1);
+}
+
 bool isBall(){
     return (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10);
 }
@@ -283,9 +310,19 @@ void playGoalkeeperCamera(int color)
         if (stateGame != 0)
         {
             kfTimer = millis();
-            killerFeature(1 ^ color);
+            // killerFeature(1 ^ color);
             // Serial.println("KILLER!!!");
             continue;
+        }
+
+        float global_x, global_y;
+        if (getGlobalPosition(global_x, global_y, color)){
+            menu.writeLineClean(3, "GP X" + std::to_string(global_x));
+            menu.writeLineClean(4, "GP Y" + std::to_string(global_y));
+        }
+        else{
+            menu.writeLineClean(3, "Failed to calculate");
+            menu.writeLineClean(4, "");
         }
 
         ballAngle = sensor.Locator.getBallAngleLocal();

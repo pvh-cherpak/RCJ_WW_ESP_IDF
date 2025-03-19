@@ -110,12 +110,12 @@ extern "C"
 		BTDebug_t BTDebug(sensor);
 		BTDebug.init();
 
-		while (1)
-		{
-			BTDebug.send();
-			sensor.testUpdate();
-			vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
-		}
+		// while (1)
+		// {
+		// 	BTDebug.send();
+		// 	sensor.testUpdate();
+		// 	vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
+		// }
 		
 		sensor.init();
 		drv.init();
@@ -149,7 +149,7 @@ extern "C"
 
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
 		// sensor.init();
-		// start_menu();
+		start_menu();
 
 		vTaskDelete(NULL);
 		// esp_restart();
