@@ -1,6 +1,6 @@
 #include "spp_callbacks.h"
 
-#define LOG_LOCAL_LEVEL ESP_LOG_INFO
+#define LOG_LOCAL_LEVEL ESP_LOG_WARN
 #include "esp_log.h"
 
 
@@ -17,13 +17,13 @@ static SemaphoreHandle_t canWrite = xSemaphoreCreateBinary();
 void esp_spp_callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
     //Used in app_main() to setup the BT configuration in the ESP32 and used for communication with device
-    ESP_LOGW(SPP_TAG, "Start of: static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)");
+    ESP_LOGI(SPP_TAG, "Start of: static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)");
     switch (event)
     {
     case ESP_SPP_INIT_EVT:
         ESP_LOGI(SPP_TAG, "ESP_SPP_INIT_EVT");
         ESP_LOGI(SPP_TAG, "Call esp_bt_dev_set_device_name(EXAMPLE_DEVICE_NAME)");
-        esp_bt_gap_set_device_name("esp-32");
+        esp_bt_gap_set_device_name("esp-332");
         ESP_LOGI(SPP_TAG, "Call esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE)");
         esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
         ESP_LOGI(SPP_TAG, "Call esp_spp_start_srv(sec_mask,role_slave, 0, SPP_SERVER_NAME)");
@@ -187,7 +187,7 @@ bool can_write(uint32_t *handle)
     }
     else
     {
-        ESP_LOGV(SPP_TAG, "No active SPP connection, skipping data");
+        ESP_LOGW(SPP_TAG, "No active SPP connection, skipping data");
         return false;
     }
 }

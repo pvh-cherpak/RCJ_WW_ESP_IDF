@@ -15,29 +15,38 @@
 class BTDebug_t
 {
 private:
-    sensor_t& sensor;
+    static const int16_t mask1 = 0b1111111100000000;
+    static const int16_t mask2 = 0b0000000011111111;
 
+    static const int string_buf_start_pos = 44;
+    static const int buffer_size = 1023 + string_buf_start_pos;
+private:
+    uint8_t outbuf[buffer_size + 1];
+
+    sensor_t &sensor;
+
+    int str_end_pos = string_buf_start_pos;
+
+private:
     uint8_t state = 0;
-    char str[1024];
-    int str_pos = 0;
-public:
+    int16_t pos_x = 0;
+    int16_t pos_y = 0;
+public: 
     BTDebug_t(sensor_t &sensors);
     ~BTDebug_t();
 
-    void setState(uint8_t state){this->state = state;}
-    /*
-    void addString(string& s){
-        int s_size = s.size();
-        if(s_size + str_pos > 1024)
-            return;
-        for(int i = 0; i < 1024; str_pos++)
-            str[str_pos + i] = s[i];
-        str_pos+=s_size + 1;
-    }
-        */
+    void setState(uint8_t state) { this->state = state; }
+
+    void addCString(const char *s);
+
+    void addString(std::string &s);
+
+    void setPosition(int16_t x, int16_t y) {pos_x = x; pos_y = y;};
 
     void init();
+
     void send();
+
 public:
     void prepair_sensor_buff();
 };

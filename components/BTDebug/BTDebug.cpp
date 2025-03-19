@@ -2,6 +2,7 @@
 #include "spp_callbacks.h"
 
 #include "esp_timer.h"
+#include "BTDebug.h"
 
 static const char *TAG = "BT debug";
 static const char *SPP_TAG = "SSP: ";
@@ -9,10 +10,6 @@ static const char *SPP_TAG = "SSP: ";
 
 static const esp_spp_mode_t esp_spp_mode = ESP_SPP_MODE_CB;
 
-uint8_t outbuf[40];
-
-const int16_t mask1 = 0b1111111100000000;
-const int16_t mask2 = 0b0000000011111111;
 
 BTDebug_t::BTDebug_t(sensor_t &sensors):sensor(sensors)
 {
@@ -22,6 +19,118 @@ BTDebug_t::BTDebug_t(sensor_t &sensors):sensor(sensors)
 BTDebug_t::~BTDebug_t()
 {
 }
+
+void BTDebug_t::addCString(const char *s)
+{
+    for (int i = 0; 0 != s[i] && str_end_pos < buffer_size; str_end_pos++, i++)
+        outbuf[str_end_pos] = s[i];
+}
+
+void BTDebug_t::addString(std::string &s)
+{
+    int s_size = s.size();
+    if (s_size + str_end_pos > buffer_size)
+        return;
+    for (int i = 0; i < s_size; i++, str_end_pos++)
+        outbuf[str_end_pos] = s[i];
+}
+
+void BTDebug_t::send()
+{
+    int64_t start_time = esp_timer_get_time();
+    uint32_t handle;
+    if (can_write(&handle))
+    {
+        prepair_sensor_buff();
+        outbuf[str_end_pos] = 39;
+        str_end_pos++;
+        esp_spp_write(handle, str_end_pos, outbuf);
+    }
+    str_end_pos = string_buf_start_pos;
+    int64_t end_time = esp_timer_get_time();
+    int64_t elapsed_time = end_time - start_time;
+    ESP_LOGI(TAG, "Vrema otprevky %llu", elapsed_time);
+}
+
+void BTDebug_t::prepair_sensor_buff()
+{
+    outbuf[0] = 255;
+    outbuf[1] = 255;
+    outbuf[2] = 255;
+
+    // Линиb
+    outbuf[3] = 0;
+    outbuf[4] = 0;
+    for (int i = 0; i < 8; ++i)
+    {
+        outbuf[3] |= sensor.LineSensor.is_line_on_sensor[i] << i;
+        outbuf[4] |= sensor.LineSensor.is_line_on_sensor[i + 8] << i;
+    }
+
+    outbuf[5] = (sensor.LineSensor.LineAngleDelayed & mask1) >> 8;
+    outbuf[6] = sensor.LineSensor.LineAngleDelayed & mask2;
+
+    outbuf[7] = (sensor.Locator.BallAngleLocal & mask1) >> 8;
+    outbuf[8] = sensor.Locator.BallAngleLocal & mask2;
+
+    outbuf[9] = (sensor.IMU.Yaw & mask1) >> 8;
+    outbuf[10] = sensor.IMU.Yaw & mask2;
+
+    outbuf[11] = 0;
+    outbuf[12] = 0;
+    outbuf[13] = 0;
+
+    outbuf[14] = 0;
+
+    //Байт состояний
+    outbuf[15] = state;
+
+    // Данные камеры
+    outbuf[16] = ((sensor.Cam.camDataOmni.gates[0].left_angle) & mask1) >> 8;
+    outbuf[17] = (sensor.Cam.camDataOmni.gates[0].left_angle) & mask2;
+    // Serial.print(outbuf [16]);
+    // Serial.print(outbuf [17]);
+
+    outbuf[18] = (sensor.Cam.camDataOmni.gates[0].right_angle & mask1) >> 8;
+    outbuf[19] = sensor.Cam.camDataOmni.gates[0].right_angle & mask2;
+
+    outbuf[20] = (sensor.Cam.camDataOmni.gates[0].center_angle & mask1) >> 8;
+    outbuf[21] = sensor.Cam.camDataOmni.gates[0].center_angle & mask2;
+
+    outbuf[22] = (sensor.Cam.camDataOmni.gates[0].width & mask1) >> 8;
+    outbuf[23] = sensor.Cam.camDataOmni.gates[0].width & mask2;
+
+    outbuf[24] = (sensor.Cam.camDataOmni.gates[0].distance & mask1) >> 8;
+    outbuf[25] = sensor.Cam.camDataOmni.gates[0].distance & mask2;
+
+    outbuf[26] = (sensor.Cam.camDataOmni.gates[0].height & mask1) >> 8;
+    outbuf[27] = sensor.Cam.camDataOmni.gates[0].height & mask2;
+    // голубые ворота
+    outbuf[28] = (sensor.Cam.camDataOmni.gates[1].left_angle & mask1) >> 8;
+    outbuf[29] = sensor.Cam.camDataOmni.gates[1].left_angle & mask2;
+
+    outbuf[30] = (sensor.Cam.camDataOmni.gates[1].right_angle & mask1) >> 8;
+    outbuf[31] = sensor.Cam.camDataOmni.gates[1].right_angle & mask2;
+
+    outbuf[32] = (sensor.Cam.camDataOmni.gates[1].center_angle & mask1) >> 8;
+    outbuf[33] = sensor.Cam.camDataOmni.gates[1].center_angle & mask2;
+
+    outbuf[34] = (sensor.Cam.camDataOmni.gates[1].width & mask1) >> 8;
+    outbuf[35] = sensor.Cam.camDataOmni.gates[1].width & mask2;
+
+    outbuf[36] = (sensor.Cam.camDataOmni.gates[1].distance & mask1) >> 8;
+    outbuf[37] = sensor.Cam.camDataOmni.gates[1].distance & mask2;
+
+    outbuf[38] = (sensor.Cam.camDataOmni.gates[1].height & mask1) >> 8;
+    outbuf[39] = sensor.Cam.camDataOmni.gates[1].height & mask2;
+
+    outbuf[40] = (pos_x & mask1) >> 8;
+    outbuf[41] = pos_x & mask2;
+    
+    outbuf[42] = (pos_y & mask1) >> 8;
+    outbuf[43] = pos_y & mask2;
+}
+
 
 void BTDebug_t::init()
 {
@@ -118,91 +227,4 @@ void BTDebug_t::init()
     esp_bt_gap_set_pin(pin_type, 0, pin_code);
 
     ESP_LOGI(SPP_TAG, "void init_bluetooth - End");
-}
-
-void BTDebug_t::send()
-{
-    int64_t start_time = esp_timer_get_time();
-    uint32_t handle;
-    if (can_write(&handle))
-    {
-        prepair_sensor_buff();
-        esp_spp_write(handle, 40, outbuf);
-    }
-    int64_t end_time = esp_timer_get_time();
-    int64_t elapsed_time = end_time - start_time;
-    ESP_LOGI(TAG, "Vrema otprevky %llu", elapsed_time);
-}
-
-void BTDebug_t::prepair_sensor_buff()
-{
-    outbuf[0] = 255;
-    outbuf[1] = 255;
-    outbuf[2] = 255;
-
-    // Линиb
-    outbuf[3] = 0;
-    outbuf[4] = 0;
-    for (int i = 0; i < 8; ++i)
-    {
-        outbuf[3] |= sensor.LineSensor.is_line_on_sensor[i] << i;
-        outbuf[4] |= sensor.LineSensor.is_line_on_sensor[i + 8] << i;
-    }
-
-    outbuf[5] = (sensor.LineSensor.LineAngleDelayed & mask1) >> 8;
-    outbuf[6] = sensor.LineSensor.LineAngleDelayed & mask2;
-
-    outbuf[7] = (sensor.Locator.BallAngleLocal & mask1) >> 8;
-    outbuf[8] = sensor.Locator.BallAngleLocal & mask2;
-
-    outbuf[9] = (sensor.IMU.Yaw & mask1) >> 8;
-    outbuf[10] = sensor.IMU.Yaw & mask2;
-
-    outbuf[11] = 0;
-    outbuf[12] = 0;
-    outbuf[13] = 0;
-
-    outbuf[14] = 0;
-
-    //Байт состояний
-    outbuf[15] = state;
-
-    // Данные камеры
-    outbuf[16] = ((sensor.Cam.camDataOmni.gates[0].left_angle) & mask1) >> 8;
-    outbuf[17] = (sensor.Cam.camDataOmni.gates[0].left_angle) & mask2;
-    // Serial.print(outbuf [16]);
-    // Serial.print(outbuf [17]);
-
-    outbuf[18] = (sensor.Cam.camDataOmni.gates[0].right_angle & mask1) >> 8;
-    outbuf[19] = sensor.Cam.camDataOmni.gates[0].right_angle & mask2;
-
-    outbuf[20] = (sensor.Cam.camDataOmni.gates[0].center_angle & mask1) >> 8;
-    outbuf[21] = sensor.Cam.camDataOmni.gates[0].center_angle & mask2;
-
-    outbuf[22] = (sensor.Cam.camDataOmni.gates[0].width & mask1) >> 8;
-    outbuf[23] = sensor.Cam.camDataOmni.gates[0].width & mask2;
-
-    outbuf[24] = (sensor.Cam.camDataOmni.gates[0].distance & mask1) >> 8;
-    outbuf[25] = sensor.Cam.camDataOmni.gates[0].distance & mask2;
-
-    outbuf[26] = (sensor.Cam.camDataOmni.gates[0].height & mask1) >> 8;
-    outbuf[27] = sensor.Cam.camDataOmni.gates[0].height & mask2;
-    // голубые ворота
-    outbuf[28] = (sensor.Cam.camDataOmni.gates[1].left_angle & mask1) >> 8;
-    outbuf[29] = sensor.Cam.camDataOmni.gates[1].left_angle & mask2;
-
-    outbuf[30] = (sensor.Cam.camDataOmni.gates[1].right_angle & mask1) >> 8;
-    outbuf[31] = sensor.Cam.camDataOmni.gates[1].right_angle & mask2;
-
-    outbuf[32] = (sensor.Cam.camDataOmni.gates[1].center_angle & mask1) >> 8;
-    outbuf[33] = sensor.Cam.camDataOmni.gates[1].center_angle & mask2;
-
-    outbuf[34] = (sensor.Cam.camDataOmni.gates[1].width & mask1) >> 8;
-    outbuf[35] = sensor.Cam.camDataOmni.gates[1].width & mask2;
-
-    outbuf[36] = (sensor.Cam.camDataOmni.gates[1].distance & mask1) >> 8;
-    outbuf[37] = sensor.Cam.camDataOmni.gates[1].distance & mask2;
-
-    outbuf[38] = (sensor.Cam.camDataOmni.gates[1].height & mask1) >> 8;
-    outbuf[39] = sensor.Cam.camDataOmni.gates[1].height & mask2;
 }

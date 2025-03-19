@@ -21,7 +21,6 @@
 #include "esp_system.h"
 #include "esp_timer.h"
 
-
 #include <stdlib.h>
 #include "esp_log.h"
 #include <string>
@@ -35,13 +34,14 @@ static const char *TAG = "example";
 extern const char *NVS_WHITE_VALUE_GROUP;
 extern const char *NVS_GREEN_VALUE_GROUP;
 
+void nvs_set_variables();
+
 extern "C"
 {
 	void app_main(void)
 	{
+		// nvs_set_variables();
 
-		start_i2c_legacy();
-		menu.init();
 
 		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
 		// флеш память, её количество можно менять поэтому существует вероятность что место зарезервиролванное под
@@ -65,20 +65,12 @@ extern "C"
 			esp_restart();
 		};
 
-////////////////////////////////////////////////////////инициализация  NVS переменных
- 		// nvs_handle_t nvs_handle;
-		// 		nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
-		// 		// ещё одна особеность все пары ключ-значение должны быть разбиты на группы
-		// 		// коеми являются NVS_WHITE_VALUE_GROUP, NVS_GREEN_VALUE_GROUP
-		// 		for (int i = 0; i < 16; i++) // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
-		// 			ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i));
-		// 		nvs_close(nvs_handle);
-
-		// 		nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
-		// 		for (int i = 0; i < 16; i++)
-		// 			ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
-		// 		nvs_close(nvs_handle);
-////////////////////////////////////////////////////////////////
+		start_i2c_legacy();
+		menu.init();
+		BTDebug.init();
+		sensor.init();
+		drv.init();
+		err_log.init();
 
 		// // это тесты камеры
 		// vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -105,21 +97,23 @@ extern "C"
 		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
 		// }
 
-	
 		// тест блютуза
-		BTDebug_t BTDebug(sensor);
-		BTDebug.init();
+		/*
 
-		// while (1)
-		// {
-		// 	BTDebug.send();
-		// 	sensor.testUpdate();
-		// 	vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
-		// }
-		
-		sensor.init();
-		drv.init();
-		err_log.init();
+		bool flag = false;
+		while (1)
+		{
+			flag = !flag;
+			if (flag)
+				BTDebug.ddCString("GOOOO000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000L");
+			else
+				BTDebug.addCString("GOJDAAAAAAA");
+
+			BTDebug.send();
+			sensor.update();
+			vTaskDelay(pdMS_TO_TICKS(100)); // Задержка 1 секунда
+		}
+		*/
 
 		//err_log.print_all_errors();
 
@@ -129,11 +123,11 @@ extern "C"
 		// 	//drv.drive(0, speed);
 		// 	//menu.writeLineClean(0, std::to_string(speed), false);
 		// 	sensor.update();
-			
+
 		// 	menu.writeLineClean(0, "blue: " + std::to_string(sensor.Cam.blue.center_angle));
 		// 	menu.writeLineClean(1, "yellow: " + std::to_string(sensor.Cam.yellow.center_angle));
 		// 	menu.writeLineClean(2, "errors: " + std::to_string(err_count));
-			
+
 		// 	ESP_LOGI("cam", "r center_angle: %d", sensor.Cam.yellow.center_angle);
 		// 	ESP_LOGI("cam", "r height: %d", sensor.Cam.yellow.height);
 		// 	ESP_LOGI("cam", "r width: %d", sensor.Cam.yellow.width);
@@ -146,7 +140,6 @@ extern "C"
 		// 	//speed = -speed;
 		// }
 
-
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
 		// sensor.init();
 		start_menu();
@@ -154,4 +147,19 @@ extern "C"
 		vTaskDelete(NULL);
 		// esp_restart();
 	}
+}
+
+void nvs_set_variables()
+{
+	nvs_handle_t nvs_handle;
+	nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
+
+	for (int i = 0; i < 16; i++) // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
+		ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i));
+	nvs_close(nvs_handle);
+
+	nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
+	for (int i = 0; i < 16; i++)
+		ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
+	nvs_close(nvs_handle);
 }
