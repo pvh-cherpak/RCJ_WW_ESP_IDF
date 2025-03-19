@@ -20,6 +20,12 @@ void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, 
 
 void killerFeature(int color);
 
+bool isBall();
+
 void playGoalkeeperCamera(int color);
+
+void playForwardGoyda(int color);
+
+void playForwardDribble2(int color);
 
 #endif
