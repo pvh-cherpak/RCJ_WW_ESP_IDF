@@ -170,31 +170,32 @@ void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, 
     projectSpeedOnLineXY(speedX, speedY, lineX, lineY, resSpeedX, resSpeedY);
 }
 
-bool getGlobalPosition(float &x, float &y, int color){
-    int our_gate = sensor.Cam.blue.center_angle;
-    int other_gate = sensor.Cam.yellow.center_angle;
-    if (color == 0)
+int getGlobalPosition_2gates(double& x, double& y, int color) {
+    int our_gate = sensor.Cam.yellow.center_angle;
+    int other_gate = sensor.Cam.blue.center_angle;
+    if (color == 1)
         std::swap(our_gate, other_gate);
 
     if (our_gate == 360 || other_gate == 360)
-        return false;
-    
-    int our_x = 0, our_y = -50;
-    int other_x = 0, other_y = 50;
+        return 1;
 
-    float a1 = sin(our_gate * DEG_TO_RAD);
-    float b1 = -cos(our_gate * DEG_TO_RAD);
-    float c1 = -a1 * our_x - b1 * our_y;
+    double our_x = 0, our_y = -110;
+    double other_x = 0, other_y = 110;
 
-    float a2 = sin(other_gate * DEG_TO_RAD);
-    float b2 = -cos(other_gate * DEG_TO_RAD);
-    float c2 = -a2 * other_x - b2 * other_y;
+    double a1 = cos(our_gate * DEG_TO_RAD);
+    double b1 = -sin(our_gate * DEG_TO_RAD);
+    double c1 = -a1 * our_x - b1 * our_y;
+
+    double a2 = cos(other_gate * DEG_TO_RAD);
+    double b2 = -sin(other_gate * DEG_TO_RAD);
+    double c2 = -a2 * other_x - b2 * other_y;
 
     if (a1 * b2 == a2 * b1)
-        return false;
-    
+        return 2;
+
     x = -(c1 * b2 - c2 * b1) / (a1 * b2 - a2 * b1);
     y = -(a1 * c2 - a2 * c1) / (a1 * b2 - a2 * b1);
+    return 0;
 }
 
 bool isBall(){
@@ -315,13 +316,18 @@ void playGoalkeeperCamera(int color)
             continue;
         }
 
-        float global_x, global_y;
-        if (getGlobalPosition(global_x, global_y, color)){
+        double global_x, global_y;
+        int get_pos_callback = getGlobalPosition_2gates(global_x, global_y, color);
+        if (get_pos_callback == 0){
             menu.writeLineClean(3, "GP X" + std::to_string(global_x));
             menu.writeLineClean(4, "GP Y" + std::to_string(global_y));
         }
-        else{
-            menu.writeLineClean(3, "Failed to calculate");
+        else if (get_pos_callback == 1){
+            menu.writeLineClean(3, "FAILED: no gate");
+            menu.writeLineClean(4, "");
+        }
+        else if (get_pos_callback == 2){
+            menu.writeLineClean(3, "FAILED: parallel");
             menu.writeLineClean(4, "");
         }
 
