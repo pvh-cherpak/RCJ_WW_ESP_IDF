@@ -3,6 +3,9 @@
 
 #include "esp_timer.h"
 
+#include "esp_log.h"
+#define LOG_LOCAL_LEVEL ESP_LOG_WARN
+
 static const char *TAG = "air debug";
 static const char *SPP_TAG = "SSP: ";
 
@@ -172,41 +175,41 @@ void prepair_buff(gebug_data_t &msg)
     outbuf[15] = msg.state;
 
     // Данные камеры
-    outbuf[16] = ((msg.camDataOmni.gates[0].left_angle) & mask1) >> 8;
-    outbuf[17] = (msg.camDataOmni.gates[0].left_angle) & mask2;
+    outbuf[16] = ((msg.CamDataOmni.Gates[0].left_angle) & mask1) >> 8;
+    outbuf[17] = (msg.CamDataOmni.Gates[0].left_angle) & mask2;
     // Serial.print(outbuf [16]);
     // Serial.print(outbuf [17]);
 
-    outbuf[18] = (msg.camDataOmni.gates[0].right_angle & mask1) >> 8;
-    outbuf[19] = msg.camDataOmni.gates[0].right_angle & mask2;
+    outbuf[18] = (msg.CamDataOmni.Gates[0].right_angle & mask1) >> 8;
+    outbuf[19] = msg.CamDataOmni.Gates[0].right_angle & mask2;
 
-    outbuf[20] = (msg.camDataOmni.gates[0].center_angle & mask1) >> 8;
-    outbuf[21] = msg.camDataOmni.gates[0].center_angle & mask2;
+    outbuf[20] = (msg.CamDataOmni.Gates[0].center_angle & mask1) >> 8;
+    outbuf[21] = msg.CamDataOmni.Gates[0].center_angle & mask2;
 
-    outbuf[22] = (msg.camDataOmni.gates[0].width & mask1) >> 8;
-    outbuf[23] = msg.camDataOmni.gates[0].width & mask2;
+    outbuf[22] = (msg.CamDataOmni.Gates[0].width & mask1) >> 8;
+    outbuf[23] = msg.CamDataOmni.Gates[0].width & mask2;
 
-    outbuf[24] = (msg.camDataOmni.gates[0].distance & mask1) >> 8;
-    outbuf[25] = msg.camDataOmni.gates[0].distance & mask2;
+    outbuf[24] = (msg.CamDataOmni.Gates[0].distance & mask1) >> 8;
+    outbuf[25] = msg.CamDataOmni.Gates[0].distance & mask2;
 
-    outbuf[26] = (msg.camDataOmni.gates[0].height & mask1) >> 8;
-    outbuf[27] = msg.camDataOmni.gates[0].height & mask2;
+    outbuf[26] = (msg.CamDataOmni.Gates[0].height & mask1) >> 8;
+    outbuf[27] = msg.CamDataOmni.Gates[0].height & mask2;
     // голубые ворота
-    outbuf[28] = (msg.camDataOmni.gates[1].left_angle & mask1) >> 8;
-    outbuf[29] = msg.camDataOmni.gates[1].left_angle & mask2;
+    outbuf[28] = (msg.CamDataOmni.Gates[1].left_angle & mask1) >> 8;
+    outbuf[29] = msg.CamDataOmni.Gates[1].left_angle & mask2;
 
-    outbuf[30] = (msg.camDataOmni.gates[1].right_angle & mask1) >> 8;
-    outbuf[31] = msg.camDataOmni.gates[1].right_angle & mask2;
+    outbuf[30] = (msg.CamDataOmni.Gates[1].right_angle & mask1) >> 8;
+    outbuf[31] = msg.CamDataOmni.Gates[1].right_angle & mask2;
 
-    outbuf[32] = (msg.camDataOmni.gates[1].center_angle & mask1) >> 8;
-    outbuf[33] = msg.camDataOmni.gates[1].center_angle & mask2;
+    outbuf[32] = (msg.CamDataOmni.Gates[1].center_angle & mask1) >> 8;
+    outbuf[33] = msg.CamDataOmni.Gates[1].center_angle & mask2;
 
-    outbuf[34] = (msg.camDataOmni.gates[1].width & mask1) >> 8;
-    outbuf[35] = msg.camDataOmni.gates[1].width & mask2;
+    outbuf[34] = (msg.CamDataOmni.Gates[1].width & mask1) >> 8;
+    outbuf[35] = msg.CamDataOmni.Gates[1].width & mask2;
 
-    outbuf[36] = (msg.camDataOmni.gates[1].distance & mask1) >> 8;
-    outbuf[37] = msg.camDataOmni.gates[1].distance & mask2;
+    outbuf[36] = (msg.CamDataOmni.Gates[1].distance & mask1) >> 8;
+    outbuf[37] = msg.CamDataOmni.Gates[1].distance & mask2;
 
-    outbuf[38] = (msg.camDataOmni.gates[1].height & mask1) >> 8;
-    outbuf[39] = msg.camDataOmni.gates[1].height & mask2;
+    outbuf[38] = (msg.CamDataOmni.Gates[1].height & mask1) >> 8;
+    outbuf[39] = msg.CamDataOmni.Gates[1].height & mask2;
 }

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "esp_log.h"
-
 #include "esp_bt.h"
 #include "esp_bt_main.h"
 #include "esp_gap_bt_api.h"
@@ -41,7 +39,7 @@ public:
 
     void addString(std::string &s);
 
-    void setPosition(int16_t x, int16_t y) {pos_x = x; pos_y = y;};
+    void setPosition(int16_t x, int16_t y) {pos_x = x * 10; pos_y = y * 10;};
 
     void init();
 

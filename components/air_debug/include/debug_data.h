@@ -4,7 +4,7 @@
 
 struct gebug_data_t
 {
-    OmniCamData_t camDataOmni;
+    OmniCamData_t CamDataOmni;
     bool line_sensor[16];
     int16_t line_angle;
     int16_t ball_angle;

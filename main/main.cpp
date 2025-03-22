@@ -42,7 +42,6 @@ extern "C"
 	{
 		// nvs_set_variables();
 
-
 		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
 		// флеш память, её количество можно менять поэтому существует вероятность что место зарезервиролванное под
 		// данные не размечено нижестоящий код проверяет, размечена ли память под NVS и если нет пробует разметить
@@ -65,13 +64,16 @@ extern "C"
 			esp_restart();
 		};
 
+		
 		start_i2c_legacy();
 		menu.init();
 		BTDebug.init();
 		sensor.init();
 		drv.init();
 		err_log.init();
-
+		
+		start_menu();
+		
 		// // это тесты камеры
 		// vTaskDelay(1000 / portTICK_PERIOD_MS);
 		// OpenMVCommunication_t cam;
@@ -99,19 +101,24 @@ extern "C"
 
 		// тест блютуза
 		/*
-
+		BTDebug.init();
 		bool flag = false;
 		while (1)
 		{
-			flag = !flag;
-			if (flag)
-				BTDebug.ddCString("GOOOO000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000L");
-			else
-				BTDebug.addCString("GOJDAAAAAAA");
-
-			BTDebug.send();
-			sensor.update();
-			vTaskDelay(pdMS_TO_TICKS(100)); // Задержка 1 секунда
+			for (int y = -110; y < 110; y += 10)
+				for (int x = -80; x < 80; x += 10)
+				{
+					flag = !flag;
+					if (flag)
+						BTDebug.addCString("GOOOO000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000L");
+					else
+						BTDebug.addCString("GOJDAAAAAAA");
+					
+					BTDebug.setPosition(x, y);
+					BTDebug.send();
+					sensor.testUpdate();
+					vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
+				}
 		}
 		*/
 
@@ -142,7 +149,7 @@ extern "C"
 
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
 		// sensor.init();
-		start_menu();
+		
 
 		vTaskDelete(NULL);
 		// esp_restart();

@@ -17,11 +17,10 @@ public:
     locator_t Locator;
     OpenMVCommunication_t Cam;
 public:
-    sensor_t(/* args */){}
+    sensor_t(/* args */): Cam(IMU){}
     ~sensor_t(){}
     
     void init(){IMU.init(); LineSensor.init(); Locator.init(); Cam.init();}
     void update(){IMU.update(); LineSensor.update(); Locator.update(); Cam.update();}
     void testUpdate() {IMU.testUpdate(); LineSensor.testUpdate(); Locator.testUpdate();}
-    void sendInfo();
 };

@@ -11,5 +11,5 @@ struct OmniCamBlobInfo_t
 };
 struct OmniCamData_t
 {
-    OmniCamBlobInfo_t gates[2];
+    OmniCamBlobInfo_t Gates[2];
 };

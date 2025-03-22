@@ -171,8 +171,8 @@ void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, 
 }
 
 int getGlobalPosition_2gates(double& x, double& y, int color) {
-    int our_gate = sensor.Cam.yellow.center_angle;
-    int other_gate = sensor.Cam.blue.center_angle;
+    int our_gate = sensor.Cam.GlobalYellow.center_angle;
+    int other_gate = sensor.Cam.GlobalBlue.center_angle;
     if (color == 1)
         std::swap(our_gate, other_gate);
 
