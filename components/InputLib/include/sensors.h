@@ -4,6 +4,7 @@
 #include "../LineSensor.h"
 #include "../locator.h"
 #include "../OpenMV.h"
+#include "../BallSensor.h"
 
 #include "debug_data.h"
 
@@ -23,6 +24,7 @@ public:
     LineSensor_t LineSensor;
     locator_t Locator;
     OpenMVCommunication_t Cam;
+    BallSensor_t BallSensor;
 public:
     sensor_t():Cam(IMU){}
     ~sensor_t(){}

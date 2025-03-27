@@ -100,7 +100,7 @@ extern "C"
 		senser_init(type);
 
 		if (type == 1)
-			menu.showPicture(0, 0, shet, 128, 64, false);
+			menu.showPicture(0, 0, shet, 128, 64, true);
 		else
 			menu.showPicture(0, 0, mechi, 128, 64, false);
 
