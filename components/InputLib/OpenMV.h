@@ -11,7 +11,7 @@ private:
     // const uint8_t CAM_ADDRESS = 0x42;
     // const TickType_t I2C_TIMEOUT_TIME_TICS = 50 / portTICK_PERIOD_MS;
     const uart_port_t uart_num = UART_NUM_1; // использую только для тестов, так как нету паяльника
-    const int GPIO_CAM_UART = 35;
+    int GPIO_CAM_UART = 36;
     const TickType_t UART_READ_TIMEOUT_TIME_TICS = 50 / portTICK_PERIOD_MS;
 public:
     const OmniCamData_t &CamDataOmni = cam_data;
@@ -22,7 +22,7 @@ public:
     const OmniCamBlobInfo_t &GlobalYellow = globa_cam_data.Gates[0];
     const OmniCamBlobInfo_t &GlobalBlue = globa_cam_data.Gates[1];
 public:
-    void init();
+    void init(int GPIO);
     void update();
     OpenMVCommunication_t(IMU_t& IMUU);
     ~OpenMVCommunication_t();

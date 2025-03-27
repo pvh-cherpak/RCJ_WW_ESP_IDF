@@ -53,8 +53,10 @@ void Encoder_t::setNewLimits(int new_min, int new_max, int new_step, int start_v
     cur_value = start_value;
 }
 
-void Encoder_t::init()
+void Encoder_t::init(int GPIO_A, int GPIO_B)
 {
+    this->GPIO_A = GPIO_A;
+    this->GPIO_B = GPIO_B;
     if (pcnt_unit != NULL){
         pcnt_unit_disable(pcnt_unit);
         pcnt_del_unit(pcnt_unit);
@@ -78,14 +80,14 @@ void Encoder_t::init()
     ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(pcnt_unit, &filter_config));
 
     pcnt_chan_config_t chan_a_config = {
-        .edge_gpio_num = EXAMPLE_EC11_GPIO_A,
-        .level_gpio_num = EXAMPLE_EC11_GPIO_B,
+        .edge_gpio_num = GPIO_A,
+        .level_gpio_num = GPIO_B,
     };
     pcnt_channel_handle_t pcnt_chan_a = NULL;
     ESP_ERROR_CHECK(pcnt_new_channel(pcnt_unit, &chan_a_config, &pcnt_chan_a));
     pcnt_chan_config_t chan_b_config = {
-        .edge_gpio_num = EXAMPLE_EC11_GPIO_B,
-        .level_gpio_num = EXAMPLE_EC11_GPIO_A,
+        .edge_gpio_num = GPIO_B,
+        .level_gpio_num = GPIO_A,
     };
     pcnt_channel_handle_t pcnt_chan_b = NULL;
     ESP_ERROR_CHECK(pcnt_new_channel(pcnt_unit, &chan_b_config, &pcnt_chan_b));
@@ -112,7 +114,7 @@ void Encoder_t::init()
 
 #if CONFIG_EXAMPLE_WAKE_UP_LIGHT_SLEEP
     // EC11 channel output high level in normal state, so we set "low level" to wake up the chip
-    ESP_ERROR_CHECK(gpio_wakeup_enable(EXAMPLE_EC11_GPIO_A, GPIO_INTR_LOW_LEVEL));
+    ESP_ERROR_CHECK(gpio_wakeup_enable(GPIO_A, GPIO_INTR_LOW_LEVEL));
     ESP_ERROR_CHECK(esp_sleep_enable_gpio_wakeup());
     ESP_ERROR_CHECK(esp_light_sleep_start());
 #endif

@@ -2,6 +2,7 @@
 #include "global.h"
 #include "logics.h"
 
+
 static const char *OLED_tag = "SSD1106";
 static SemaphoreHandle_t encoder_button_sem = xSemaphoreCreateBinary();
 static SemaphoreHandle_t encoder_double_click_sem = xSemaphoreCreateBinary();
@@ -106,7 +107,12 @@ void DisplayMenu_t::setChosenItem(int new_item){
     chosen_item = new_item;
 }
 
-void start_menu()
+void DisplayMenu_t::showPicture(int xpos, int ypos, uint8_t *bitmap, int width, int height, bool invert)
+{
+    ssd1306_bitmaps(dev, xpos, ypos, bitmap, width, height, invert);
+}
+
+void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B)
 {
     // create gpio button
     button_config_t gpio_btn_cfg = {
@@ -132,8 +138,10 @@ void start_menu()
     int menu_size = start_menu_text.size();
     ESP_LOGI(OLED_tag, "Start main menu");
 
-    encoder.init();
+    encoder.init(encoder_GPIO_A, encoder_GPIO_B);
     encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 0);
+
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     // отрисовываем стартовое меню
     menu.drawFullMenu(start_menu_text);

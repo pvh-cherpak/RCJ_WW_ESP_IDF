@@ -7,38 +7,42 @@
 const char *NVS_WHITE_VALUE_GROUP = "WHITE_VALUES";
 const char *NVS_GREEN_VALUE_GROUP = "GREEN_VALUES";
 
-void LineSensor_t::init()
+void LineSensor_t::init(LineSensor_config_t config)
 {
+  CONFIG = config;
+  
   for (int i = 0; i < 4; i++)
   {
-    gpio_reset_pin(MULT_IN[i]); //  ЕСП рекомендует перед использованием сбрасывать пины
-    ESP_ERROR_CHECK(gpio_set_direction(MULT_IN[i], GPIO_MODE_OUTPUT));
-    ESP_ERROR_CHECK(gpio_set_pull_mode(MULT_IN[i], GPIO_FLOATING)); // я не особо понял, надо ли настраивать подтяжку на output порты но няхай будет
-    ESP_ERROR_CHECK(gpio_set_level(MULT_IN[i], 0));
+    gpio_reset_pin(CONFIG.mult_in[i]); //  ЕСП рекомендует перед использованием сбрасывать пины
+    ESP_ERROR_CHECK(gpio_set_direction(CONFIG.mult_in[i], GPIO_MODE_OUTPUT));
+    ESP_ERROR_CHECK(gpio_set_pull_mode(CONFIG.mult_in[i], GPIO_FLOATING)); // я не особо понял, надо ли настраивать подтяжку на output порты но няхай будет
+    ESP_ERROR_CHECK(gpio_set_level(CONFIG.mult_in[i], 0));
   }
   // какойто непонятный разрещаюший сигнал, гениальная трата бесценных ножек GPIO
+  if(CONFIG.stupid_pin){
   gpio_reset_pin(GPIO_NUM_25);
-  ESP_ERROR_CHECK(gpio_set_direction(GPIO_NUM_25, GPIO_MODE_OUTPUT));
-  ESP_ERROR_CHECK(gpio_set_pull_mode(GPIO_NUM_25, GPIO_PULLDOWN_ONLY));
-  ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_25, 0));
+    ESP_ERROR_CHECK(gpio_set_direction(GPIO_NUM_25, GPIO_MODE_OUTPUT));
+    ESP_ERROR_CHECK(gpio_set_pull_mode(GPIO_NUM_25, GPIO_PULLDOWN_ONLY));
+    ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_25, 0));
+  }
 
   // У есп есть 2 АЦП каждый можно комутировать на определённый диапазон прописанный в доках
   // для нашего пина нужен 2
   // ulp_mode это режим колибровки показаний АЦП, я думаю оно нам не надо
   adc_oneshot_unit_init_cfg_t init_config1 = {
-      .unit_id = ADC_UNIT_2,
+      .unit_id = CONFIG.ADC_unit,
       .ulp_mode = ADC_ULP_MODE_DISABLE,
   };
   ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc_mult));
   // atten - Атеньюатор, рабочекрестьянским языком уменьшитель сигнала (это не я вас принижаю, в душе не ебу как это работает, думается мне что это не просто делитель напряжения)
   // bitwidth - разрядность в битах, чем больше битов тем выше точность ADC_BITWIDTH_DEFAULT должен обеспечивать максимальную точность на какую способен АЦП
-  adc_oneshot_chan_cfg_t config = {
+  adc_oneshot_chan_cfg_t ADC_config = {
       .atten = ADC_ATTEN_DB_12,
       .bitwidth = ADC_BITWIDTH_DEFAULT,
   };
 
   // у АЦП не ножки а каналы у нас по таблице ADC_CHANNEL_6
-  ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_mult, ADC_CHANNEL_6, &config));
+  ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_mult, CONFIG.ADC_chanel, &ADC_config));
   // gpio_reset_pin(MULT_OUT);
   // ESP_ERROR_CHECK(gpio_set_direction(MULT_OUT, GPIO_MODE_INPUT));
   // ESP_ERROR_CHECK(gpio_set_pull_mode(MULT_OUT, GPIO_PULLDOWN_ONLY));
@@ -198,7 +202,7 @@ void LineSensor_t::read_line_sensors()
   for (int channel = 0; channel < 16; channel++)
   {
     for (int bit = 0; bit < 4; bit++)
-      ESP_ERROR_CHECK(gpio_set_level(MULT_IN[bit], MULT_CHANEL[channel][bit]));
+      ESP_ERROR_CHECK(gpio_set_level(CONFIG.mult_in[bit], MULT_CHANEL[channel][bit]));
     ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, ADC_CHANNEL_6, &actual_value[channel]));
   }
 }

@@ -19,6 +19,9 @@
 
 class Encoder_t{
 private:
+    int GPIO_A = 32;
+    int GPIO_B = 35;
+private:
     int min_value = 0, max_value = 0;
     int step = 1; // на сколько меняется value за один поворот
     
@@ -33,7 +36,7 @@ private:
     int prev_pcnt = 0;
 
 public:
-    void init();
+    void init(int GPIO_A, int GPIO_B);
     int getCurValue();
     void setNewLimits(int new_min, int new_max, int new_step, int start_value, bool skip = false);
 };

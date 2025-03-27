@@ -44,9 +44,9 @@ void OpenMVCommunication_t::update()
 }
 */
 
-void OpenMVCommunication_t::init()
+void OpenMVCommunication_t::init(int GPIO)
 {
-    // РАСКОМЕНТИРОВАТЬ ПРИ ПЕРЕНОСЕ НА 1 ЮАРТ
+    GPIO_CAM_UART = GPIO;
 
     uart_config_t uart_config = {
         .baud_rate = 115200,

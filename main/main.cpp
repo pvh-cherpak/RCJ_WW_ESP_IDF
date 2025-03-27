@@ -4,6 +4,7 @@
 // #include "debug_data.h"
 #include "motorControl.h"
 #include "debug_log.h"
+#include "pictures.h"
 
 /*
  * SPDX-FileCopyrightText: 2010-2022 Espressif Systems (Shanghai) CO LTD
@@ -31,13 +32,44 @@
 
 extern const char *NVS_WHITE_VALUE_GROUP;
 extern const char *NVS_GREEN_VALUE_GROUP;
+extern const char *NVS_IDENTIFIER_GROUP;
 
-void nvs_set_variables();
+void nvs_set_variables(uint8_t type);
+// 1 - goalkepper 2 - forvard
+uint8_t get_identifier();
+
+void senser_init(uint8_t type)
+{
+	sensor_config_t conf;
+
+	if (type == 1)
+	{ //keeper
+		conf.LineSensor_config = {
+			{(gpio_num_t)13,
+			 (gpio_num_t)12,
+			 (gpio_num_t)26,
+			 (gpio_num_t)27},
+			ADC_UNIT_2,
+			ADC_CHANNEL_6,
+			false};
+		conf.CAM_GPIO = 36;
+	}
+	else
+	{ //forward
+		conf.LineSensor_config = {{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false};
+		conf.CAM_GPIO = 35;
+	}
+
+	sensor.init(conf);
+}
 
 extern "C"
 {
 	void app_main(void)
 	{
+		start_i2c_legacy();
+		menu.init();
+		menu.clearDisplay();
 		// nvs_set_variables();
 
 		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
@@ -62,21 +94,33 @@ extern "C"
 			esp_restart();
 		};
 
-		
-		start_i2c_legacy();
-		menu.init();
-		//BTDebug.init();
-		sensor.init();
+		uint8_t type = get_identifier();
+		if (!type)
+			esp_restart();
+		senser_init(type);
+
+		if (type == 1)
+			menu.showPicture(0, 0, shet, 128, 64, false);
+		else
+			menu.showPicture(0, 0, mechi, 128, 64, false);
+
+		BTDebug.init();
 		drv.init();
-		dribbler.init();
-		//err_log.init();
+		err_log.init();
 
-		drv.drive(30, 30, 30, 30);
+		int GPIO_A, GPIO_B;
+		if (type == 1)
+		{
+			GPIO_A = 32;
+			GPIO_B = 35;
+		}
+		else
+		{
+			GPIO_A = 36;
+			GPIO_B = 39;
+		}
+		start_menu(type, GPIO_A, GPIO_B);
 
-		start_menu();
-
-
-		
 		// // это тесты камеры
 		// vTaskDelay(1000 / portTICK_PERIOD_MS);
 		// OpenMVCommunication_t cam;
@@ -152,14 +196,13 @@ extern "C"
 
 		// vTaskDelay(5000 / portTICK_PERIOD_MS);
 		// sensor.init();
-		
 
 		vTaskDelete(NULL);
 		// esp_restart();
 	}
 }
 
-void nvs_set_variables()
+void nvs_set_variables(uint8_t type)
 {
 	nvs_handle_t nvs_handle;
 	nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
@@ -172,4 +215,29 @@ void nvs_set_variables()
 	for (int i = 0; i < 16; i++)
 		ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
 	nvs_close(nvs_handle);
+
+	ESP_ERROR_CHECK(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
+	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, "type", type));
+	nvs_close(nvs_handle);
+}
+
+uint8_t get_identifier()
+{
+	uint8_t type = 0;
+
+	nvs_handle_t nvs_handle;
+	ESP_ERROR_CHECK(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
+	esp_err_t err = nvs_get_u8(nvs_handle, "type", &type);
+	if (err == ESP_OK)
+		return type;
+
+	nvs_close(nvs_handle);
+
+	if (err == ESP_ERR_NVS_NOT_FOUND)
+	{
+		nvs_set_variables(2);
+		return 1;
+	}
+
+	return 0;
 }
