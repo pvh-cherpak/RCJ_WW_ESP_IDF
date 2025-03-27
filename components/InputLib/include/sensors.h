@@ -7,6 +7,13 @@
 
 #include "debug_data.h"
 
+struct sensor_config_t
+{
+    LineSensor_config_t LineSensor_config;
+    int CAM_GPIO;
+};
+
+
 class sensor_t
 {
 private:
@@ -17,10 +24,10 @@ public:
     locator_t Locator;
     OpenMVCommunication_t Cam;
 public:
-    sensor_t(/* args */): Cam(IMU){}
+    sensor_t():Cam(IMU){}
     ~sensor_t(){}
     
-    void init(){IMU.init(); LineSensor.init(); Locator.init(); Cam.init();}
+    void init(sensor_config_t config){IMU.init(); LineSensor.init(config.LineSensor_config); Locator.init(); Cam.init(config.CAM_GPIO);}
     void update(){IMU.update(); LineSensor.update(); Locator.update(); Cam.update();}
     void testUpdate() {IMU.testUpdate(); LineSensor.testUpdate(); Locator.testUpdate();}
 };

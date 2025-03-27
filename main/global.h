@@ -20,6 +20,7 @@ extern sensor_t sensor;
 extern DisplayMenu_t menu;
 extern MotorControl drv;
 extern ErrLog_t err_log;
+extern const char *NVS_IDENTIFIER_GROUP;
 // extern BTDebug_t BTDebug;
 
 // void init_i2c();
