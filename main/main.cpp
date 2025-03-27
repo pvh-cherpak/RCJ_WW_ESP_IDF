@@ -4,6 +4,7 @@
 // #include "debug_data.h"
 #include "motorControl.h"
 #include "debug_log.h"
+#include "pictures.h"
 
 /*
  * SPDX-FileCopyrightText: 2010-2022 Espressif Systems (Shanghai) CO LTD
@@ -39,27 +40,27 @@ void nvs_set_variables(uint8_t type);
 // 1 - goalkepper 2 - forvard
 uint8_t get_identifier();
 
-void senser_init()
+void senser_init(uint8_t type)
 {
-	uint8_t type = get_identifier();
-	if (!type)
-		esp_restart();
-
 	sensor_config_t conf;
 
-	if(type == 2){ // forward
+	if (type == 1)
+	{ //keeper
+		conf.LineSensor_config = {
+			{(gpio_num_t)13,
+			 (gpio_num_t)12,
+			 (gpio_num_t)26,
+			 (gpio_num_t)27},
+			ADC_UNIT_2,
+			ADC_CHANNEL_6,
+			false};
+		conf.CAM_GPIO = 36;
+	}
+	else
+	{ //forward
 		conf.LineSensor_config = {{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false};
 		conf.CAM_GPIO = 35;
 	}
-	else{ //keeper
-		conf.LineSensor_config = {
-			{(gpio_num_t)13,
-			(gpio_num_t)12,
-			(gpio_num_t)26,
-			(gpio_num_t)27}, ADC_UNIT_2, ADC_CHANNEL_6, false};
-		conf.CAM_GPIO = 36;
-	}
-
 
 	sensor.init(conf);
 }
@@ -68,6 +69,9 @@ extern "C"
 {
 	void app_main(void)
 	{
+		start_i2c_legacy();
+		menu.init();
+		menu.clearDisplay();
 		// nvs_set_variables();
 
 		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
@@ -92,15 +96,32 @@ extern "C"
 			esp_restart();
 		};
 
-		start_i2c_legacy();
-		senser_init();
-		
-		menu.init();
+		uint8_t type = get_identifier();
+		if (!type)
+			esp_restart();
+		senser_init(type);
+
+		if (type == 1)
+			menu.showPicture(0, 0, shet, 128, 64, false);
+		else
+			menu.showPicture(0, 0, mechi, 128, 64, false);
+
 		BTDebug.init();
 		drv.init();
 		err_log.init();
 
-		start_menu();
+		int GPIO_A, GPIO_B;
+		if (type == 1)
+		{
+			GPIO_A = 32;
+			GPIO_B = 35;
+		}
+		else
+		{
+			GPIO_A = 36;
+			GPIO_B = 39;
+		}
+		start_menu(type, GPIO_A, GPIO_B);
 
 		// // это тесты камеры
 		// vTaskDelay(1000 / portTICK_PERIOD_MS);

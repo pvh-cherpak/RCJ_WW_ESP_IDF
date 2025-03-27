@@ -17,7 +17,7 @@
 
 void button_click(void* arg, void* event);
 void button_double_click(void* arg, void* event);
-void start_menu();
+void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B);
 void info_menu(button_handle_t &encoder_button);
 void another_menu(button_handle_t &encoder_button);
 void edit_dribbler_speed(button_handle_t &encoder_button);
@@ -36,6 +36,7 @@ public:
     void updateLine(const std::vector<std::string> &menu_text, int line_index);
     void drawFullMenu(const std::vector<std::string> &menu_text);
     void setChosenItem(int new_item);
+    void showPicture(int xpos, int ypos, uint8_t * bitmap, int width, int height, bool invert);
 };
 
 #endif
