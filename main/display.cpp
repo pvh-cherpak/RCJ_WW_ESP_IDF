@@ -275,7 +275,7 @@ void edit_dribbler_speed(button_handle_t &encoder_button){
         dribbler_speed = encoder.getCurValue();
         another_menu_output_text[2] = another_menu_text[2] + std::to_string(dribbler_speed);
         menu.writeLineClean(2, "*" + another_menu_output_text[2], false);
-        
+        dribbler.dribble(dribbler_speed);
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
     

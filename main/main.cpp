@@ -29,8 +29,6 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
-static const char *TAG = "example";
-
 extern const char *NVS_WHITE_VALUE_GROUP;
 extern const char *NVS_GREEN_VALUE_GROUP;
 
@@ -67,12 +65,17 @@ extern "C"
 		
 		start_i2c_legacy();
 		menu.init();
-		BTDebug.init();
+		//BTDebug.init();
 		sensor.init();
 		drv.init();
-		err_log.init();
-		
+		dribbler.init();
+		//err_log.init();
+
+		drv.drive(30, 30, 30, 30);
+
 		start_menu();
+
+
 		
 		// // это тесты камеры
 		// vTaskDelay(1000 / portTICK_PERIOD_MS);

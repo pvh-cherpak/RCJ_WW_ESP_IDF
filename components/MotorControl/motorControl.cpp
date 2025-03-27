@@ -4,6 +4,7 @@
 static const char *motor_tag = "motors";
 
 MotorControl drv;
+Dribbler dribbler;
 
 void MotorControl::init(){
     ESP_LOGI(motor_tag, "initializing mcpwm gpio...");
@@ -158,4 +159,33 @@ void motor_drv8833_task()
         if (speed <= 0)
             speed = 100;
     }
+}
+
+uint32_t Dribbler::servo_per_degree_init(uint32_t degree_of_rotation)
+{
+    uint32_t cal_pulsewidth = 0;
+    cal_pulsewidth = (SERVO_MIN_PULSEWIDTH + (((SERVO_MAX_PULSEWIDTH - SERVO_MIN_PULSEWIDTH) * (degree_of_rotation)) / (180)));
+    return cal_pulsewidth;
+}
+
+void Dribbler::init(){
+    mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM2A, DRB);
+    mcpwm_config_t pwm_config;
+    pwm_config.frequency = 50; // 1000;    //frequency = 1000Hz,
+    pwm_config.cmpr_a = 0;                     //duty cycle of PWMxA = 0
+    pwm_config.cmpr_b = 0;                     //duty cycle of PWMxb = 0
+    pwm_config.counter_mode = MCPWM_UP_COUNTER;
+    pwm_config.duty_mode = MCPWM_DUTY_MODE_0;
+
+    mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_2, &pwm_config);
+
+    dribble(180);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    dribble(0);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+}
+
+void Dribbler::dribble(uint8_t speed){
+    mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_2, MCPWM_OPR_A, servo_per_degree_init(speed));
+    //mcpwm_set_duty(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_GEN_A, abs(speed));
 }

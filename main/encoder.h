@@ -14,8 +14,8 @@
 #define PCNT_LOW_LIMIT  -10000
 #define PCNT_HIGH_LIMIT 10000
 
-#define EXAMPLE_EC11_GPIO_A 32
-#define EXAMPLE_EC11_GPIO_B 35
+#define EXAMPLE_EC11_GPIO_A 36
+#define EXAMPLE_EC11_GPIO_B 39
 
 class Encoder_t{
 private:

@@ -19,6 +19,7 @@ extern BTDebug_t BTDebug;
 extern sensor_t sensor;
 extern DisplayMenu_t menu;
 extern MotorControl drv;
+extern Dribbler dribbler;
 extern ErrLog_t err_log;
 // extern BTDebug_t BTDebug;
 

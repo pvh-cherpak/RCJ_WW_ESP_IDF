@@ -19,9 +19,14 @@ static const gpio_num_t M3_BW = GPIO_NUM_18;
 static const gpio_num_t M4_FW = GPIO_NUM_5;
 static const gpio_num_t M4_BW = GPIO_NUM_17;
 
+static const gpio_num_t DRB = GPIO_NUM_25;
+
 // MCPWM peripheral components to use
 static const mcpwm_unit_t drv8833_mcpwm_unit = MCPWM_UNIT_0;
 static const uint32_t drv8833_mcpwm_freq = 50000;
+
+static const uint16_t SERVO_MIN_PULSEWIDTH = 1000; //Minimum pulse width in microsecond
+static const uint16_t SERVO_MAX_PULSEWIDTH = 2000; //Maximum pulse width in microsecond
 
 void mcpwm_example_gpio_initialize();
 void set_channel(bool bBrake, int32_t iSpeed, mcpwm_timer_t timer);
@@ -39,6 +44,14 @@ public:
     void drive(float angle, int rotation_speed, int speed);
     void drive(float angle, int speed);
     void driveXY(int speedX, int speedY, int rotationSpeed);
+};
+
+class Dribbler{
+    private:
+        uint32_t servo_per_degree_init(uint32_t degree_of_rotation);
+    public:
+        void init();
+        void dribble(uint8_t speed);
 };
 
 #endif
