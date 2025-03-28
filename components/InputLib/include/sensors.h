@@ -6,19 +6,16 @@
 #include "../OpenMV.h"
 #include "../BallSensor.h"
 
-#include "debug_data.h"
-
 struct sensor_config_t
 {
     LineSensor_config_t LineSensor_config;
     int CAM_GPIO;
+    uint8_t robotType;
 };
 
 
 class sensor_t
 {
-private:
-    gebug_data_t air_debug_data;
 public:
     IMU_t IMU;
     LineSensor_t LineSensor;

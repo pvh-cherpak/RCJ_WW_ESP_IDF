@@ -6,8 +6,6 @@
 #include "esp_bt_device.h"
 #include "esp_spp_api.h"
 
-#include "debug_data.h"
-
 extern QueueHandle_t bt_queue;
 
 void bt_task(void *arg);

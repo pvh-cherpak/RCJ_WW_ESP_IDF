@@ -34,15 +34,15 @@ extern const char *NVS_WHITE_VALUE_GROUP;
 extern const char *NVS_GREEN_VALUE_GROUP;
 extern const char *NVS_IDENTIFIER_GROUP;
 
-void nvs_set_variables(uint8_t type);
-// 1 - goalkepper 2 - forvard
+void nvs_set_variables(uint8_t robot_type);
+// 1 - goalkepper 2 - forward
 uint8_t get_identifier();
 
-void senser_init(uint8_t type)
+void sensor_init(uint8_t robot_type)
 {
 	sensor_config_t conf;
 
-	if (type == 1)
+	if (robot_type == 1)
 	{ //keeper
 		conf.LineSensor_config = {
 			{(gpio_num_t)13,
@@ -53,11 +53,13 @@ void senser_init(uint8_t type)
 			ADC_CHANNEL_6,
 			false};
 		conf.CAM_GPIO = 36;
+		conf.robotType = robot_type;
 	}
 	else
 	{ //forward
 		conf.LineSensor_config = {{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false};
 		conf.CAM_GPIO = 35;
+		conf.robotType = robot_type;
 	}
 
 	sensor.init(conf);
@@ -94,22 +96,22 @@ extern "C"
 			esp_restart();
 		};
 
-		uint8_t type = get_identifier();
-		if (!type)
+		uint8_t robot_type = get_identifier();
+		if (!robot_type)
 			esp_restart();
-		senser_init(type);
+		sensor_init(robot_type);
 
-		if (type == 1)
+		if (robot_type == 1)
 			menu.showPicture(0, 0, shet, 128, 64, true);
 		else
 			menu.showPicture(0, 0, mechi, 128, 64, false);
 
 		BTDebug.init();
 		drv.init();
-		err_log.init();
+		//err_log.init();
 
 		int GPIO_A, GPIO_B;
-		if (type == 1)
+		if (robot_type == 1)
 		{
 			GPIO_A = 32;
 			GPIO_B = 35;
@@ -119,7 +121,10 @@ extern "C"
 			GPIO_A = 36;
 			GPIO_B = 39;
 		}
-		start_menu(type, GPIO_A, GPIO_B);
+
+		drv.drive(50, 50, 50, 50);
+
+		start_menu(robot_type, GPIO_A, GPIO_B);
 
 		// // это тесты камеры
 		// vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -202,7 +207,7 @@ extern "C"
 	}
 }
 
-void nvs_set_variables(uint8_t type)
+void nvs_set_variables(uint8_t robot_type)
 {
 	nvs_handle_t nvs_handle;
 	nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
@@ -217,19 +222,19 @@ void nvs_set_variables(uint8_t type)
 	nvs_close(nvs_handle);
 
 	ESP_ERROR_CHECK(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
-	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, "type", type));
+	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, "robot_type", robot_type));
 	nvs_close(nvs_handle);
 }
 
 uint8_t get_identifier()
 {
-	uint8_t type = 0;
+	uint8_t robot_type = 0;
 
 	nvs_handle_t nvs_handle;
 	ESP_ERROR_CHECK(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
-	esp_err_t err = nvs_get_u8(nvs_handle, "type", &type);
+	esp_err_t err = nvs_get_u8(nvs_handle, "robot_type", &robot_type);
 	if (err == ESP_OK)
-		return type;
+		return robot_type;
 
 	nvs_close(nvs_handle);
 
