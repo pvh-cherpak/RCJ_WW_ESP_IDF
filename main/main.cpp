@@ -122,7 +122,7 @@ extern "C"
 			GPIO_B = 39;
 		}
 
-		drv.drive(50, 50, 50, 50);
+		// drv.drive(50, 50, 50, 50);
 
 		start_menu(robot_type, GPIO_A, GPIO_B);
 
@@ -210,19 +210,36 @@ extern "C"
 void nvs_set_variables(uint8_t robot_type)
 {
 	nvs_handle_t nvs_handle;
+	esp_err_t err;
 	nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
 
-	for (int i = 0; i < 16; i++) // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
-		ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i));
+	for (int i = 0; i < 16; i++)
+	{ // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
+		err = nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i);
+		if (err != ESP_ERR_NVS_NOT_FOUND)
+		{
+			ESP_LOGE("nvs_set_variables", "nvs_set_u16 error: %d (%s)", err, esp_err_to_name(err));
+		}
+	}
 	nvs_close(nvs_handle);
 
 	nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
 	for (int i = 0; i < 16; i++)
-		ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
+	{ // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
+		err = nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i);
+		if (err != ESP_ERR_NVS_NOT_FOUND)
+		{
+			ESP_LOGE("nvs_set_variables", "nvs_set_u16 error: %d (%s)", err, esp_err_to_name(err));
+		}
+	}
 	nvs_close(nvs_handle);
 
-	ESP_ERROR_CHECK(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
-	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, "robot_type", robot_type));
+	(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
+	err = (nvs_set_u8(nvs_handle, "robot_type", robot_type));
+	if (err != ESP_ERR_NVS_NOT_FOUND)
+	{
+		ESP_LOGE("nvs_set_variables", "nvs_set_u8 error: %d (%s)", err, esp_err_to_name(err));
+	}
 	nvs_close(nvs_handle);
 }
 

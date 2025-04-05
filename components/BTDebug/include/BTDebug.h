@@ -37,7 +37,7 @@ public:
 
     void addCString(const char *s);
 
-    void addString(std::string &s);
+    void addString(const std::string &s);
 
     void setPosition(int16_t x, int16_t y) {pos_x = x * 10; pos_y = y * 10;};
 
