@@ -51,9 +51,9 @@ void sensor_init(uint8_t robot_type)
 			 (gpio_num_t)27},
 			ADC_UNIT_2,
 			ADC_CHANNEL_6,
-			false};
-		conf.CAM_GPIO = 36;
+			true};
 		conf.robotType = robot_type;
+		conf.CAM_GPIO = 36;
 	}
 	else
 	{ //forward
@@ -69,11 +69,6 @@ extern "C"
 {
 	void app_main(void)
 	{
-		start_i2c_legacy();
-		menu.init();
-		menu.clearDisplay();
-		// nvs_set_variables();
-
 		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
 		// флеш память, её количество можно менять поэтому существует вероятность что место зарезервиролванное под
 		// данные не размечено нижестоящий код проверяет, размечена ли память под NVS и если нет пробует разметить
@@ -95,6 +90,11 @@ extern "C"
 		{
 			esp_restart();
 		};
+
+		start_i2c_legacy();
+		menu.init();
+		menu.clearDisplay();
+		nvs_set_variables(1);
 
 		uint8_t robot_type = get_identifier();
 		if (!robot_type)
@@ -217,9 +217,7 @@ void nvs_set_variables(uint8_t robot_type)
 	{ // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
 		err = nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i);
 		if (err != ESP_ERR_NVS_NOT_FOUND)
-		{
-			ESP_LOGE("nvs_set_variables", "nvs_set_u16 error: %d (%s)", err, esp_err_to_name(err));
-		}
+			ESP_ERROR_CHECK(err);
 	}
 	nvs_close(nvs_handle);
 
@@ -228,18 +226,14 @@ void nvs_set_variables(uint8_t robot_type)
 	{ // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
 		err = nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i);
 		if (err != ESP_ERR_NVS_NOT_FOUND)
-		{
-			ESP_LOGE("nvs_set_variables", "nvs_set_u16 error: %d (%s)", err, esp_err_to_name(err));
-		}
+			ESP_ERROR_CHECK(err);
 	}
 	nvs_close(nvs_handle);
 
 	(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
 	err = (nvs_set_u8(nvs_handle, "robot_type", robot_type));
 	if (err != ESP_ERR_NVS_NOT_FOUND)
-	{
-		ESP_LOGE("nvs_set_variables", "nvs_set_u8 error: %d (%s)", err, esp_err_to_name(err));
-	}
+		ESP_ERROR_CHECK(err);
 	nvs_close(nvs_handle);
 }
 
