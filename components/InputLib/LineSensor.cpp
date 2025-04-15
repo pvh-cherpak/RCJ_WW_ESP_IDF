@@ -20,7 +20,7 @@ void LineSensor_t::init(LineSensor_config_t config)
   }
   // какойто непонятный разрещаюший сигнал, гениальная трата бесценных ножек GPIO
   if(CONFIG.stupid_pin){
-  gpio_reset_pin(GPIO_NUM_25);
+    gpio_reset_pin(GPIO_NUM_25);
     ESP_ERROR_CHECK(gpio_set_direction(GPIO_NUM_25, GPIO_MODE_OUTPUT));
     ESP_ERROR_CHECK(gpio_set_pull_mode(GPIO_NUM_25, GPIO_PULLDOWN_ONLY));
     ESP_ERROR_CHECK(gpio_set_level(GPIO_NUM_25, 0));
@@ -64,7 +64,7 @@ void LineSensor_t::init(LineSensor_config_t config)
       if (err == ESP_OK)
         corection_counter++;
       else
-        ESP_LOGE("LineSensor NVS", "NVS nvs_set_u16 error: %d (%s)", err, esp_err_to_name(err));
+        ESP_ERROR_CHECK(err);
     }
   }
   nvs_close(nvs_handle);
@@ -83,7 +83,7 @@ void LineSensor_t::init(LineSensor_config_t config)
       if (err == ESP_OK)
         corection_counter++;
       else
-        ESP_LOGE("LineSensor NVS", "NVS nvs_set_u16 error: %d (%s)", err, esp_err_to_name(err));
+        ESP_ERROR_CHECK(err);
     }
   }
   nvs_close(nvs_handle);

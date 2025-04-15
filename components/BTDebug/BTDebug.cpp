@@ -29,7 +29,7 @@ void BTDebug_t::addCString(const char *s)
         outbuf[str_end_pos] = s[i];
 }
 
-void BTDebug_t::addString(std::string &s)
+void BTDebug_t::addString(const std::string &s)
 {
     int s_size = s.size();
     if (s_size + str_end_pos > buffer_size)
