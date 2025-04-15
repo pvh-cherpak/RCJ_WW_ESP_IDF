@@ -192,11 +192,12 @@ void info_menu(button_handle_t &encoder_button)
     while (true)
     {
         sensor.update();
+        sensor.BallSensor.update();
         menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
         menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
         menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
         menu.writeLineClean(5, "B gate: " + std::to_string(sensor.Cam.Blue.center_angle), false);
-        menu.writeLineClean(6, "Ball str: " + std::to_string(sensor.Locator.getStrength()), false);
+        menu.writeLineClean(6, "Is ball: " + std::to_string(sensor.BallSensor.IsBall), false);
         
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
             // возвращаемся в стартовое меню

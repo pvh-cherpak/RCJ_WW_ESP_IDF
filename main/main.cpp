@@ -51,7 +51,7 @@ void sensor_init(uint8_t robot_type)
 			 (gpio_num_t)27},
 			ADC_UNIT_2,
 			ADC_CHANNEL_6,
-			false};
+			true};
 		conf.CAM_GPIO = 36;
 		conf.robotType = robot_type;
 	}
@@ -63,6 +63,7 @@ void sensor_init(uint8_t robot_type)
 	}
 
 	sensor.init(conf);
+	// sensor.BallSensor.init();
 }
 
 extern "C"
@@ -72,7 +73,7 @@ extern "C"
 		start_i2c_legacy();
 		menu.init();
 		menu.clearDisplay();
-		// nvs_set_variables();
+		// nvs_set_variables(1);
 
 		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
 		// флеш память, её количество можно менять поэтому существует вероятность что место зарезервиролванное под
@@ -124,7 +125,14 @@ extern "C"
 
 		drv.drive(50, 50, 50, 50);
 
+		while (true){
+			sensor.LineSensor.update();
+			sensor.LineSensor.writeValues();
+			vTaskDelay(500 / portTICK_PERIOD_MS);
+		}
+
 		start_menu(robot_type, GPIO_A, GPIO_B);
+
 
 		// // это тесты камеры
 		// vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -213,16 +221,16 @@ void nvs_set_variables(uint8_t robot_type)
 	nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
 
 	for (int i = 0; i < 16; i++) // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
-		ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i));
+		(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i));
 	nvs_close(nvs_handle);
 
 	nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
 	for (int i = 0; i < 16; i++)
-		ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
+		(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
 	nvs_close(nvs_handle);
 
-	ESP_ERROR_CHECK(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
-	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, "robot_type", robot_type));
+	(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
+	(nvs_set_u8(nvs_handle, "robot_type", robot_type));
 	nvs_close(nvs_handle);
 }
 
@@ -231,7 +239,7 @@ uint8_t get_identifier()
 	uint8_t robot_type = 0;
 
 	nvs_handle_t nvs_handle;
-	ESP_ERROR_CHECK(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
+	(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
 	esp_err_t err = nvs_get_u8(nvs_handle, "robot_type", &robot_type);
 	if (err == ESP_OK)
 		return robot_type;
