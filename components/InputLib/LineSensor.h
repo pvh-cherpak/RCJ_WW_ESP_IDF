@@ -17,6 +17,7 @@ struct LineSensor_config_t
     adc_unit_t ADC_unit;
     adc_channel_t ADC_chanel;
     bool stupid_pin;
+    bool inversed_without_offset;
 };
 
 

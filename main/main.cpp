@@ -51,13 +51,15 @@ void sensor_init(uint8_t robot_type)
 			 (gpio_num_t)27},
 			ADC_UNIT_2,
 			ADC_CHANNEL_6,
-			true};
+			true, 
+			false};
 		conf.robotType = robot_type;
 		conf.CAM_GPIO = 36;
+
 	}
 	else
 	{ //forward
-		conf.LineSensor_config = {{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false};
+		conf.LineSensor_config = {{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false, true};
 		conf.CAM_GPIO = 35;
 		conf.robotType = robot_type;
 	}
@@ -94,7 +96,7 @@ extern "C"
 		start_i2c_legacy();
 		menu.init();
 		menu.clearDisplay();
-		nvs_set_variables(1);
+		// nvs_set_variables(2);
 
 		uint8_t robot_type = get_identifier();
 		if (!robot_type)
@@ -108,6 +110,7 @@ extern "C"
 
 		BTDebug.init();
 		drv.init();
+		dribbler.init();
 		//err_log.init();
 
 		int GPIO_A, GPIO_B;

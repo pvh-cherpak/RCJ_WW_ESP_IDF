@@ -175,6 +175,9 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B)
                 menu.setChosenItem(0);
                 another_menu(encoder_button);
                 break;
+            case 7:
+                BTCheck(encoder_button);
+                break;
             default:
                 ESP_LOGI(OLED_tag, "Button click");
                 break;
@@ -312,6 +315,26 @@ void LineCalibrate(button_handle_t &encoder_button)
     sensor.LineSensor.saveGreenWhite();
     
     menu.clearDisplay();
+}
+
+void BTCheck(button_handle_t &encoder_button)
+{
+    menu.clearDisplay();
+    menu.writeLineClean(0, "---BT menu---", true);
+    while (true)
+    {
+        sensor.update();
+        BTDebug.send();
+        
+        if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
+            // возвращаемся в стартовое меню
+            menu.drawFullMenu(start_menu_text);
+            encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 0);
+            return;
+        }
+
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+    }
 }
 
 void button_click(void *arg, void *event)
