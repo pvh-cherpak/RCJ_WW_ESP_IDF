@@ -13,6 +13,8 @@
 #include "debug_log.h"
 #include "BTDebug.h"
 
+const double DEG_TO_RAD = acos(-1) / 180;
+const double RAD_TO_DEG = 180 / acos(-1);
 
 // extern i2c_master_bus_handle_t i2c_bus_handle;
 extern BTDebug_t BTDebug;

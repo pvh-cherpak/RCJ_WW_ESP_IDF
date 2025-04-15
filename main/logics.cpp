@@ -1,5 +1,6 @@
 #include "logics.h"
 #include "esp_timer.h"
+#include "vector2.h"
 
 //[Header("Управляющие переменные")]
 float timer = 0;
@@ -170,25 +171,43 @@ void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, 
     projectSpeedOnLineXY(speedX, speedY, lineX, lineY, resSpeedX, resSpeedY);
 }
 
-int getGlobalPosition_2gates(double& x, double& y, int color) {
-    int our_gate = sensor.Cam.GlobalYellow.center_angle;
-    int other_gate = sensor.Cam.GlobalBlue.center_angle;
+int getGlobalPosition_2gates(float& x, float& y, int color) {
+    int our_gate = sensor.Cam.GlobalYellow.center_angle + sensor.IMU.getYaw();
+    int other_gate = sensor.Cam.GlobalBlue.center_angle + sensor.IMU.getYaw();
     if (color == 1)
         std::swap(our_gate, other_gate);
 
     if (our_gate == 360 || other_gate == 360)
         return 1;
 
-    double our_x = 0, our_y = -110;
-    double other_x = 0, other_y = 110;
+    float our_x = 0, our_y = -110;
+    float other_x = 0, other_y = 110;
 
-    double a1 = cos(our_gate * DEG_TO_RAD);
-    double b1 = -sin(our_gate * DEG_TO_RAD);
-    double c1 = -a1 * our_x - b1 * our_y;
+    float a1 = cos(our_gate * DEG_TO_RAD);
+    float b1 = -sin(our_gate * DEG_TO_RAD);
+    float c1 = -a1 * our_x - b1 * our_y;
 
-    double a2 = cos(other_gate * DEG_TO_RAD);
-    double b2 = -sin(other_gate * DEG_TO_RAD);
-    double c2 = -a2 * other_x - b2 * other_y;
+    float a2 = cos(other_gate * DEG_TO_RAD);
+    float b2 = -sin(other_gate * DEG_TO_RAD);
+    float c2 = -a2 * other_x - b2 * other_y;
+
+    float vp = a1 * b2 - a2 * b1;
+    
+    float our_dist = (color == 0 ? sensor.Cam.gate(0).distance : sensor.Cam.gate(1).distance);
+    float other_dist = (color == 0 ? sensor.Cam.gate(1).distance : sensor.Cam.gate(0).distance);
+
+    // if (a1 * b2 == a2 * b1 || abs(vp) < 0.35f)
+    // {
+    //     x = 0;
+    //     y = -110 + 220 * our_dist / (our_dist + other_dist);
+
+    //     return 2;
+    // }
+
+    // x = -(c1 * b2 - c2 * b1) / (a1 * b2 - a2 * b1);
+    // y = -110 + 220 * our_dist / (our_dist + other_dist); // -(a1 * c2 - a2 * c1) / (a1 * b2 - a2 * b1);
+
+    // return 0;
 
     if (a1 * b2 == a2 * b1)
         return 2;
@@ -316,7 +335,7 @@ void playGoalkeeperCamera(int color)
             continue;
         }
 
-        double global_x, global_y;
+        float global_x, global_y;
         int get_pos_callback = getGlobalPosition_2gates(global_x, global_y, color);
         if (get_pos_callback == 0){
             menu.writeLineClean(3, "GP X" + std::to_string(global_x));
@@ -330,6 +349,28 @@ void playGoalkeeperCamera(int color)
             menu.writeLineClean(3, "FAILED: parallel");
             menu.writeLineClean(4, "");
         }
+
+        Vector2 rightBallDir = Vector2(1, 0), leftBallDir = Vector2(-1, 0);
+
+        // if (global_x > 35){
+        //     rightBallDir = Vector2(0, -0.5f);
+        //     if (global_y < -80) { 
+        //         leftBallDir = Vector2(0, 1);
+        //     }
+        //     else { 
+        //         leftBallDir = Vector2(-1.5f, 0);
+        //     }
+        // }
+        
+        // if (global_x < -35){
+        //     leftBallDir = Vector2(0, -0.5f);
+        //     if (global_y < -80) { 
+        //         rightBallDir = Vector2(0, 1);
+        //     }
+        //     else {
+        //         rightBallDir = Vector2(1.5f, 0);
+        //     }
+        // }
 
         ballAngle = sensor.Locator.getBallAngleLocal();
         int robotAngle = sensor.IMU.getYaw();
@@ -443,8 +484,15 @@ void playGoalkeeperCamera(int color)
         // }
         gkBallIntegral += (ball_err) * gb_ki;
         gkBallPrev = ball_err;
-        speedX += (int)(ballSpeed);
-        // speedX = 0;
+
+        if (ballSpeed > 0) {
+            speedX += (int)(abs(ballSpeed) * rightBallDir.x);
+            speedY += (int)(abs(ballSpeed) * rightBallDir.y);
+        }
+        else{
+            speedX += (int)(abs(ballSpeed) * leftBallDir.x);
+            speedY += (int)(abs(ballSpeed) * leftBallDir.y);
+        }
 
         deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
 
