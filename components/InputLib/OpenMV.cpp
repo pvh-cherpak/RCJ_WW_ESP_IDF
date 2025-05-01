@@ -69,7 +69,7 @@ void OpenMVCommunication_t::init(int GPIO)
 
 const int CAM_UART_BUFFER_SIZE = 256; // модуль, по которому берутся индексы
 const int CAM_UART_READ_LIMIT = 128;  // если пришло больше - чистим буфер
-const int CAM_MSG_SIZE = 30;
+const int CAM_MSG_SIZE = 34;
 
 inline int fit(int index)
 {
@@ -187,6 +187,9 @@ void OpenMVCommunication_t::parseData(uint8_t *data)
     cam_data.Gates[1].distance = from_direct_code((data[8 + 14] << 8) | data[9 + 14]);
     cam_data.Gates[1].width = from_direct_code((data[10 + 14] << 8) | data[11 + 14]);
     cam_data.Gates[1].height = from_direct_code((data[12 + 14] << 8) | data[13 + 14]);
+
+    obst_angle = from_direct_code((data[28] << 8) | data[29]);
+    obst_dist = from_direct_code((data[30] << 8) | data[31]);
 }
 
 int local_good_angle(int angle)
@@ -216,4 +219,6 @@ void OpenMVCommunication_t::calculate_global_values()
     globa_cam_data.Gates[1].distance = cam_data.Gates[1].distance;
     globa_cam_data.Gates[1].width = cam_data.Gates[1].width + IMU.Yaw;
     globa_cam_data.Gates[1].height = cam_data.Gates[1].height + IMU.Yaw;
+    
+    g_obst_angle = obst_angle + IMU.Yaw;
 }

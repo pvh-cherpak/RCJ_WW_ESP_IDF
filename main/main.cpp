@@ -72,9 +72,6 @@ extern "C"
 {
 	void app_main(void)
 	{
-		start_i2c_legacy();
-		menu.init();
-		menu.clearDisplay();
 		// nvs_set_variables(1);
 
 		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
@@ -133,11 +130,11 @@ extern "C"
 
 		// drv.drive(50, 50, 50, 50);
 
-		while (true){
-			sensor.LineSensor.update();
-			sensor.LineSensor.writeValues();
-			vTaskDelay(500 / portTICK_PERIOD_MS);
-		}
+		// while (true){
+		// 	sensor.LineSensor.update();
+		// 	sensor.LineSensor.writeValues();
+		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
+		// }
 
 		start_menu(robot_type, GPIO_A, GPIO_B);
 
