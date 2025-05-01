@@ -18,7 +18,7 @@ static const std::vector<std::string> info_menu_text =
     {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Ball str:", "Line X:", "Exit"};
 
 static const std::vector<std::string> another_menu_text =
-    {"-Another  menu-", "Line calib", "Dribbler: "};
+    {"-Another  menu-", "Line calib", "Dribbler: ", "Na vse babki", "neutral"};
     
 static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 
@@ -240,6 +240,12 @@ void another_menu(button_handle_t &encoder_button)
                 LineCalibrate(encoder_button);
                 menu.drawFullMenu(another_menu_output_text);
                 break;
+            case 3:
+                dribbler.na_vse_babki();
+                break;
+            case 4:
+                dribbler.neutral();
+                break;
             default:
                 ESP_LOGI(OLED_tag, "Button click");
                 break;
@@ -252,7 +258,6 @@ void another_menu(button_handle_t &encoder_button)
                 // редактируем переменную
                 edit_dribbler_speed(encoder_button);
                 break;
-            
             default:
                 // возвращаемся в стартовое меню
                 encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 5);

@@ -53,7 +53,7 @@ public:
     LineSensor_t():CONFIG{{(gpio_num_t)13,
         (gpio_num_t)12,
         (gpio_num_t)26,
-        (gpio_num_t)27}, ADC_UNIT_2, ADC_CHANNEL_6, false}{}
+        (gpio_num_t)27}, ADC_UNIT_2, ADC_CHANNEL_6, false, false}{}
     
     void init(LineSensor_config_t config);
     void update(){read_line_sensors(); saveLineDirection(); calculateLineAngle();}

@@ -179,13 +179,23 @@ void Dribbler::init(){
 
     mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_2, &pwm_config);
 
-    dribble(180);
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    dribble(0);
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    neutral();
 }
 
 void Dribbler::dribble(uint8_t speed){
     mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_2, MCPWM_OPR_A, servo_per_degree_init(speed));
     //mcpwm_set_duty(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_GEN_A, abs(speed));
+}
+
+void Dribbler::neutral()
+{
+    dribble(50);
+}
+
+void Dribbler::na_vse_babki()
+{
+    for(int i = 50; i < 150; i += 5){
+        dribble(i);
+        vTaskDelay(10);
+    }
 }
