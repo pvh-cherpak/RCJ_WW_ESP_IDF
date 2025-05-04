@@ -26,7 +26,7 @@ void locator_t::update()
     // if (dir == -180)
     // return lastBallSeenAngle - mpuGetDegree();
     // lastBallSeenAngle = dir + mpuGetDegree();
-    ball_angle = dir;
+    ball_angle = dir - 90;
 }
 
 uint8_t locator_t::ReadHeading_1200()

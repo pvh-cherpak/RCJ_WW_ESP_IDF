@@ -21,6 +21,9 @@ public:
     const OmniCamData_t &GlobalCamDataOmni = globa_cam_data;
     const OmniCamBlobInfo_t &GlobalYellow = globa_cam_data.Gates[0];
     const OmniCamBlobInfo_t &GlobalBlue = globa_cam_data.Gates[1];
+
+    float obst_angle = 0, obst_dist = 0;
+    float g_obst_angle = 0, g_obst_dist = 0;
 public:
     void init(int GPIO);
     void update();

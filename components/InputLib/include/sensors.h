@@ -28,9 +28,8 @@ public:
     sensor_t():Cam(IMU){}
     ~sensor_t(){}
     
-    void init(sensor_config_t config){LineSensor.init(config.LineSensor_config); Locator.init(config.locator_offset);
+    void init(sensor_config_t config){/*IMU.init();*/ LineSensor.init(config.LineSensor_config); Locator.init(); 
         Cam.init(config.CAM_GPIO);}
-    void update(){IMU.update(); LineSensor.update(); Locator.update(); Cam.update();}
-
+    void update(){/*IMU.update();*/ LineSensor.update(); Locator.update(); Cam.update();}
     void testUpdate() {IMU.testUpdate(); LineSensor.testUpdate(); Locator.testUpdate();}
 };

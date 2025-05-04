@@ -157,13 +157,13 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B)
             switch (user_pointer_pos)
             {
             case 1:
-                playForwardGoyda(0);
+                playForwardDribble2(0);
                 break;
             case 2:
                 playGoalkeeperCamera(0);
                 break;
             case 3:
-                playForwardGoyda(1);
+                playForwardDribble2(1);
                 break;
             case 4:
                 playGoalkeeperCamera(1);
@@ -195,11 +195,12 @@ void info_menu(button_handle_t &encoder_button)
     while (true)
     {
         sensor.update();
+        sensor.BallSensor.update();
         menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
         menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
         menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
         menu.writeLineClean(5, "B gate: " + std::to_string(sensor.Cam.Blue.center_angle), false);
-        menu.writeLineClean(6, "Ball str: " + std::to_string(sensor.Locator.getStrength()), false);
+        menu.writeLineClean(6, "Obst: " + std::to_string((int)sensor.Cam.obst_angle) + " " + std::to_string((int)sensor.Cam.obst_dist), false);
         
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
             // возвращаемся в стартовое меню

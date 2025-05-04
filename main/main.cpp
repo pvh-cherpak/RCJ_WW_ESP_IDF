@@ -73,6 +73,8 @@ extern "C"
 {
 	void app_main(void)
 	{
+		// nvs_set_variables(1);
+
 		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
 		// флеш память, её количество можно менять поэтому существует вероятность что место зарезервиролванное под
 		// данные не размечено нижестоящий код проверяет, размечена ли память под NVS и если нет пробует разметить
@@ -129,7 +131,14 @@ extern "C"
 
 		// drv.drive(50, 50, 50, 50);
 
+		// while (true){
+		// 	sensor.LineSensor.update();
+		// 	sensor.LineSensor.writeValues();
+		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
+		// }
+
 		start_menu(robot_type, GPIO_A, GPIO_B);
+
 
 		// // это тесты камеры
 		// vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -247,7 +256,7 @@ uint8_t get_identifier()
 	uint8_t robot_type = 0;
 
 	nvs_handle_t nvs_handle;
-	ESP_ERROR_CHECK(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
+	(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
 	esp_err_t err = nvs_get_u8(nvs_handle, "robot_type", &robot_type);
 	if (err == ESP_OK)
 		return robot_type;

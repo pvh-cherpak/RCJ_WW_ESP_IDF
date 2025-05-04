@@ -207,6 +207,6 @@ void LineSensor_t::read_line_sensors()
   {
     for (int bit = 0; bit < 4; bit++)
       ESP_ERROR_CHECK(gpio_set_level(CONFIG.mult_in[bit], MULT_CHANEL[channel][bit]));
-    ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, ADC_CHANNEL_6, &actual_value[channel]));
+    ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, CONFIG.ADC_chanel, &actual_value[channel]));
   }
 }
