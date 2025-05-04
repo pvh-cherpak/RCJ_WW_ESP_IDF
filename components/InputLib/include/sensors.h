@@ -5,12 +5,14 @@
 #include "../locator.h"
 #include "../OpenMV.h"
 #include "../BallSensor.h"
+#include "../locator.h"
 
 struct sensor_config_t
 {
     LineSensor_config_t LineSensor_config;
     int CAM_GPIO;
     uint8_t robotType;
+    int locator_offset = 0;
 };
 
 
@@ -26,8 +28,9 @@ public:
     sensor_t():Cam(IMU){}
     ~sensor_t(){}
     
-    void init(sensor_config_t config){IMU.init(); LineSensor.init(config.LineSensor_config); Locator.init(); 
+    void init(sensor_config_t config){LineSensor.init(config.LineSensor_config); Locator.init(config.locator_offset);
         Cam.init(config.CAM_GPIO);}
     void update(){IMU.update(); LineSensor.update(); Locator.update(); Cam.update();}
+
     void testUpdate() {IMU.testUpdate(); LineSensor.testUpdate(); Locator.testUpdate();}
 };

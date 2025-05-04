@@ -194,7 +194,7 @@ void Dribbler::neutral()
 
 void Dribbler::na_vse_babki()
 {
-    for(int i = 50; i < 150; i += 5){
+    for(int i = 50; i < 120; i += 5){
         dribble(i);
         vTaskDelay(10);
     }

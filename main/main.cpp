@@ -55,16 +55,18 @@ void sensor_init(uint8_t robot_type)
 			false};
 		conf.robotType = robot_type;
 		conf.CAM_GPIO = 36;
-
+		conf.locator_offset = 0;
 	}
 	else
 	{ //forward
 		conf.LineSensor_config = {{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false, true};
 		conf.CAM_GPIO = 35;
 		conf.robotType = robot_type;
+		conf.locator_offset = 90;
 	}
 
 	sensor.init(conf);
+	
 }
 
 extern "C"
