@@ -1,6 +1,6 @@
 #include "BallSensor.h"
 
-inline void BallSensor_t::init()
+void BallSensor_t::init()
 {
     gpio_reset_pin(GPIO); //  ЕСП рекомендует перед использованием сбрасывать пины
     ESP_ERROR_CHECK(gpio_set_direction(GPIO, GPIO_MODE_INPUT));

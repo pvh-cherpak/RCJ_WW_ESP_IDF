@@ -56,6 +56,8 @@ void sensor_init(uint8_t robot_type)
 		conf.robotType = robot_type;
 		conf.CAM_GPIO = 36;
 		conf.locator_offset = 0;
+
+		sensor.init(conf);
 	}
 	else
 	{ //forward
@@ -63,10 +65,12 @@ void sensor_init(uint8_t robot_type)
 		conf.CAM_GPIO = 35;
 		conf.robotType = robot_type;
 		conf.locator_offset = 90;
-	}
 
-	sensor.init(conf);
-	
+		sensor.Cam.init(conf.CAM_GPIO);
+		sensor.LineSensor.init(conf.LineSensor_config);
+		sensor.Locator.init(conf.locator_offset);
+		sensor.BallSensor.init();
+	}
 }
 
 extern "C"
