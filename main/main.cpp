@@ -51,11 +51,12 @@ void sensor_init(uint8_t robot_type)
 			 (gpio_num_t)27},
 			ADC_UNIT_2,
 			ADC_CHANNEL_6,
-			true, 
+			true,
 			false};
 		conf.robotType = robot_type;
 		conf.CAM_GPIO = 36;
 		conf.locator_offset = 0;
+		conf.IMU_active = true;
 
 		sensor.init(conf);
 	}
@@ -65,11 +66,14 @@ void sensor_init(uint8_t robot_type)
 		conf.CAM_GPIO = 35;
 		conf.robotType = robot_type;
 		conf.locator_offset = 90;
+		conf.IMU_active = false;
 
+		sensor.IMU_active=false;
 		sensor.Cam.init(conf.CAM_GPIO);
 		sensor.LineSensor.init(conf.LineSensor_config);
 		sensor.Locator.init(conf.locator_offset);
 		sensor.BallSensor.init();
+
 	}
 }
 
@@ -142,7 +146,6 @@ extern "C"
 		// }
 
 		start_menu(robot_type, GPIO_A, GPIO_B);
-
 
 		// // это тесты камеры
 		// vTaskDelay(1000 / portTICK_PERIOD_MS);

@@ -183,6 +183,7 @@ void Dribbler::init(){
 }
 
 void Dribbler::dribble(uint8_t speed){
+    cur_speed = speed;
     mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_2, MCPWM_OPR_A, servo_per_degree_init(speed));
     //mcpwm_set_duty(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_GEN_A, abs(speed));
 }
@@ -194,8 +195,31 @@ void Dribbler::neutral()
 
 void Dribbler::na_vse_babki()
 {
-    for(int i = 50; i < 120; i += 5){
+    for(int i = 50; i < 110; i += 5){
         dribble(i);
         vTaskDelay(10);
+    }
+}
+
+void Dribbler::smart_dribble(uint8_t speed)
+{
+    speed += 50;
+    if (speed > 110)
+        speed = 110;
+    if (speed < cur_speed){
+        while (speed < cur_speed){
+            cur_speed -= 10;
+            dribble(cur_speed);
+            //ESP_LOGI("Drb", "cur_speed = %d", cur_speed);
+            vTaskDelay(5);
+        }
+    }
+    else{
+        while (speed > cur_speed){
+            cur_speed += 10;
+            dribble(cur_speed);
+            //ESP_LOGI("Drb", "cur_speed = %d", cur_speed);
+            vTaskDelay(5);
+        }
     }
 }

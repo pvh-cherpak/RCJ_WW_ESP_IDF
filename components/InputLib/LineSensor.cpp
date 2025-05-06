@@ -148,13 +148,18 @@ bool LineSensor_t::isLineOnSensor(int sensor)
 
 void LineSensor_t::saveLineDirection()
 {
+  bool mass[16];
   is_line_detected = false;
-  for (int i = 0; i < 16; i++)
+  for (int i = 0; i < 16; i++){
+    mass[i] = 0;
     if (isLineOnSensor(i) && (white_value[i] - green_value[i] > 700))
     {
       line_time[i] = xTaskGetTickCount();
       is_line_detected = true;
+      mass[i] = 1;
+    }
   }
+  // ESP_LOGI("Line  ", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", mass[0], mass[1], mass[2], mass[3], mass[4], mass[5], mass[6], mass[7], mass[8], mass[9], mass[10], mass[11], mass[12], mass[13], mass[14], mass[15]);
 }
 
 void LineSensor_t::getLineDirection_Delayed(float &x, float &y)

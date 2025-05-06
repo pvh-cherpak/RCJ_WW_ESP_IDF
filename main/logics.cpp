@@ -611,6 +611,12 @@ void playForwardGoyda(int color)
 
         sensor.update();
 
+        // if (sensor.Locator.getStrength() < 5){
+        //     drv.drive(0, 0, 0, 0);
+        //     // dribbler.smart_dribble(0);
+        //     return;
+        // }
+
         int cam_angle = -sensor.Cam.gate(color).center_angle;
         int cam_dist = sensor.Cam.gate(color).distance;
 
@@ -776,7 +782,12 @@ void playForwardDribble2(int color)
 
         if (!isBall())
         {
-            dribbler.dribble((abs(ballAngle) < 40) ? 40 : 0);
+            if (abs(ballAngle) < 40)
+                dribbler.na_vse_babki();
+            else
+                dribbler.neutral();
+            // dribbler.dribble((abs(ballAngle) < 40) ? 40 : 0);
+            // dribbler.neutral();
             int deltaAngle = ballAngle * 0.6;
             if (lineAngle == 360)
             {

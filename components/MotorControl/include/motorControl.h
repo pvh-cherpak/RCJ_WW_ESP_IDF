@@ -49,11 +49,13 @@ public:
 class Dribbler{
     private:
         uint32_t servo_per_degree_init(uint32_t degree_of_rotation);
+        int cur_speed = 50;
     public:
         void init();
         void dribble(uint8_t speed);
         void neutral();
         void na_vse_babki();
+        void smart_dribble(uint8_t speed);
 };
 
 #endif

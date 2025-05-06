@@ -157,13 +157,13 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B)
             switch (user_pointer_pos)
             {
             case 1:
-                playForwardDribble2(0);
+                playForwardGoyda(0);
                 break;
             case 2:
                 playGoalkeeperCamera(0);
                 break;
             case 3:
-                playForwardDribble2(1);
+                playForwardGoyda(1);
                 break;
             case 4:
                 playGoalkeeperCamera(1);
@@ -279,6 +279,8 @@ void another_menu(button_handle_t &encoder_button)
             }
             ESP_LOGI(OLED_tag, "Button double click");
         }
+
+        dribbler.smart_dribble(dribbler_speed);
         
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
@@ -332,13 +334,6 @@ void BTCheck(button_handle_t &encoder_button)
         sensor.update();
         BTDebug.send();
         
-        if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
-            // возвращаемся в стартовое меню
-            menu.drawFullMenu(start_menu_text);
-            encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 0);
-            return;
-        }
-
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
 }
