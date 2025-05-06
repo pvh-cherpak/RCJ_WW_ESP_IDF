@@ -251,7 +251,7 @@ void Dribbler::init()
 
     ESP_LOGI("Dribbler::init()", "start taski");
     
-    if (xTaskCreatePinnedToCore(xDriblerTask, "Drb_task", 1024, NULL, 2, &Task, 0) != pdPASS) {
+    if (xTaskCreatePinnedToCore(xDriblerTask, "Drb_task", 8096, NULL, 2, &Task, 0) != pdPASS) {
         ESP_LOGE("Drb_task", "chotot poshlo ne tak pri sozdanii taski");
         vTaskDelay(10);
         esp_restart();
