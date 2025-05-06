@@ -636,7 +636,7 @@ void playForwardGoyda(int color)
 
         else if (!isBall())
         {
-            //dribble((abs(ballAngle) < 40) ? 30 : 0);
+            //smart_dribble((abs(ballAngle) < 40) ? 30 : 0);
             int deltaAngle = -robotAngle; //ballAngle * 0.3;
             if (lineAngle == 360)
             {
@@ -734,7 +734,7 @@ void goalRotate(int color){
     while (isBall()){
         sensor.update();
         int rotateSpeed = abs(sensor.Cam.gate(color).center_angle) > 140 ? 42 : 80; // 42 : 100
-        dribbler.dribble(abs(sensor.Cam.gate(color).center_angle) > 120 ? 110 : 60); // 110
+        dribbler.smart_dribble(abs(sensor.Cam.gate(color).center_angle) > 120 ? 110 : 60); // 110
         drv.drive(0, rotateSpeed * sign, 0);
 
         // if (omnicam().gates[color].center_angle > 0){
@@ -748,7 +748,7 @@ void goalRotate(int color){
 }
 
 void goalDriveBack(int color){
-    dribbler.dribble(0);
+    dribbler.smart_dribble(0);
     while (isBall()){
         sensor.update();
         drv.driveXY(0, -100, 0);
@@ -786,7 +786,7 @@ void playForwardDribble2(int color)
                 dribbler.na_vse_babki();
             else
                 dribbler.neutral();
-            // dribbler.dribble((abs(ballAngle) < 40) ? 40 : 0);
+            // dribbler.smart_dribble((abs(ballAngle) < 40) ? 40 : 0);
             // dribbler.neutral();
             int deltaAngle = ballAngle * 0.6;
             if (lineAngle == 360)
@@ -802,7 +802,7 @@ void playForwardDribble2(int color)
         }
         else
         {
-            dribbler.dribble(50);
+            dribbler.smart_dribble(50);
             drv.drive(0, 0, 0, 0);
             int tt = millis();
             make_pause(500);
@@ -813,7 +813,7 @@ void playForwardDribble2(int color)
                 cam_angle = -sensor.Cam.gate(color).center_angle;
                 cam_dist = sensor.Cam.gate(color).distance;
                 lineAngle = sensor.LineSensor.getAngleDelayed();
-                dribbler.dribble((abs(cam_angle) > 10 || cam_dist > 50) ? 50 : 0);
+                dribbler.smart_dribble((abs(cam_angle) > 10 || cam_dist > 50) ? 50 : 0);
 
                 if (lineAngle == 360)
                 {
@@ -853,7 +853,7 @@ void playForwardDribble2(int color)
                         // return;
                         drv.drive(0, 0, 0, 0);
                         sensor.update();
-                        dribbler.dribble(80);
+                        dribbler.smart_dribble(80);
 
                         make_pause(100);
 

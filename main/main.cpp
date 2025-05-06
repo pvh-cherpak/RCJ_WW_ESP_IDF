@@ -81,6 +81,18 @@ extern "C"
 {
 	void app_main(void)
 	{
+		dribbler.init();
+		ESP_LOGI("main_task", "init vizvan");
+		vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
+		ESP_LOGI("main_task", "smart_dribble 1 vizov");
+		dribbler.smart_dribble(10);
+		ESP_LOGI("main_task", "smart_dribble 1 vizvan uspeshno");
+		vTaskDelay(pdMS_TO_TICKS(1000));
+		dribbler.smart_dribble(10);
+		vTaskDelay(pdMS_TO_TICKS(1000));
+		dribbler.smart_dribble(00);
+		vTaskDelay(pdMS_TO_TICKS(1000));
+		vTaskDelete(NULL);
 		// nvs_set_variables(1);
 
 		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
@@ -190,7 +202,7 @@ extern "C"
 					BTDebug.setPosition(x, y);
 					BTDebug.send();
 					sensor.testUpdate();
-					vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
+					
 				}
 		}
 		*/

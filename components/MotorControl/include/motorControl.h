@@ -46,16 +46,24 @@ public:
     void driveXY(int speedX, int speedY, int rotationSpeed);
 };
 
+void dribble(uint32_t speed);
+uint32_t servo_per_degree_init(uint32_t degree_of_rotation);
+static QueueHandle_t Queue = NULL;
 class Dribbler{
     private:
-        uint32_t servo_per_degree_init(uint32_t degree_of_rotation);
-        int cur_speed = 50;
+        TaskHandle_t Task = NULL;
+        int programm_speed = 0;
+
+    
+    
+        static void xDriblerTask(void *arg);
+    
     public:
         void init();
-        void dribble(uint8_t speed);
+        void smart_dribble(int speed);
         void neutral();
         void na_vse_babki();
-        void smart_dribble(uint8_t speed);
+       
 };
 
 #endif
