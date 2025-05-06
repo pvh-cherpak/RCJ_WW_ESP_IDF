@@ -224,7 +224,11 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
 
 bool isBall()
 {
-    return (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10);
+    if (sensor.cfg.robotType == 2){
+        return sensor.BallSensor.IsBall;
+    }
+    else
+        return (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10);
 }
 
 void killerFeature(int color)
@@ -782,11 +786,7 @@ void playForwardDribble2(int color)
 
         if (!isBall())
         {
-            if (abs(ballAngle) < 40)
-                dribbler.na_vse_babki();
-            else
-                dribbler.neutral();
-            // dribbler.smart_dribble((abs(ballAngle) < 40) ? 40 : 0);
+            dribbler.smart_dribble((abs(ballAngle) < 40) ? 40 : 0);
             // dribbler.neutral();
             int deltaAngle = ballAngle * 0.6;
             if (lineAngle == 360)
@@ -848,7 +848,7 @@ void playForwardDribble2(int color)
                         continue;
                     }
                     // Serial.println(cam_dist);
-                    if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist < 90)
+                    if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist < 30)
                     {
                         // return;
                         drv.drive(0, 0, 0, 0);
@@ -875,7 +875,7 @@ void playForwardDribble2(int color)
 
                         make_pause(200);
 
-                        if (abs(sensor.IMU.getYaw()) < 150 || cam_dist < 60)
+                        if (abs(sensor.IMU.getYaw()) < 150 || cam_dist < 30)
                             goalRotate(color);
                         else
                             goalDriveBack(color);

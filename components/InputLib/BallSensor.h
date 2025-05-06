@@ -3,7 +3,7 @@
 class BallSensor_t
 {
 private:
-    const gpio_num_t GPIO = GPIO_NUM_0;
+    const gpio_num_t GPIO = GPIO_NUM_33;
 private:
     int isBall = false;
 public:

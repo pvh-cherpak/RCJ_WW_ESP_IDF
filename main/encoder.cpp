@@ -32,7 +32,7 @@ int Encoder_t::getCurValue(){
             cur_value -= step;
     }
 
-    ESP_LOGI(TAG, "cur_value: %d (+ %d * %d)", cur_value, complete, step);
+    // ESP_LOGI(TAG, "cur_value: %d (+ %d * %d)", cur_value, complete, step);
 
     prev_pcnt += complete * 4;
     

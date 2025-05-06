@@ -192,22 +192,25 @@ void Dribbler::xDriblerTask(void *arg)
     int speed = 50;
     while (true)
     {
-        ESP_LOGI("Drb_task", "Nachalo cikla");
+        // ESP_LOGI("Drb_task", "Nachalo cikla");
         if (xQueueReceive(Queue, &speed, portMAX_DELAY) != pdPASS) {
             ESP_LOGE("Drb_task", "Error xQueueReceive()");
             break;
         }
-        if (uxQueueMessagesWaiting(Queue) != 0)
+        if (uxQueueMessagesWaiting(Queue) != 0){
+            ESP_LOGW("Drb_task", "в очереди несколько значений, матаем до последнего");
             continue;
+        }
+            
         speed += 50;
         if (speed > 110)
             speed = 110;
         if (speed < cur_speed)
             while (speed < cur_speed)
             {
-                cur_speed -= 10;
+                cur_speed -= 5;
                 dribble(cur_speed);
-                // ESP_LOGI("Drb", "cur_speed = %d", cur_speed);
+                // ESP_LOGI("Drb_task", "cur_speed = %d", cur_speed);
                 vTaskDelay(5);
                 if (uxQueueMessagesWaiting(Queue) != 0)
                     break;
@@ -215,9 +218,9 @@ void Dribbler::xDriblerTask(void *arg)
         else
             while (speed > cur_speed)
             {
-                cur_speed += 10;
+                cur_speed += 5;
                 dribble(cur_speed);
-                // ESP_LOGI("Drb", "cur_speed = %d", cur_speed);
+                // ESP_LOGI("Drb_task", "cur_speed = %d", cur_speed);
                 vTaskDelay(5);
                 if (uxQueueMessagesWaiting(Queue) != 0)
                     break;
@@ -279,7 +282,7 @@ void Dribbler::smart_dribble(int speed)
 {
     if (programm_speed == speed)
         return;
-    if (xQueueSend(Queue, &speed, 0) == errQUEUE_FULL)
+    if (xQueueSend(Queue, &speed, 1) == errQUEUE_FULL)
     {
         ESP_LOGE("smart_dribble", "errQUEUE_FULL");
         return;

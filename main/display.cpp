@@ -157,13 +157,13 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B)
             switch (user_pointer_pos)
             {
             case 1:
-                playForwardGoyda(0);
+                playForwardDribble2(0);
                 break;
             case 2:
                 playGoalkeeperCamera(0);
                 break;
             case 3:
-                playForwardGoyda(1);
+                playForwardDribble2(1);
                 break;
             case 4:
                 playGoalkeeperCamera(1);
