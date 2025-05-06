@@ -38,10 +38,12 @@ public:
         IMU_active = config.IMU_active;
         IMU.init(); LineSensor.init(config.LineSensor_config); Locator.init(config.locator_offset); 
         Cam.init(config.CAM_GPIO);
+        BallSensor.init();
     }
     void update(){
         if(IMU_active) IMU.update(); 
         LineSensor.update(); Locator.update(); Cam.update();
+        BallSensor.update();
     }
     void testUpdate() {IMU.testUpdate(); LineSensor.testUpdate(); Locator.testUpdate();}
 };

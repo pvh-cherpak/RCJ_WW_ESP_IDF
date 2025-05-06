@@ -66,13 +66,16 @@ void sensor_init(uint8_t robot_type)
 		conf.CAM_GPIO = 35;
 		conf.robotType = robot_type;
 		conf.locator_offset = 90;
-		conf.IMU_active = false;
+		conf.IMU_active = true;
 
-		sensor.IMU_active=false;
-		sensor.Cam.init(conf.CAM_GPIO);
-		sensor.LineSensor.init(conf.LineSensor_config);
-		sensor.Locator.init(conf.locator_offset);
-		sensor.BallSensor.init();
+		sensor.init(conf);
+
+		// sensor.IMU_active=false;
+		// sensor.Cam.init(conf.CAM_GPIO);
+		// sensor.LineSensor.init(conf.LineSensor_config);
+		// sensor.Locator.init(conf.locator_offset);
+		// sensor.BallSensor.init();
+		// sensor.cfg = conf;
 
 	}
 }
@@ -132,7 +135,13 @@ extern "C"
 		if (robot_type == 1)
 			menu.showPicture(0, 0, shet, 128, 64, true);
 		else
-			menu.showPicture(0, 0, mechi, 128, 64, false);
+			if(robot_type == 2)
+				menu.showPicture(0, 0, mechi, 128, 64, false);
+			else{
+				menu.writeLineClean(0, "Unknown robot type");
+				vTaskDelay(1000);
+				esp_restart();
+			}
 
 		BTDebug.init();
 		drv.init();
@@ -287,7 +296,7 @@ uint8_t get_identifier()
 	if (err == ESP_ERR_NVS_NOT_FOUND)
 	{
 		nvs_set_variables(2);
-		return 1;
+		return 2;
 	}
 
 	return 0;

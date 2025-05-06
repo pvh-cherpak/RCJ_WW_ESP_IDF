@@ -1,4 +1,6 @@
 #include "BallSensor.h"
+#include "esp_timer.h"
+#include "esp_log.h"
 
 void BallSensor_t::init()
 {
@@ -10,6 +12,17 @@ void BallSensor_t::init()
 void BallSensor_t::update()
 {
     isBall = gpio_get_level(GPIO);
+    if (isBall){
+        ESP_LOGI("ball", " %d", (int)esp_timer_get_time());
+        lastIsBallTime = esp_timer_get_time();
+    }
+}
+
+bool BallSensor_t::ballCatched()
+{
+    if (esp_timer_get_time() - lastIsBallTime <= 10000000) // 200 ms
+        return true;
+    return false;
 }
 
 BallSensor_t::BallSensor_t(/* args */)

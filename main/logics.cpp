@@ -225,7 +225,7 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
 bool isBall()
 {
     if (sensor.cfg.robotType == 2){
-        return sensor.BallSensor.IsBall;
+        return sensor.BallSensor.ballCatched();
     }
     else
         return (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10);
@@ -786,6 +786,7 @@ void playForwardDribble2(int color)
 
         if (!isBall())
         {
+            menu.writeLineClean(0, "ball");
             dribbler.smart_dribble((abs(ballAngle) < 40) ? 40 : 0);
             // dribbler.neutral();
             int deltaAngle = ballAngle * 0.6;
@@ -802,12 +803,14 @@ void playForwardDribble2(int color)
         }
         else
         {
+            menu.writeLineClean(0, "gate...");
             dribbler.smart_dribble(50);
             drv.drive(0, 0, 0, 0);
-            int tt = millis();
             make_pause(500);
+            sensor.BallSensor.update();
             while (isBall())
             {
+                menu.writeLineClean(0, "gate");
                 sensor.update();
 
                 cam_angle = -sensor.Cam.gate(color).center_angle;
