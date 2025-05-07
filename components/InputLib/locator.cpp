@@ -1,7 +1,8 @@
 #include "locator.h"
 
-void locator_t::init(int offset)
+void locator_t::init(int offset, bool inverse)
 {
+    this->inverse=inverse;
     this->offset=offset;
     uint8_t command = 0x00;
     ESP_ERROR_CHECK(i2c_master_write_to_device(I2C_NUM_0, LOCATOR_ADDRESS, &command, 1, I2C_TIMEOUT_TIME_TICS));
@@ -26,7 +27,10 @@ void locator_t::update()
     // if (dir == -180)
     // return lastBallSeenAngle - mpuGetDegree();
     // lastBallSeenAngle = dir + mpuGetDegree();
-    ball_angle = dir;
+    if(inverse)
+        ball_angle = -dir;
+    else
+        ball_angle = dir;
 }
 
 uint8_t locator_t::ReadHeading_1200()

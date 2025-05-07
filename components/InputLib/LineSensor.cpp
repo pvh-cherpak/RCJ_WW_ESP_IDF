@@ -143,7 +143,8 @@ void LineSensor_t::calculateLineAngle()
 
 bool LineSensor_t::isLineOnSensor(int sensor)
 {
-  return ((actual_value[sensor] - green_value[sensor]) >= ((white_value[sensor] - green_value[sensor]) / 2));
+  is_line_on_sensor[sensor] = ((actual_value[sensor] - green_value[sensor]) >= ((white_value[sensor] - green_value[sensor]) / 2));
+  return is_line_on_sensor[sensor];
 }
 
 void LineSensor_t::saveLineDirection()

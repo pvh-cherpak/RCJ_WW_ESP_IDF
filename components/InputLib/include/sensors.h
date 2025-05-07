@@ -14,6 +14,7 @@ struct sensor_config_t
     uint8_t robotType;
     int locator_offset = 0;
     bool IMU_active = true;
+    bool inverse_locator = false;
 };
 
 
@@ -36,12 +37,15 @@ public:
     void init(sensor_config_t config){
         cfg = config;
         IMU_active = config.IMU_active;
-        IMU.init(); LineSensor.init(config.LineSensor_config); Locator.init(config.locator_offset); 
+        if (IMU_active)
+            IMU.init();
+        LineSensor.init(config.LineSensor_config); Locator.init(config.locator_offset, config.inverse_locator); 
         Cam.init(config.CAM_GPIO);
         BallSensor.init();
     }
     void update(){
-        if(IMU_active) IMU.update(); 
+        if(IMU_active)
+            IMU.update();
         LineSensor.update(); Locator.update(); Cam.update();
         BallSensor.update();
     }

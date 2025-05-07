@@ -20,7 +20,7 @@ void BallSensor_t::update()
 
 bool BallSensor_t::ballCatched()
 {
-    if (esp_timer_get_time() - lastIsBallTime <= 10000000) // 200 ms
+    if (esp_timer_get_time() - lastIsBallTime <= 500000) // 200 ms
         return true;
     return false;
 }

@@ -203,15 +203,15 @@ void Dribbler::xDriblerTask(void *arg)
         }
             
         speed += 50;
-        if (speed > 110)
-            speed = 110;
+        if (speed > 140)
+            speed = 140;
         if (speed < cur_speed)
             while (speed < cur_speed)
             {
                 cur_speed -= 5;
                 dribble(cur_speed);
                 // ESP_LOGI("Drb_task", "cur_speed = %d", cur_speed);
-                vTaskDelay(5);
+                vTaskDelay(10);
                 if (uxQueueMessagesWaiting(Queue) != 0)
                     break;
             }
@@ -221,7 +221,7 @@ void Dribbler::xDriblerTask(void *arg)
                 cur_speed += 5;
                 dribble(cur_speed);
                 // ESP_LOGI("Drb_task", "cur_speed = %d", cur_speed);
-                vTaskDelay(5);
+                vTaskDelay(10);
                 if (uxQueueMessagesWaiting(Queue) != 0)
                     break;
             }

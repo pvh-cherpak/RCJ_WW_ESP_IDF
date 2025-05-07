@@ -10,7 +10,7 @@ private:
     const TickType_t I2C_TIMEOUT_TIME_TICS = 100 / portTICK_PERIOD_MS;
 
 public:
-    void init(int offset);
+    void init(int offset, bool inverse);
     void update();
     void testUpdate(){ball_angle = rand() % 360; ESP_LOGI("Locator", "r center_angle: %d", ball_angle);}
     int getBallAngleLocal() { return ball_angle;}
@@ -25,6 +25,7 @@ private:
     int ball_angle = 0;
     int strength = 0;
     int offset = 0;
+    bool inverse;
 private:
     uint8_t ReadHeading_1200();
     uint8_t ReadHeading_600();
