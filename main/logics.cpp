@@ -81,7 +81,7 @@ float rightPrev = 0;
 
 float gb_kp = 1.;
 float gb_ki = 0;
-float gb_kd = 2;
+float gb_kd = 5;
 float gkBallIntegral = 0;
 float gkBallPrev = 0;
 
@@ -92,8 +92,7 @@ int lastGateAngle = 180;
 int lastGateTime = 0;
 int lastGateReset = 5000;
 
-float gate_kp = 1.6;
-float gate_kp_neg = 0.5;
+float gate_kp = 1;
 float gate_kd = 0;
 float gate_ki = 0;
 
@@ -275,7 +274,7 @@ void killerFeature(int color)
 
         lineAngle = sensor.LineSensor.getAngleDelayed();
 
-        deltaAngle = goodAngle(gateAngle + 180) * 0.25f;
+        deltaAngle = goodAngle(gateAngle) * 0.25f;
 
         ESP_LOGI("killerFeature", "gateAngle: %d", gateAngle);
 
@@ -295,7 +294,7 @@ void killerFeature(int color)
         }
         else
         {
-            if (sensor.Locator.getStrength() >= 70 && abs(ballAngle) > 165)
+            if (sensor.Locator.getStrength() >= 70 && abs(ballAngle) < 15)
             {
                 moveAngle = gateAngle;
                 drv.drive(moveAngle, (int)deltaAngle, 80);
@@ -308,9 +307,9 @@ void killerFeature(int color)
                 if (ballAngle < 0 && ballAngle > -150)
                     moveAngle -= (-180 - ballAngle) * 0.6f;*/
                 if (ballAngle > 0)
-                    moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
-                else
                     moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
+                else
+                    moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
 
                 drv.drive(moveAngle, (int)deltaAngle, 50);
             }
@@ -421,9 +420,9 @@ void playGoalkeeperCamera(int color)
                 continue;
             }
 
-            // float global_x, global_y;
-            // int get_pos_callback = getGlobalPosition_2gates(global_x, global_y, color);
-            // BTDebug.send();
+            float global_x, global_y;
+            int get_pos_callback = getGlobalPosition_2gates(global_x, global_y, color);
+            BTDebug.send();
             // if (get_pos_callback == 0)
             // {
             //     menu.writeLineClean(3, "GP X" + std::to_string(global_x));
@@ -496,7 +495,12 @@ void playGoalkeeperCamera(int color)
         int cam_height = sensor.Cam.gate(color).height;
         int cam_dist = sensor.Cam.gate(color).distance;
 
-        menu.writeLineClean(1, "GK " + std::to_string(gateAngle) + "  " + std::to_string(cam_dist));
+        if (globalGateAngle < -135 || globalGateAngle > 135){
+            leftBallDir = Vector2(-1.5f, 0);
+            rightBallDir = Vector2(1.5f, 0);
+        }
+        else
+            menu.writeLineClean(1, "GK " + std::to_string(gateAngle) + "  " + std::to_string(cam_dist));
 
         if (cam_height > 0)
         {
@@ -543,7 +547,8 @@ void playGoalkeeperCamera(int color)
             menu.writeLineClean(2, "Line");
             // speedX = (int)(-lineX * 80);
             // speedY = (int)(-lineY * 80);
-            deltaAngle = (gateAngle == 360) ? -robotAngle : -(int)goodAngle(180 - gateAngle);
+            //deltaAngle = -robotAngle * 0.25; 
+            deltaAngle = (gateAngle == 360) ? -robotAngle * 0.5 : -(int)goodAngle(180 - gateAngle) * 0.25;
             drv.drive(goodAngle(lineAngle + 180), deltaAngle, 80);
             continue;
         }
@@ -551,15 +556,20 @@ void playGoalkeeperCamera(int color)
         {
             menu.writeLineClean(2, "");
             speedX = 0;
-            int err = 20; //cam_height - 10;
-            // speedY = (int)(err * gate_kp + (err - gatePrev) * gate_kd + gateIntegral);
+            int err = -constrain((-1./84000 * cam_dist*cam_dist*cam_dist*cam_dist + 1./672 * cam_dist*cam_dist*cam_dist
+                                  - 31./1680 * cam_dist*cam_dist - 11./84 *cam_dist), 0, 100);
+            if (cam_dist < 15)
+                err = 50;
+            else if (cam_dist < 20)
+                err = 25;
+           else if (cam_dist < 25)
+                err = 0;
+            //speedY = (int)(err * gate_kp + (err - gatePrev) * gate_kd + gateIntegral);
+            speedY = err;
 
-            if (err < 20)
-                speedY = 50;
-            else
-                speedY = -constrain((err*err*err*err/2400 - 7 * err * err * err / 1600 + 67 * err * err / 240 - 4*err), 0, 100);
+            // menu.writeLineClean(3, std::to_string(cam_dist) + " " + std::to_string(err) + " " + std::to_string(speedY));
             // if (err < -2)
-            //     speedY = 0.07 * err * err + 5 * err - 3.5;
+            //     speedY = 0.07 * err * err + 5 * err - 3.5; zzzzzzzzzzzzzzzzz
             // else if (err < 2)
             //     speedY = 0;
             // else
@@ -571,6 +581,7 @@ void playGoalkeeperCamera(int color)
 
             if (abs(ballAngle) > 80 && err < 0)
             {
+                //deltaAngle = -robotAngle * 0.25; 
                 deltaAngle = (gateAngle == 360) ? -robotAngle * 0.5 : -(int)goodAngle(180 - gateAngle) * 0.25;
                 ball_strength = sensor.Locator.getStrength();
                 if (ballAngle > 0)
@@ -621,17 +632,20 @@ void playGoalkeeperCamera(int color)
 
         // prevBallStrength = ball_strength;
 
-        speedX = 0;
         // speedX = constrain(speedX, -50, 50);
         // speedY = constrain(speedY, -50, 50);
         int sp = sqrt(speedX * speedX + speedY * speedY);
-        if (sp > 100)
-        {
-            speedX = speedX * 100 / sp;
-            speedY = speedY * 100 / sp;
-        }
+        float angle = atan2(speedX, speedY) * RAD_TO_DEG;
+        angle += goodAngle(gateAngle - 180);
+        drv.drive(angle, (int)deltaAngle, constrain(sp, 0, 100));
 
-        drv.driveXY(speedX, speedY, (int)deltaAngle);
+        // if (sp > 100)
+        // {
+        //     speedX = speedX * 100 / sp;
+        //     speedY = speedY * 100 / sp;
+        // }
+
+        // drv.driveXY(speedX, speedY, (int)deltaAngle);
     }
 }
 
