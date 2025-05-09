@@ -227,7 +227,7 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
 
 bool isBall()
 {
-    if (sensor.cfg.robotType == 2)
+    if (false) //sensor.cfg.robotType == 2)
     {
         return sensor.BallSensor.ballCatched();
     }
@@ -824,12 +824,13 @@ void goalPush(int color)
     while (true)
     {
         vTaskDelay(10 / portTICK_PERIOD_MS);
-        dribbler.smart_dribble(0);
+        sensor.update();
+        // dribbler.smart_dribble(0);
         if (sensor.Cam.gate(color).width < 0)
             break;
         ballAngle = sensor.Locator.getBallAngleLocal();
         int robotAngle = sensor.IMU.getYaw();
-        int gateAngle = (int)sensor.Cam.gate(color).center_angle;
+        int gateAngle = -(int)sensor.Cam.gate(color).center_angle;
         if (gateAngle == 360)
             break;
         lineAngle = sensor.LineSensor.getAngleDelayed();
@@ -876,8 +877,8 @@ void playForwardDribble2(int color)
         int ballAngle = -sensor.Locator.getBallAngleLocal();
         int lineAngle = sensor.LineSensor.getAngleDelayed();
         
-        if (sensor.Cam.gate(color).width >= 0)
-            goalPush(color);
+        // if (sensor.Cam.gate(color).width >= 0)
+        //     goalPush(color);
 
         if (!isBall())
         {
@@ -887,7 +888,7 @@ void playForwardDribble2(int color)
             int deltaAngle = ballAngle * 0.3; //(ballAngle < 45 ? 0.3 : 0.5);
             if (lineAngle == 360)
             {
-                moveAngle = ballAngle * 0.5;
+                moveAngle = ballAngle;
 
                 drv.drive(moveAngle, (int)(deltaAngle), 60);
             }

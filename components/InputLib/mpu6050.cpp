@@ -85,8 +85,8 @@ void IMU_t::mpu6050_init(){
 	mpu.setZGyroOffset(offset[5]);
 
 	// Calibration Time: generate offsets and calibrate our MPU6050
-	mpu.CalibrateAccel(7);
-	mpu.CalibrateGyro(7);
+	// mpu.CalibrateAccel(7);
+	// mpu.CalibrateGyro(7);
 	mpu.setDMPEnabled(true);
 	ESP_LOGI(TAG, "End Calibration: %d", mpu.getZGyroOffset());
 }

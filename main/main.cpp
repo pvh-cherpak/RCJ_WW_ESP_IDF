@@ -67,7 +67,7 @@ void sensor_init(uint8_t robot_type)
 		conf.CAM_GPIO = 35;
 		conf.robotType = robot_type;
 		conf.locator_offset = 90;
-		conf.IMU_active = false;
+		conf.IMU_active = true;
 		conf.inverse_locator=true;
 
 		sensor.init(conf);
