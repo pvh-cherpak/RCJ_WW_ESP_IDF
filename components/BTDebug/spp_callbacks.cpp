@@ -174,7 +174,7 @@ bool can_write(uint32_t *handle)
 {
     if (active_spp_client_handle != 0)
     {
-        if (xSemaphoreTake(canWrite, 20 / portTICK_PERIOD_MS) == pdTRUE)
+        if (xSemaphoreTake(canWrite, 0) == pdTRUE)
         {
             *handle = active_spp_client_handle;
             return true;

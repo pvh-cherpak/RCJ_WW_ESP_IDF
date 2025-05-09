@@ -241,3 +241,13 @@ void BTDebug_t::init()
     ESP_LOGI(SPP_TAG, "void init_bluetooth - End");
     active = true;
 }
+
+int16_t f_coordinate2int16(float coord)
+{
+       coord *= 10;
+    if (coord > INT16_MAX)
+        return INT16_MAX;
+    if (coord < INT16_MIN)
+        return INT16_MIN;
+    return (int16_t)coord;
+}

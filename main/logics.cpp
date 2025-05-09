@@ -142,7 +142,8 @@ void make_pause(int ms)
 {
     // vTaskDelay(ms / portTICK_PERIOD_MS);
     int start = millis();
-    while (millis() - start < ms){
+    while (millis() - start < ms)
+    {
         sensor.update();
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
@@ -226,7 +227,8 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
 
 bool isBall()
 {
-    if (sensor.cfg.robotType == 2){
+    if (sensor.cfg.robotType == 2)
+    {
         return sensor.BallSensor.ballCatched();
     }
     else
@@ -329,7 +331,7 @@ void goOverObstacleOmni(float generalSpeed, float generalAngle, float rot_angle,
     // стартовые параметры для drive
     moveAngle = generalAngle;
     deltaAngle = rot_angle;
-    
+
     //if (Mathf.Abs(deltaAngle) > maxTorqueWithBall)
     //{
     //    deltaAngle = (deltaAngle > 0) ? maxTorqueWithBall : -maxTorqueWithBall;
@@ -340,7 +342,7 @@ void goOverObstacleOmni(float generalSpeed, float generalAngle, float rot_angle,
     {
         menu.writeLineClean(0, "obst: " + std::to_string((int)-sensor.Cam.obst_angle));
         float co_angle = goodAngle(-sensor.Cam.obst_angle - generalAngle); // разность углов ворот и препятствия
-        if (rotate) // если нужно отворачиваться от препятствия, то отворачиваемся
+        if (rotate)                                                        // если нужно отворачиваться от препятствия, то отворачиваемся
         {
             if (co_angle > 0 && co_angle < criticalObstacleAngle)
             {
@@ -371,7 +373,8 @@ void goOverObstacleOmni(float generalSpeed, float generalAngle, float rot_angle,
             }
         }
     }
-    else{
+    else
+    {
         menu.writeLineClean(0, "");
         menu.writeLineClean(1, "");
     }
@@ -398,46 +401,46 @@ void playGoalkeeperCamera(int color)
 
         //while (true)
         //{
-            vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
 
-            //killerFeature(1 ^ color);
-            //continue;
+        //killerFeature(1 ^ color);
+        //continue;
 
-            sensor.update();
+        sensor.update();
 
-            if (sensor.Locator.getStrength() < 5)
-            {
-                menu.writeLineClean(1, "No ball");
-                drv.drive(0, 0, 0, 0);
-                continue;
-            }
+        if (sensor.Locator.getStrength() < 5)
+        {
+            menu.writeLineClean(1, "No ball");
+            drv.drive(0, 0, 0, 0);
+            continue;
+        }
 
-            if (stateGame != 0)
-            {
-                kfTimer = millis();
-                killerFeature(1 ^ color);
-                // Serial.println("KILLER!!!");
-                continue;
-            }
+        if (stateGame != 0)
+        {
+            kfTimer = millis();
+            killerFeature(1 ^ color);
+            // Serial.println("KILLER!!!");
+            continue;
+        }
 
-            float global_x, global_y;
-            int get_pos_callback = getGlobalPosition_2gates(global_x, global_y, color);
-            BTDebug.send();
-            // if (get_pos_callback == 0)
-            // {
-            //     menu.writeLineClean(3, "GP X" + std::to_string(global_x));
-            //     menu.writeLineClean(4, "GP Y" + std::to_string(global_y));
-            // }
-            // else if (get_pos_callback == 1)
-            // {
-            //     menu.writeLineClean(3, "FAILED: no gate");
-            //     menu.writeLineClean(4, "");
-            // }
-            // else if (get_pos_callback == 2)
-            // {
-            //     menu.writeLineClean(3, "FAILED: parallel");
-            //     menu.writeLineClean(4, "");
-            // }
+        float global_x, global_y;
+        int get_pos_callback = getGlobalPosition_2gates(global_x, global_y, color);
+        BTDebug.send();
+        // if (get_pos_callback == 0)
+        // {
+        //     menu.writeLineClean(3, "GP X" + std::to_string(global_x));
+        //     menu.writeLineClean(4, "GP Y" + std::to_string(global_y));
+        // }
+        // else if (get_pos_callback == 1)
+        // {
+        //     menu.writeLineClean(3, "FAILED: no gate");
+        //     menu.writeLineClean(4, "");
+        // }
+        // else if (get_pos_callback == 2)
+        // {
+        //     menu.writeLineClean(3, "FAILED: parallel");
+        //     menu.writeLineClean(4, "");
+        // }
         //}
         Vector2 rightBallDir(1.0, 0.0);
         Vector2 leftBallDir(-1.0, 0.0);
@@ -495,7 +498,8 @@ void playGoalkeeperCamera(int color)
         int cam_height = sensor.Cam.gate(color).height;
         int cam_dist = sensor.Cam.gate(color).distance;
 
-        if (globalGateAngle < -135 || globalGateAngle > 135){
+        if (globalGateAngle < -135 || globalGateAngle > 135)
+        {
             leftBallDir = Vector2(-1.5f, 0);
             rightBallDir = Vector2(1.5f, 0);
         }
@@ -547,7 +551,7 @@ void playGoalkeeperCamera(int color)
             menu.writeLineClean(2, "Line");
             // speedX = (int)(-lineX * 80);
             // speedY = (int)(-lineY * 80);
-            //deltaAngle = -robotAngle * 0.25; 
+            //deltaAngle = -robotAngle * 0.25;
             deltaAngle = (gateAngle == 360) ? -robotAngle * 0.5 : -(int)goodAngle(180 - gateAngle) * 0.25;
             drv.drive(goodAngle(lineAngle + 180), deltaAngle, 80);
             continue;
@@ -556,13 +560,12 @@ void playGoalkeeperCamera(int color)
         {
             menu.writeLineClean(2, "");
             speedX = 0;
-            int err = -constrain((-1./84000 * cam_dist*cam_dist*cam_dist*cam_dist + 1./672 * cam_dist*cam_dist*cam_dist
-                                  - 31./1680 * cam_dist*cam_dist - 11./84 *cam_dist), 0, 100);
+            int err = -constrain((-1. / 84000 * cam_dist * cam_dist * cam_dist * cam_dist + 1. / 672 * cam_dist * cam_dist * cam_dist - 31. / 1680 * cam_dist * cam_dist - 11. / 84 * cam_dist), 0, 100);
             if (cam_dist < 15)
                 err = 50;
             else if (cam_dist < 20)
                 err = 25;
-           else if (cam_dist < 25)
+            else if (cam_dist < 25)
                 err = 0;
             //speedY = (int)(err * gate_kp + (err - gatePrev) * gate_kd + gateIntegral);
             speedY = err;
@@ -581,7 +584,7 @@ void playGoalkeeperCamera(int color)
 
             if (abs(ballAngle) > 80 && err < 0)
             {
-                //deltaAngle = -robotAngle * 0.25; 
+                //deltaAngle = -robotAngle * 0.25;
                 deltaAngle = (gateAngle == 360) ? -robotAngle * 0.5 : -(int)goodAngle(180 - gateAngle) * 0.25;
                 ball_strength = sensor.Locator.getStrength();
                 if (ballAngle > 0)
@@ -777,11 +780,13 @@ void playForwardGoyda(int color)
     }
 }
 
-void goalRotate(int color){
+void goalRotate(int color)
+{
     int sign = 1; //(sensor.IMU.getYaw() < 0) ? -1 : 1;
-    while (isBall()){
+    while (isBall())
+    {
         sensor.update();
-        int rotateSpeed = abs(sensor.Cam.gate(color).center_angle) > 140 ? 30 : 90; // 42 : 100
+        int rotateSpeed = abs(sensor.Cam.gate(color).center_angle) > 140 ? 30 : 90;        // 42 : 100
         dribbler.smart_dribble(abs(sensor.Cam.gate(color).center_angle) > 120 ? 110 : 60); // 110
         drv.drive(0, rotateSpeed * sign, 0);
 
@@ -795,19 +800,61 @@ void goalRotate(int color){
     }
 }
 
-void goalDriveBack(int color){
+void goalDriveBack(int color)
+{
     dribbler.smart_dribble(0);
-    while (isBall()){
+    while (isBall())
+    {
         sensor.update();
         drv.driveXY(0, -100, 0);
     }
 
     ballAngle = sensor.Locator.getBallAngleLocal();
     int sign = 1; //(sensor.IMU.getYaw() < 0) ? -1 : 1;
-    while (abs(ballAngle) < 40 && !isBall()){
+    while (abs(ballAngle) < 40 && !isBall())
+    {
         sensor.update();
         ballAngle = sensor.Locator.getBallAngleLocal();
         drv.driveXY(40 * sign, 0, 0);
+    }
+}
+
+void goalPush(int color)
+{
+    while (true)
+    {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        dribbler.smart_dribble(0);
+        if (sensor.Cam.gate(color).width < 0)
+            break;
+        ballAngle = sensor.Locator.getBallAngleLocal();
+        int robotAngle = sensor.IMU.getYaw();
+        int gateAngle = (int)sensor.Cam.gate(color).center_angle;
+        if (gateAngle == 360)
+            break;
+        lineAngle = sensor.LineSensor.getAngleDelayed();
+        deltaAngle = goodAngle(gateAngle + 180) * 0.25f;
+        if (lineAngle != 360)
+        {
+            drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
+        }
+        else
+        {
+            if (sensor.Locator.getStrength() >= 70 && abs(ballAngle) > 165)
+            {
+                moveAngle = gateAngle;
+                drv.drive(moveAngle, (int)deltaAngle, 80);
+            }
+            else
+            {
+                moveAngle = ballAngle;
+                if (ballAngle > 0)
+                    moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
+                else
+                    moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
+                drv.drive(moveAngle, (int)deltaAngle, 50);
+            }
+        }
     }
 }
 
@@ -828,6 +875,9 @@ void playForwardDribble2(int color)
         int st = sensor.Locator.getStrength();
         int ballAngle = -sensor.Locator.getBallAngleLocal();
         int lineAngle = sensor.LineSensor.getAngleDelayed();
+        
+        if (sensor.Cam.gate(color).width >= 0)
+            goalPush(color);
 
         if (!isBall())
         {

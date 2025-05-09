@@ -15,7 +15,9 @@ void projectSpeedOnLineXY(int speedX, int speedY, float lineX, float lineY, floa
 
 void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, float &resSpeedX, float &resSpeedY);
 
-int getGlobalPosition_2gates(double &x, double &y, int color);
+bool getRayIntersection(float x1, float y1, float a1, float x2, float y2, float a2, float& out_x, float& out_y);
+
+int getGlobalPosition_2gates(float &x, float &y, int color);
 
 void killerFeature(int color);
 

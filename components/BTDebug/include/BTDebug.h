@@ -11,14 +11,7 @@
 #include "string"
 #include <limits.h>
 
-int16_t f_coordinate2int16(float coord){
-    coord *= 10;
-    if (coord > INT16_MAX)
-        return INT16_MAX;
-    if (coord < INT16_MIN)
-        return INT16_MIN;
-    return (int16_t)coord;
-}
+int16_t f_coordinate2int16(float coord);
 
 class BTDebug_t
 {
