@@ -57,7 +57,7 @@ static const char *TAG = "IMU";
 #define RAD_TO_DEG (180.0/3.1415926)
 #define DEG_TO_RAD 0.0174533
 
-void IMU_t::mpu6050_init(){
+void IMU_t::mpu6050_init(int16_t offset[]){
 	// Initialize mpu6050
 	mpu.initialize();
 	// Get Device ID
@@ -139,6 +139,15 @@ void IMU_t::getYawPitchRoll() {
 	ESP_LOGV(TAG, "roll:%f pitch:%f yaw:%f",ypr[2] * RAD_TO_DEG, ypr[1] * RAD_TO_DEG, ypr[0] * RAD_TO_DEG);
 }
 
+int16_t *IMU_t::calibrate(uint8_t loops)
+{
+	mpu.setDMPEnabled(false);
+	mpu.CalibrateAccel(loops);
+	mpu.CalibrateGyro(loops);
+	int16_t *ofsets = mpu.GetActiveOffsets();
+	mpu.setDMPEnabled(true);
+    return ofsets;
+}
 
 // display real acceleration, adjusted to remove gravity
 /*

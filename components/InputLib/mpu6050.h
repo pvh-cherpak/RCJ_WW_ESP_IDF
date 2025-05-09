@@ -13,8 +13,6 @@
 class IMU_t
 {
 private:
-    int16_t offset[6] = {-183, -3592, 1408, 41, -45, -46};
-    //XAxes YAxes ZAxes XGyro YDyro ZGyro
     float quatx;
     float quaty;
     float quatz;
@@ -56,7 +54,7 @@ private:
     // void getQuaternion()
 private:
     MPU6050 mpu;
-    void mpu6050_init();
+    void mpu6050_init(int16_t offset[]);
     void mpu6050();
     void mpu6059_calibrate();
     void getYawPitchRoll();
@@ -64,8 +62,9 @@ private:
 public:
     int getYaw() { return i_yaw; }
     const int &Yaw = i_yaw;
-    void init() { mpu6050_init();}
+    void init(int16_t offset[]) { mpu6050_init(offset);}
     void update() { mpu6050(); }
+    int16_t * calibrate(uint8_t loops);
     void testUpdate(){i_yaw = rand() % 360; ESP_LOGI("MPU6050 TEST", "Yaw: %d", i_yaw);}
     IMU_t() {}
 };

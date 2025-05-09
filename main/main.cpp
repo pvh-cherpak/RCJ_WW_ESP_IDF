@@ -29,6 +29,7 @@
 
 #include "nvs.h"
 #include "nvs_flash.h"
+#include "nvs_templates.h"
 
 extern const char *NVS_WHITE_VALUE_GROUP;
 extern const char *NVS_GREEN_VALUE_GROUP;
@@ -41,6 +42,8 @@ uint8_t get_identifier();
 void sensor_init(uint8_t robot_type)
 {
 	sensor_config_t conf;
+
+	conf.offsets = get_MPU_offsets_blob();
 
 	if (robot_type == 1)
 	{ //keeper
@@ -57,7 +60,7 @@ void sensor_init(uint8_t robot_type)
 		conf.CAM_GPIO = 36;
 		conf.locator_offset = 0;
 		conf.IMU_active = true;
-		conf.inverse_locator=false;
+		conf.inverse_locator = false;
 
 		sensor.init(conf);
 	}
@@ -68,7 +71,7 @@ void sensor_init(uint8_t robot_type)
 		conf.robotType = robot_type;
 		conf.locator_offset = 90;
 		conf.IMU_active = true;
-		conf.inverse_locator=true;
+		conf.inverse_locator = true;
 
 		sensor.init(conf);
 
@@ -78,7 +81,6 @@ void sensor_init(uint8_t robot_type)
 		// sensor.Locator.init(conf.locator_offset);
 		// sensor.BallSensor.init();
 		// sensor.cfg = conf;
-
 	}
 }
 
@@ -98,7 +100,6 @@ extern "C"
 		// dribbler.smart_dribble(00);
 		// vTaskDelay(pdMS_TO_TICKS(1000));
 		// vTaskDelete(NULL);
-
 
 		// nvs_set_variables(1);
 
@@ -136,17 +137,17 @@ extern "C"
 
 		if (robot_type == 1)
 			menu.showPicture(0, 0, shet, 128, 64, true);
+		else if (robot_type == 2)
+			menu.showPicture(0, 0, mechi, 128, 64, false);
 		else
-			if(robot_type == 2)
-				menu.showPicture(0, 0, mechi, 128, 64, false);
-			else{
-				menu.writeLineClean(0, "Unknown robot type");
-				vTaskDelay(1000);
-				esp_restart();
-			}
+		{
+			menu.writeLineClean(0, "Unknown robot type");
+			vTaskDelay(1000);
+			esp_restart();
+		}
 
 		// BTDebug.init();
-		
+
 		drv.init();
 		dribbler.init();
 		//err_log.init();
@@ -258,30 +259,27 @@ void nvs_set_variables(uint8_t robot_type)
 {
 	nvs_handle_t nvs_handle;
 	esp_err_t err;
-	nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
 
+	nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
 	for (int i = 0; i < 16; i++)
-	{ // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
-		err = nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i);
-		if (err != ESP_ERR_NVS_NOT_FOUND)
-			ESP_ERROR_CHECK(err);
-	}
+		// символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
+		ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i));
+	nvs_commit(nvs_handle);
 	nvs_close(nvs_handle);
 
 	nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle);
 	for (int i = 0; i < 16; i++)
-	{ // символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
-		err = nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i);
-		if (err != ESP_ERR_NVS_NOT_FOUND)
-			ESP_ERROR_CHECK(err);
-	}
+		// символы w и g выбраны не потому что я жадный, а из-за ограничения размера ключа
+		ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i));
+	nvs_commit(nvs_handle);
 	nvs_close(nvs_handle);
 
-	(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
-	err = (nvs_set_u8(nvs_handle, "robot_type", robot_type));
-	if (err != ESP_ERR_NVS_NOT_FOUND)
-		ESP_ERROR_CHECK(err);
+	ESP_ERROR_CHECK(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
+	ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, "robot_type", robot_type));
+	nvs_commit(nvs_handle);
 	nvs_close(nvs_handle);
+
+	restore_MPU_offsets_blob();
 }
 
 uint8_t get_identifier()
@@ -289,11 +287,11 @@ uint8_t get_identifier()
 	uint8_t robot_type = 0;
 
 	nvs_handle_t nvs_handle;
-	(nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle));
+
+	nvs_open(NVS_IDENTIFIER_GROUP, NVS_READWRITE, &nvs_handle);
 	esp_err_t err = nvs_get_u8(nvs_handle, "robot_type", &robot_type);
 	if (err == ESP_OK)
 		return robot_type;
-
 	nvs_close(nvs_handle);
 
 	if (err == ESP_ERR_NVS_NOT_FOUND)

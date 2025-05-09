@@ -15,6 +15,7 @@ struct sensor_config_t
     int locator_offset = 0;
     bool IMU_active = true;
     bool inverse_locator = false;
+    int16_t *offsets = nullptr;
 };
 
 
@@ -38,7 +39,7 @@ public:
         cfg = config;
         IMU_active = config.IMU_active;
         if (IMU_active)
-            IMU.init();
+            IMU.init(config.offsets);
         LineSensor.init(config.LineSensor_config); Locator.init(config.locator_offset, config.inverse_locator); 
         Cam.init(config.CAM_GPIO);
         BallSensor.init();

@@ -48,7 +48,7 @@ void LineSensor_t::init(LineSensor_config_t config)
   // ESP_ERROR_CHECK(gpio_set_pull_mode(MULT_OUT, GPIO_PULLDOWN_ONLY));
 
   // Чиатаем значения белого и зелёного, что почему и как я в мейне распинался
-  int corection_counter = 0;
+  bool need_to_comit = false;
   nvs_handle_t nvs_handle;
   ESP_ERROR_CHECK(nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle));
   for (int i = 0; i < 16; i++)
@@ -62,13 +62,16 @@ void LineSensor_t::init(LineSensor_config_t config)
     {
       err = nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), i);
       if (err == ESP_OK)
-        corection_counter++;
+        need_to_comit = true;
       else
         ESP_ERROR_CHECK(err);
     }
   }
+  if(need_to_comit)
+    nvs_commit(nvs_handle);
   nvs_close(nvs_handle);
 
+  need_to_comit = false;
   ESP_ERROR_CHECK(nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle));
   for (int i = 0; i < 16; i++)
   {
@@ -81,15 +84,14 @@ void LineSensor_t::init(LineSensor_config_t config)
     {
       err = nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), i);
       if (err == ESP_OK)
-        corection_counter++;
+        need_to_comit = true;
       else
         ESP_ERROR_CHECK(err);
     }
   }
+  if(need_to_comit)
+    nvs_commit(nvs_handle);
   nvs_close(nvs_handle);
-
-  if (corection_counter)
-    ESP_LOGW("LineSensor NVS", "corected errors %d", corection_counter);
 
   // согласитесь это ШЕДЕВР
   ESP_LOGI("White values", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", white_value[0], white_value[1], white_value[2], white_value[3], white_value[4], white_value[5], white_value[6], white_value[7], white_value[8], white_value[9], white_value[10], white_value[11], white_value[12], white_value[13], white_value[14], white_value[15]);
@@ -123,11 +125,13 @@ void LineSensor_t::saveGreenWhite()
   ESP_ERROR_CHECK(nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle));
   for (int i = 0; i < 16; i++)
     ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("w" + std::to_string(i)).c_str(), white_value[i]));
+  nvs_commit(nvs_handle);
   nvs_close(nvs_handle);
 
   ESP_ERROR_CHECK(nvs_open(NVS_GREEN_VALUE_GROUP, NVS_READWRITE, &nvs_handle));
   for (int i = 0; i < 16; i++)
     ESP_ERROR_CHECK(nvs_set_u16(nvs_handle, ("g" + std::to_string(i)).c_str(), green_value[i]));
+  nvs_commit(nvs_handle);
   nvs_close(nvs_handle);
 }
 

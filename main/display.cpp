@@ -18,7 +18,7 @@ static const std::vector<std::string> info_menu_text =
     {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Ball str:", "Line X:", "Exit"};
 
 static const std::vector<std::string> another_menu_text =
-    {"-Another  menu-", "Line calib", "Dribbler: ", "Na vse babki", "neutral"};
+    {"-Another  menu-", "Line calib", "Dribbler: ", "Na vse babki", "neutral", "mpu calib"};
     
 static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 
@@ -245,6 +245,17 @@ void another_menu(button_handle_t &encoder_button)
                 break;
             case 4:
                 dribbler.neutral();
+                break;
+            case 5:
+                menu.clearDisplay();
+                menu.writeLine(1, "calibrating...", false);
+
+                save_MPU_offsets_blob(sensor.IMU.calibrate(10));
+                
+                menu.writeLine(1, "done", false);
+                vTaskDelay(3000 / portTICK_PERIOD_MS);
+                menu.clearDisplay();
+                menu.drawFullMenu(another_menu_output_text);
                 break;
             default:
                 ESP_LOGI(OLED_tag, "Button click");

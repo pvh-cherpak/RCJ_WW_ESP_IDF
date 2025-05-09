@@ -5,6 +5,8 @@
 #include "ssd1306.h"
 #include "font8x8_basic.h"
 
+#include "nvs_templates.h"
+
 #include <iot_button.h>
 #include <stdlib.h>
 #include <string.h>
