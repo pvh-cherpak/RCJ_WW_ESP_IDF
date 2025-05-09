@@ -145,7 +145,8 @@ extern "C"
 				esp_restart();
 			}
 
-		BTDebug.init();
+		// BTDebug.init();
+		
 		drv.init();
 		dribbler.init();
 		//err_log.init();

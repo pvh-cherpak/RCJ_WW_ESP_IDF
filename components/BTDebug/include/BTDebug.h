@@ -9,6 +9,16 @@
 #include "sensors.h"
 
 #include "string"
+#include <limits.h>
+
+int16_t f_coordinate2int16(float coord){
+    coord *= 10;
+    if (coord > INT16_MAX)
+        return INT16_MAX;
+    if (coord < INT16_MIN)
+        return INT16_MIN;
+    return (int16_t)coord;
+}
 
 class BTDebug_t
 {
@@ -26,6 +36,7 @@ private:
     int str_end_pos = string_buf_start_pos;
 
 private:
+    bool active = false;
     uint8_t state = 0;
     int16_t pos_x = 0;
     int16_t pos_y = 0;
@@ -39,7 +50,7 @@ public:
 
     void addString(const std::string &s);
 
-    void setPosition(int16_t x, int16_t y) {pos_x = x * 10; pos_y = y * 10;};
+    void setPosition(float x, float y) {pos_x = f_coordinate2int16(x); pos_y =f_coordinate2int16(y);};
 
     void init();
 

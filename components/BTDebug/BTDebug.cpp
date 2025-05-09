@@ -25,12 +25,18 @@ BTDebug_t::~BTDebug_t()
 
 void BTDebug_t::addCString(const char *s)
 {
+    if(!active)
+        return;
+
     for (int i = 0; 0 != s[i] && str_end_pos < buffer_size; str_end_pos++, i++)
         outbuf[str_end_pos] = s[i];
 }
 
 void BTDebug_t::addString(const std::string &s)
 {
+    if(!active)
+        return;
+
     int s_size = s.size();
     if (s_size + str_end_pos > buffer_size)
         return;
@@ -40,6 +46,9 @@ void BTDebug_t::addString(const std::string &s)
 
 void BTDebug_t::send()
 {
+    if(!active)
+        return;
+    
     int64_t start_time = esp_timer_get_time();
     uint32_t handle;
     if (can_write(&handle))
@@ -230,4 +239,5 @@ void BTDebug_t::init()
     esp_bt_gap_set_pin(pin_type, 0, pin_code);
 
     ESP_LOGI(SPP_TAG, "void init_bluetooth - End");
+    active = true;
 }
