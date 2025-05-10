@@ -178,29 +178,31 @@ void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, 
 void calibrateDistOffset(int color)
 {
     sensor.update();
-    while (abs(sensor.IMU.getYaw()) > 5){
-        ESP_LOGI("GP", "to 0");
+    while (abs(sensor.IMU.getYaw()) > 10){
+        // ESP_LOGI("GP", "to 0");
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.update();
-        drv.drive(0, -sensor.IMU.getYaw() * 0.5, 0);
+        drv.drive(0, -sensor.IMU.getYaw(), 0);
     }
 
     std::vector<int> angles, dist;
 
     while (abs(sensor.IMU.getYaw()) < 170){
-        ESP_LOGI("GP", "to 170");
+        // ESP_LOGI("GP", "to 170");
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.update();
-        angles.push_back(sensor.Cam.gate(color).clos_angle);
-        dist.push_back(sensor.Cam.gate(color).distance);
+        if (sensor.Cam.gate(color).clos_angle != 360 && sensor.Cam.gate(color).distance > 3){
+            angles.push_back(sensor.Cam.gate(color).clos_angle);
+            dist.push_back(sensor.Cam.gate(color).distance);
+        }
         drv.drive(0, 15, 0);
     }
 
     while (abs(sensor.IMU.getYaw()) > 5){
-        ESP_LOGI("GP", "back to 0");
+        // ESP_LOGI("GP", "back to 0");
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.update();
-        if (sensor.Cam.gate(color).clos_angle != 360){
+        if (sensor.Cam.gate(color).clos_angle != 360 && sensor.Cam.gate(color).distance > 3){
             angles.push_back(sensor.Cam.gate(color).clos_angle);
             dist.push_back(sensor.Cam.gate(color).distance);
         }
@@ -210,6 +212,7 @@ void calibrateDistOffset(int color)
     drv.drive(0, 0, 0, 0);
 
     float min_x = 0, max_x = 0, min_y = 0, max_y = 0;
+    int min_dist = 1000, max_dist = 0;
     for (int i = 0; i < dist.size(); ++i){
         Vector2 vec(angles[i]);
         vec = vec * dist[i];
@@ -217,13 +220,16 @@ void calibrateDistOffset(int color)
         max_x = std::max(max_x, vec.x);
         min_y = std::min(min_y, vec.y);
         max_y = std::max(max_y, vec.y);
+        min_dist = std::min(min_dist, dist[i]);
+        max_dist = std::max(max_dist, dist[i]);
         ESP_LOGI("GP", "%d:  %d;%d  (%d;%d)", i, dist[i], angles[i], (int)vec.x, (int)vec.y);
     }
 
+    ESP_LOGI("GP", "dist:  %d..%d", (int)min_dist, (int)max_dist);
     ESP_LOGI("GP", "dist offset:  x %d..%d y %d..%d", (int)min_x, (int)max_x, (int)min_y, (int)max_y);
 
-    sensor.Cam.dist_offset_x = (min_x + max_x) / 2;
-    sensor.Cam.dist_offset_y = (min_y + max_y) / 2;
+    sensor.Cam.dist_offset_x -= (min_x + max_x) / 2;
+    sensor.Cam.dist_offset_y -= (min_y + max_y) / 2;
 }
 
 bool getRayIntersection(float x1, float y1, float ang1, float x2, float y2, float ang2, float& out_x, float& out_y) {
