@@ -47,8 +47,9 @@ void sensor_init(uint8_t robot_type)
 	get_MPU_offsets_blob(offset);
 	conf.offsets = offset;
 
-	ESP_LOGI("MPU", "offsets_pointer: %p", conf.offsets);
-	ESP_LOGI("MPU", "offset[0] : %d", *conf.offsets);
+	// ESP_LOGI("MPU", "offsets_pointer: %p", conf.offsets);
+	ESP_LOGI("MPU", "XAxes YAxes ZAxes XGyro YDyro ZGyro");
+	ESP_LOGI("MPU", "offsets: %d, %d, %d, %d, %d, %d", offset[0], offset[1], offset[2], offset[3], offset[4], offset[5]);
 
 	if (robot_type == 1)
 	{ //keeper
