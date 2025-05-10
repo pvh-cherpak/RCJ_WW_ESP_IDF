@@ -190,6 +190,21 @@ void OpenMVCommunication_t::parseData(uint8_t *data)
 
     obst_angle = from_direct_code((data[28] << 8) | data[29]);
     obst_dist = from_direct_code((data[30] << 8) | data[31]);
+
+    float rad2deg = 180 / acos(-1);
+    float clos_x = cam_data.Gates[0].distance * sin(cam_data.Gates[0].clos_angle / rad2deg);
+    float clos_y = cam_data.Gates[0].distance * cos(cam_data.Gates[0].clos_angle / rad2deg);
+    clos_x += dist_offset_x;
+    clos_y += dist_offset_y;
+    cam_data.Gates[0].distance = sqrt(clos_x * clos_x + clos_y * clos_y);
+    cam_data.Gates[0].clos_angle = atan2(clos_x, clos_y) * rad2deg;
+    
+    clos_x = cam_data.Gates[1].distance * sin(cam_data.Gates[1].clos_angle / rad2deg);
+    clos_y = cam_data.Gates[1].distance * cos(cam_data.Gates[1].clos_angle / rad2deg);
+    clos_x += dist_offset_x;
+    clos_y += dist_offset_y;
+    cam_data.Gates[1].distance = sqrt(clos_x * clos_x + clos_y * clos_y);
+    cam_data.Gates[1].clos_angle = atan2(clos_x, clos_y) * rad2deg;
 }
 
 int local_good_angle(int angle)
