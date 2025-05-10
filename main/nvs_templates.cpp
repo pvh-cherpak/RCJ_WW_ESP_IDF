@@ -3,7 +3,7 @@
 const char *NVS_UMU = "mpu5060";
 const char *NVS_CAM = "openMV";
 
-bool get_variable(const char *NVS_namespace, const char *NVS_key, int16_t *value)
+bool get_variable_f(const char *NVS_namespace, const char *NVS_key, float *value)
 {
     nvs_handle_t nvs_handle;
 	esp_err_t err = nvs_open(NVS_namespace, NVS_READONLY, &nvs_handle);
@@ -12,13 +12,15 @@ bool get_variable(const char *NVS_namespace, const char *NVS_key, int16_t *value
 	else
 		ESP_ERROR_CHECK(err);
 
-	err = nvs_get_i16(nvs_handle, NVS_key, value);
+	uint32_t buf;
+	err = nvs_get_u32(nvs_handle, NVS_key, &buf);
 	nvs_close(nvs_handle);
 	if (err == ESP_ERR_NVS_NOT_FOUND)
 		return false;
 	else
 		ESP_ERROR_CHECK(err);
 	
+	memcpy(value, &buf, sizeof(float));
 	return true;
 }
 
@@ -60,24 +62,28 @@ void restore_MPU_offsets_blob()
 	save_MPU_offsets_blob(offset);
 }
 
-void get_OpenMV_offset(int16_t *offset_x, int16_t *offset_y)
+void get_OpenMV_offset(float *offset_x, float *offset_y)
 {
-	if(!get_variable(NVS_CAM, "x", offset_x)){
+	if(!get_variable_f(NVS_CAM, "x", offset_x)){
 		restore_OpenMV_offset();
 		esp_restart();
 	}
-	if(!get_variable(NVS_CAM, "y", offset_y)){
+	if(!get_variable_f(NVS_CAM, "y", offset_y)){
 		restore_OpenMV_offset();
 		esp_restart();
 	}	
 }
 
-void set_OpenMV_offset(int16_t offset_x, int16_t offset_y)
+void set_OpenMV_offset(float offset_x, float offset_y)
 {
+	uint32_t buf_x, buf_y;
+	memcpy(&buf_x, &offset_x, sizeof(float));
+	memcpy(&buf_y, &offset_y, sizeof(float));
+
 	nvs_handle_t nvs_handle;
 	ESP_ERROR_CHECK(nvs_open(NVS_CAM, NVS_READWRITE, &nvs_handle));
-	ESP_ERROR_CHECK(nvs_set_i16(nvs_handle, "x", offset_x));
-	ESP_ERROR_CHECK(nvs_set_i16(nvs_handle, "y", offset_y));
+	ESP_ERROR_CHECK(nvs_set_u32(nvs_handle, "x_f", offset_x));
+	ESP_ERROR_CHECK(nvs_set_u32(nvs_handle, "y_f", offset_y));
 	nvs_commit(nvs_handle);
 	nvs_close(nvs_handle);
 }
