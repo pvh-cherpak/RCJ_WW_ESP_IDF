@@ -235,96 +235,6 @@ bool isBall()
         return (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10);
 }
 
-void killerFeature(int color)
-{
-    while (true)
-    {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-
-        if (stateGame != 1)
-        {
-            break;
-            // playGoalkeeperCamera(1 ^ color);
-        }
-        if (millis() - kfTimer >= maxKfTime)
-        {
-            stateGame = 0;
-            ballMoveTime = millis();
-            break;
-        }
-
-        sensor.update();
-
-        ballAngle = sensor.Locator.getBallAngleLocal();
-        int robotAngle = sensor.IMU.getYaw();
-        int gateAngle = sensor.Cam.gate(color).center_angle;
-
-        if (gateAngle != 360)
-        {
-            gateAngle = (int)goodAngle(-gateAngle /*+ 180*/);
-            //lastGateAngle = (int)goodAngle(gateAngle + robotAngle);
-            //lastGateTime = millis();
-        }
-        else
-        {
-            drv.driveXY(0, 0, 20);
-            continue;
-            gateAngle = (int)goodAngle(180 - robotAngle);
-        }
-
-        int cam_height = sensor.Cam.gate(color).height;
-
-        lineAngle = sensor.LineSensor.getAngleDelayed();
-
-        deltaAngle = goodAngle(gateAngle) * 0.25f;
-
-        ESP_LOGI("killerFeature", "gateAngle: %d", gateAngle);
-
-        // if (abs(goodAngle(gateAngle - ballAngle)) >= 140){
-        //     stateGame = 0;
-        //     continue;
-        // }
-
-        // if (abs(deltaAngle) <= 10 && cam_height == 0)
-        // {
-        //     deltaAngle = 50;
-        // }
-
-        if (lineAngle != 360)
-        {
-            drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
-        }
-        else
-        {
-            if (sensor.Locator.getStrength() >= 70 && abs(ballAngle) < 15)
-            {
-                moveAngle = gateAngle;
-                drv.drive(moveAngle, (int)deltaAngle, 80);
-            }
-            else
-            {
-                moveAngle = ballAngle;
-                /*if (ballAngle >= 0 && ballAngle < 150)
-                    moveAngle -= (180 - ballAngle) * 0.6f;
-                if (ballAngle < 0 && ballAngle > -150)
-                    moveAngle -= (-180 - ballAngle) * 0.6f;*/
-                if (ballAngle > 0)
-                    moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
-                else
-                    moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
-
-                drv.drive(moveAngle, (int)deltaAngle, 50);
-            }
-        }
-
-        // if (cam_height >= 700)
-        // {
-        //     stateGame = 0;
-        //     continue;
-        // }
-    }
-}
-
 // функция, чтобы ехать в опр. направлении, объезжая препятствия
 void goOverObstacleOmni(float generalSpeed, float generalAngle, float rot_angle, float critDist, bool rotate = false)
 {
@@ -384,6 +294,95 @@ void goOverObstacleOmni(float generalSpeed, float generalAngle, float rot_angle,
 
     //moveAngle = limitSpeed(moveAngle, generalSpeed, global_x, global_y);
     drv.drive((int)moveAngle, (int)deltaAngle, (int)generalSpeed);
+}
+
+void killerFeature(int color)
+{
+    while (true)
+    {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+
+        if (stateGame != 1)
+        {
+            break;
+            // playGoalkeeperCamera(1 ^ color);
+        }
+        if (millis() - kfTimer >= maxKfTime)
+        {
+            stateGame = 0;
+            ballMoveTime = millis();
+            break;
+        }
+
+        sensor.update();
+
+        ballAngle = sensor.Locator.getBallAngleLocal();
+        int robotAngle = sensor.IMU.getYaw();
+        int gateAngle = sensor.Cam.gate(color).center_angle;
+
+        if (gateAngle != 360)
+        {
+            gateAngle = (int)goodAngle(-gateAngle /*+ 180*/);
+            //lastGateAngle = (int)goodAngle(gateAngle + robotAngle);
+            //lastGateTime = millis();
+        }
+        else
+        {
+            drv.driveXY(0, 0, 20);
+            continue;
+        }
+
+        int cam_height = sensor.Cam.gate(color).height;
+
+        lineAngle = sensor.LineSensor.getAngleDelayed();
+
+        deltaAngle = goodAngle(gateAngle) * 0.25f;
+
+        ESP_LOGI("killerFeature", "gateAngle: %d", gateAngle);
+
+        // if (abs(goodAngle(gateAngle - ballAngle)) >= 140){
+        //     stateGame = 0;
+        //     continue;
+        // }
+
+        // if (abs(deltaAngle) <= 10 && cam_height == 0)
+        // {
+        //     deltaAngle = 50;
+        // }
+
+        if (lineAngle != 360)
+        {
+            drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
+        }
+        else
+        {
+            if (sensor.Locator.getStrength() >= 70 && abs(goodAngle(ballAngle - gateAngle)) < 15)
+            {
+                moveAngle = gateAngle;
+                drv.drive(moveAngle, (int)deltaAngle, 80);
+            }
+            else
+            {
+                moveAngle = ballAngle;
+                /*if (ballAngle >= 0 && ballAngle < 150)
+                    moveAngle -= (180 - ballAngle) * 0.6f;
+                if (ballAngle < 0 && ballAngle > -150)
+                    moveAngle -= (-180 - ballAngle) * 0.6f;*/
+                if (goodAngle(ballAngle - gateAngle) > 0)
+                    moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
+                else
+                    moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
+
+                drv.drive(moveAngle, (int)deltaAngle, 50);
+            }
+        }
+
+        // if (cam_height >= 700)
+        // {
+        //     stateGame = 0;
+        //     continue;
+        // }
+    }
 }
 
 void playGoalkeeperCamera(int color)

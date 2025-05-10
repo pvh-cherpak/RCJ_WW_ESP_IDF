@@ -23,9 +23,17 @@ void killerFeature(int color);
 
 bool isBall();
 
+void goOverObstacleOmni(float generalSpeed, float generalAngle, float rot_angle, float critDist, bool rotate);
+
 void playGoalkeeperCamera(int color);
 
 void playForwardGoyda(int color);
+
+void goalRotate(int color);
+
+void goalDriveBack(int color);
+
+void goalPush(int color);
 
 void playForwardDribble2(int color);
 
