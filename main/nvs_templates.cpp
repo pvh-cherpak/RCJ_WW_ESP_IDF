@@ -2,7 +2,7 @@
 
 const char *NVS_UMU = "mpu5060";
 
-int16_t *get_MPU_offsets_blob()
+void get_MPU_offsets_blob(int16_t *offsets)
 {
 
     nvs_handle_t nvs_handle;
@@ -15,7 +15,6 @@ int16_t *get_MPU_offsets_blob()
 		ESP_ERROR_CHECK(err);
 		
 	size_t length = sizeof(int16_t) * 6;
-    int16_t *offsets = nullptr;
 	err = nvs_get_blob(nvs_handle, "offsets", offsets, &length);
 	nvs_close(nvs_handle);
 	if (err == ESP_ERR_NVS_NOT_FOUND){
@@ -24,8 +23,6 @@ int16_t *get_MPU_offsets_blob()
 	}
 	else
 		ESP_ERROR_CHECK(err);
-    
-        return offsets;
 }
 
 void save_MPU_offsets_blob(int16_t offsets[])

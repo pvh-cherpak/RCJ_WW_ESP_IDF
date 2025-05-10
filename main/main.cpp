@@ -43,7 +43,12 @@ void sensor_init(uint8_t robot_type)
 {
 	sensor_config_t conf;
 
-	conf.offsets = get_MPU_offsets_blob();
+	int16_t offset[6];
+	get_MPU_offsets_blob(offset);
+	conf.offsets = offset;
+
+	ESP_LOGI("MPU", "offsets_pointer: %p", conf.offsets);
+	ESP_LOGI("MPU", "offset[0] : %d", *conf.offsets);
 
 	if (robot_type == 1)
 	{ //keeper
@@ -88,27 +93,8 @@ extern "C"
 {
 	void app_main(void)
 	{
-		// dribbler.init();
-		// ESP_LOGI("main_task", "init vizvan");
-		// vTaskDelay(pdMS_TO_TICKS(1000)); // Задержка 1 секунда
-		// ESP_LOGI("main_task", "smart_dribble 1 vizov");
-		// dribbler.smart_dribble(10);
-		// ESP_LOGI("main_task", "smart_dribble 1 vizvan uspeshno");
-		// vTaskDelay(pdMS_TO_TICKS(1000));
-		// dribbler.smart_dribble(10);
-		// vTaskDelay(pdMS_TO_TICKS(1000));
-		// dribbler.smart_dribble(00);
-		// vTaskDelay(pdMS_TO_TICKS(1000));
-		// vTaskDelete(NULL);
-
 		// nvs_set_variables(1);
 
-		// NVS - Non-Volatile Storage Library, в есп нету EEPROMa поэтому в место него используется
-		// флеш память, её количество можно менять поэтому существует вероятность что место зарезервиролванное под
-		// данные не размечено нижестоящий код проверяет, размечена ли память под NVS и если нет пробует разметить
-		// после заполняя значениями, из-за особенностей работы NVS мы работаем не с адресами а с парами ключ-значение
-		// в случае если пары не созданные то при попытке чтения это вызовет ошибку которую я не хочу обрабатывать
-		// потому проще заполнять пары, хоть какими-то значениями
 		esp_err_t err = nvs_flash_init();
 		if ((err == ESP_ERR_NVS_NO_FREE_PAGES) || (err == ESP_ERR_NVS_NEW_VERSION_FOUND))
 		{
