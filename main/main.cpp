@@ -150,7 +150,7 @@ extern "C"
 			GPIO_B = 39;
 		}
 
-		drv.drive(50, 50, 50, 50);
+		// drv.drive(50, 50, 50, 50);
 
 		// while (true){
 		// 	sensor.LineSensor.update();

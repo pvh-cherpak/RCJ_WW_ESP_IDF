@@ -18,7 +18,7 @@ static const std::vector<std::string> info_menu_text =
     {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Ball str:", "Line X:", "Exit"};
 
 static const std::vector<std::string> another_menu_text =
-    {"-Another  menu-", "Line calib", "Dribbler: ", "Na vse babki", "neutral", "mpu calib"};
+    {"-Another  menu-", "Line calib", "Dribbler: ", "Na vse babki", "neutral", "mpu calib", "dist calib"};
     
 static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 
@@ -200,7 +200,7 @@ void info_menu(button_handle_t &encoder_button)
         menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
         menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
         menu.writeLineClean(5, "B gate: " + std::to_string(sensor.Cam.Blue.center_angle), false);
-        menu.writeLineClean(6, "Obst: " + std::to_string((int)sensor.Cam.obst_angle) + " " + std::to_string((int)sensor.Cam.obst_dist), false);
+        menu.writeLineClean(6, "Y dist: " + std::to_string((int)sensor.Cam.Yellow.distance) + " " + std::to_string((int)sensor.Cam.Yellow.clos_angle), false);
         
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
             // возвращаемся в стартовое меню
@@ -256,6 +256,9 @@ void another_menu(button_handle_t &encoder_button)
                 vTaskDelay(3000 / portTICK_PERIOD_MS);
                 menu.clearDisplay();
                 menu.drawFullMenu(another_menu_output_text);
+                break;
+            case 6:
+                calibrateDistOffset(0);
                 break;
             default:
                 ESP_LOGI(OLED_tag, "Button click");

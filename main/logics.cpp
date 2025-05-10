@@ -175,6 +175,80 @@ void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, 
     projectSpeedOnLineXY(speedX, speedY, lineX, lineY, resSpeedX, resSpeedY);
 }
 
+void calibrateDistOffset(int color)
+{
+    sensor.update();
+    while (abs(sensor.IMU.getYaw()) > 5){
+        ESP_LOGI("GP", "to 0");
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        sensor.update();
+        drv.drive(0, -sensor.IMU.getYaw() * 0.5, 0);
+    }
+
+    std::vector<int> angles, dist;
+
+    while (abs(sensor.IMU.getYaw()) < 170){
+        ESP_LOGI("GP", "to 170");
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        sensor.update();
+        angles.push_back(sensor.Cam.gate(color).clos_angle);
+        dist.push_back(sensor.Cam.gate(color).distance);
+        drv.drive(0, 15, 0);
+    }
+
+    while (abs(sensor.IMU.getYaw()) > 5){
+        ESP_LOGI("GP", "back to 0");
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        sensor.update();
+        if (sensor.Cam.gate(color).clos_angle != 360){
+            angles.push_back(sensor.Cam.gate(color).clos_angle);
+            dist.push_back(sensor.Cam.gate(color).distance);
+        }
+        drv.drive(0, 15, 0);
+    }
+
+    drv.drive(0, 0, 0, 0);
+
+    float min_x = 0, max_x = 0, min_y = 0, max_y = 0;
+    for (int i = 0; i < dist.size(); ++i){
+        Vector2 vec(angles[i]);
+        vec = vec * dist[i];
+        min_x = std::min(min_x, vec.x);
+        max_x = std::max(max_x, vec.x);
+        min_y = std::min(min_y, vec.y);
+        max_y = std::max(max_y, vec.y);
+        ESP_LOGI("GP", "%d:  %d;%d  (%d;%d)", i, dist[i], angles[i], (int)vec.x, (int)vec.y);
+    }
+
+    ESP_LOGI("GP", "dist offset:  x %d..%d y %d..%d", (int)min_x, (int)max_x, (int)min_y, (int)max_y);
+
+    sensor.Cam.dist_offset_x = (min_x + max_x) / 2;
+    sensor.Cam.dist_offset_y = (min_y + max_y) / 2;
+}
+
+bool getRayIntersection(float x1, float y1, float ang1, float x2, float y2, float ang2, float& out_x, float& out_y) {
+    float a1 = cos(ang1 * DEG_TO_RAD);
+    float b1 = -sin(ang1 * DEG_TO_RAD);
+    float c1 = -a1 * x1 - b1 * y1;
+
+    float a2 = cos(ang2 * DEG_TO_RAD);
+    float b2 = -sin(ang2 * DEG_TO_RAD);
+    float c2 = -a2 * x2 - b2 * y2;
+
+    float vp = a1 * b2 - a2 * b1;
+
+    if (abs(vp) < 0.01)
+        return false;
+
+    out_x = -(c1 * b2 - c2 * b1) / vp;
+    out_y = -(a1 * c2 - a2 * c1) / vp;
+
+    if (abs(out_x) > 100 || abs(out_y) > 120 || (abs(out_x) < 1 && abs(out_y) > 99))
+        return false;
+
+    return true;
+}
+
 int getGlobalPosition_2gates(float &x, float &y, int color)
 {
     int our_gate = sensor.Cam.GlobalYellow.center_angle;
@@ -189,19 +263,71 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
 
     float our_x = 0, our_y = -100;
     float other_x = 0, other_y = 100;
+    
+    float dist = sensor.Cam.Blue.distance;
+    float real_dist = -5.14204e-6 * dist*dist*dist*dist + 0.00138507*dist*dist*dist - 0.114196 * dist*dist + 4.33998*dist - 12.618;
+    //825.81 + 15.0901 * dist*dist - 0.0705809 * dist*dist*dist*dist + 0.0000396414 * dist*dist*dist*dist*dist*dist;
+    menu.writeLineClean(2, "B dist " + std::to_string((int)(dist)) + " "  + std::to_string((int)(real_dist)));
 
-    float a1 = cos(our_gate * DEG_TO_RAD);
-    float b1 = -sin(our_gate * DEG_TO_RAD);
-    float c1 = -a1 * our_x - b1 * our_y;
+    std::vector<float> xs = { -30,  30, -30,  30, 0, 0 };
+    // std::vector<float> xs = { 0,  0, 0, 0, 0, 0 };
+    std::vector<float> ys = { -100,-100, 100, 100, -100, 100 };
+    std::vector<float> angs = { (float)sensor.Cam.GlobalYellow.left_angle, (float)sensor.Cam.GlobalYellow.right_angle,
+                                (float)sensor.Cam.GlobalBlue.left_angle,   (float)sensor.Cam.GlobalBlue.right_angle,
+                                (float)sensor.Cam.GlobalYellow.center_angle,   (float)sensor.Cam.GlobalBlue.center_angle
+                            };
+    // std::vector<float> angs = { (float)sensor.Cam.GlobalYellow.center_angle - 5, (float)sensor.Cam.GlobalYellow.center_angle + 5,
+    //                             (float)sensor.Cam.GlobalBlue.center_angle - 5,   (float)sensor.Cam.GlobalBlue.center_angle + 5,
+    //                             (float)sensor.Cam.GlobalYellow.center_angle,   (float)sensor.Cam.GlobalBlue.center_angle
+    //                         };
+                                
+    if (color == 1){
+        std::swap(angs[0], angs[2]);
+        std::swap(angs[1], angs[3]);
+        std::swap(angs[4], angs[5]);
+    }
 
-    float a2 = cos(other_gate * DEG_TO_RAD);
-    float b2 = -sin(other_gate * DEG_TO_RAD);
-    float c2 = -a2 * other_x - b2 * other_y;
+    std::vector<float> ans_x, ans_y;
 
-    float vp = a1 * b2 - a2 * b1;
+    ESP_LOGI("GP", "Angles: %d, %d, %d, %d", (int)angs[0], (int)angs[2], (int)angs[1], (int)angs[3]);
 
-    float our_dist = (color == 0 ? sensor.Cam.gate(0).distance : sensor.Cam.gate(1).distance);
-    float other_dist = (color == 0 ? sensor.Cam.gate(1).distance : sensor.Cam.gate(0).distance);
+    for (int i = 0; i < xs.size(); ++i) {
+        for (int j = i + 1; j < xs.size(); ++j) {
+            if (getRayIntersection(xs[i], ys[i], angs[i], xs[j], ys[j], angs[j], x, y)) {
+                ans_x.push_back(x);
+                ans_y.push_back(y);
+                ESP_LOGI("GP", "%d,%d:  %d;%d", i, j, (int)x, (int)y);
+            }
+        }
+    }
+
+    if (ans_x.empty()) return 2;
+
+    for (int i = 0; i <= ans_x.size() / 2; ++i) {
+        int min_index = 0;
+        for (int j = 0; j < ans_x.size(); ++j)
+            if (ans_x[j] < ans_x[min_index])
+                min_index = j;
+        if (ans_x.size() % 2 == 0 && i == ans_x.size() / 2)
+            x = (x + ans_x[min_index]) / 2;
+        else
+            x = ans_x[min_index];
+        ans_x[min_index] = 1e9;
+    }
+
+    for (int i = 0; i <= ans_y.size() / 2; ++i) {
+        int min_index = 0;
+        for (int j = 0; j < ans_y.size(); ++j)
+            if (ans_y[j] < ans_y[min_index])
+                min_index = j;
+        if (ans_y.size() % 2 == 0 && i == ans_y.size() / 2)
+            y = (y + ans_y[min_index]) / 2;
+        else
+            y = ans_y[min_index];
+        ans_y[min_index] = 1e9;
+    }
+    
+    ESP_LOGI("GP", "median:  %d;%d", (int)x, (int)y);
 
     // if (a1 * b2 == a2 * b1 || abs(vp) < 0.35f)
     // {
@@ -216,12 +342,6 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
 
     // return 0;
 
-    if (a1 * b2 == a2 * b1)
-        return 2;
-
-    x = -(c1 * b2 - c2 * b1) / (a1 * b2 - a2 * b1);
-    y = -(a1 * c2 - a2 * c1) / (a1 * b2 - a2 * b1);
-    BTDebug.setPosition(x, y);
     return 0;
 }
 
@@ -398,8 +518,6 @@ void playGoalkeeperCamera(int color)
         // // drv.drive(moveAngle, deltaAngle, 30);
         // continue;
 
-        //while (true)
-        //{
         vTaskDelay(10 / portTICK_PERIOD_MS);
 
         //killerFeature(1 ^ color);
@@ -407,40 +525,39 @@ void playGoalkeeperCamera(int color)
 
         sensor.update();
 
-        if (sensor.Locator.getStrength() < 5)
-        {
-            menu.writeLineClean(1, "No ball");
-            drv.drive(0, 0, 0, 0);
-            continue;
-        }
+        // if (sensor.Locator.getStrength() < 5)
+        // {
+        //     menu.writeLineClean(1, "No ball");
+        //     drv.drive(0, 0, 0, 0);
+        //     continue;
+        // }
 
-        if (stateGame != 0)
-        {
-            kfTimer = millis();
-            killerFeature(1 ^ color);
-            // Serial.println("KILLER!!!");
-            continue;
-        }
+        // if (stateGame != 0)
+        // {
+        //     kfTimer = millis();
+        //     killerFeature(1 ^ color);
+        //     // Serial.println("KILLER!!!");
+        //     continue;
+        // }
 
         float global_x, global_y;
         int get_pos_callback = getGlobalPosition_2gates(global_x, global_y, color);
         BTDebug.send();
-        // if (get_pos_callback == 0)
-        // {
-        //     menu.writeLineClean(3, "GP X" + std::to_string(global_x));
-        //     menu.writeLineClean(4, "GP Y" + std::to_string(global_y));
-        // }
-        // else if (get_pos_callback == 1)
-        // {
-        //     menu.writeLineClean(3, "FAILED: no gate");
-        //     menu.writeLineClean(4, "");
-        // }
-        // else if (get_pos_callback == 2)
-        // {
-        //     menu.writeLineClean(3, "FAILED: parallel");
-        //     menu.writeLineClean(4, "");
-        // }
-        //}
+        if (get_pos_callback == 0)
+        {
+            menu.writeLineClean(3, "GP X " + std::to_string(global_x));
+            menu.writeLineClean(4, "GP Y " + std::to_string(global_y));
+        }
+        else if (get_pos_callback == 1)
+        {
+            menu.writeLineClean(3, "FAILED: no gate");
+            menu.writeLineClean(4, "");
+        }
+        else if (get_pos_callback == 2)
+        {
+            menu.writeLineClean(3, "FAILED: parallel");
+            menu.writeLineClean(4, "");
+        }
         Vector2 rightBallDir(1.0, 0.0);
         Vector2 leftBallDir(-1.0, 0.0);
 
@@ -483,7 +600,7 @@ void playGoalkeeperCamera(int color)
         //     s += "    ";
         // menu.writeLineClean(5, s);
 
-        // continue;
+        continue;
 
         ballAngle = sensor.Locator.getBallAngleLocal();
         int robotAngle = sensor.IMU.getYaw();

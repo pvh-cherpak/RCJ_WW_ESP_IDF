@@ -15,7 +15,9 @@ void projectSpeedOnLineXY(int speedX, int speedY, float lineX, float lineY, floa
 
 void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, float &resSpeedX, float &resSpeedY);
 
-bool getRayIntersection(float x1, float y1, float a1, float x2, float y2, float a2, float& out_x, float& out_y);
+void calibrateDistOffset(int color);
+
+bool getRayIntersection(float x1, float y1, float ang1, float x2, float y2, float ang2, float &out_x, float &out_y);
 
 int getGlobalPosition_2gates(float &x, float &y, int color);
 
