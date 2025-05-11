@@ -23,6 +23,8 @@ float pixel_dist_to_real(float dist);
 
 int getGlobalPosition_2gates(float &x, float &y, int color);
 
+int getGlobalPosition_dist(float &x, float &y, int color);
+
 void killerFeature(int color);
 
 bool isBall();

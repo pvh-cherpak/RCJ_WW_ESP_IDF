@@ -276,16 +276,6 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
 
     float our_x = 0, our_y = -100;
     float other_x = 0, other_y = 100;
-    
-    float dist = sensor.Cam.Yellow.distance;
-    
-    float real_dist_y = pixel_dist_to_real(dist);
-    //825.81 + 15.0901 * dist*dist - 0.0705809 * dist*dist*dist*dist + 0.0000396414 * dist*dist*dist*dist*dist*dist;
-    menu.writeLineClean(1, "Y dist " + std::to_string((int)(dist)) + " "  + std::to_string((int)(real_dist_y)));
-    
-    dist = sensor.Cam.Blue.distance;
-    float real_dist_b = pixel_dist_to_real(dist);
-    menu.writeLineClean(2, "B dist " + std::to_string((int)(dist)) + " "  + std::to_string((int)(real_dist_b)));
 
     // std::vector<float> xs = { -30,  30, -30,  30, 0, 0 };
     // std::vector<float> ys = { -100,-100, 100, 100, -100, 100 };
@@ -298,10 +288,6 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
     std::vector<float> ys = { -100, 100 };
     std::vector<float> angs = {(float)sensor.Cam.GlobalYellow.center_angle,   (float)sensor.Cam.GlobalBlue.center_angle
                             };
-
-    x = -real_dist_y * sin(sensor.Cam.GlobalYellow.center_angle * DEG_TO_RAD);
-    y = -100 - real_dist_y * cos(sensor.Cam.GlobalYellow.center_angle * DEG_TO_RAD);
-    return 0;
 
     if (color == 1){
         std::swap(angs[0], angs[2]);
@@ -351,18 +337,38 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
     
     ESP_LOGI("GP", "median:  %d;%d", (int)x, (int)y);
 
-    // if (a1 * b2 == a2 * b1 || abs(vp) < 0.35f)
-    // {
-    //     x = 0;
-    //     y = -110 + 220 * our_dist / (our_dist + other_dist);
-
-    //     return 2;
-    // }
-
     // x = -(c1 * b2 - c2 * b1) / (a1 * b2 - a2 * b1);
     // y = -110 + 220 * our_dist / (our_dist + other_dist); // -(a1 * c2 - a2 * c1) / (a1 * b2 - a2 * b1);
 
-    // return 0;
+    return 0;
+}
+
+int getGlobalPosition_dist(float &x, float &y, int color){
+    int our_gate = sensor.Cam.GlobalYellow.center_angle;
+    int other_gate = sensor.Cam.GlobalBlue.center_angle;
+    if (color == 1)
+        std::swap(our_gate, other_gate);
+
+    // if (our_gate == 360 || other_gate == 360)
+    //     return 1;
+
+    float our_x = 0, our_y = -100;
+    float other_x = 0, other_y = 100;
+    
+    menu.writeLineClean(0, "Y dist " + std::to_string((int)(sensor.Cam.Yellow.distance)) + " "  + std::to_string((int)(pixel_dist_to_real(sensor.Cam.Yellow.distance))));
+    menu.writeLineClean(1, "Y dist " + std::to_string((int)(sensor.Cam.Blue.distance)) + " "  + std::to_string((int)(pixel_dist_to_real(sensor.Cam.Blue.distance))));
+    
+    float real_dist_y = pixel_dist_to_real(sensor.Cam.Yellow.distance);
+    float real_dist_b = pixel_dist_to_real(sensor.Cam.Blue.distance);
+
+    if (sensor.Cam.Yellow.center_angle == 360){
+        x = -real_dist_b * sin(sensor.Cam.GlobalBlue.center_angle * DEG_TO_RAD);
+        y = (color == 1 ? -100 : 100) - real_dist_b * cos(sensor.Cam.GlobalBlue.center_angle * DEG_TO_RAD);
+    }
+    else if (sensor.Cam.Blue.center_angle == 360){
+        x = -real_dist_y * sin(sensor.Cam.GlobalYellow.center_angle * DEG_TO_RAD);
+        y = -100 - real_dist_y * cos(sensor.Cam.GlobalYellow.center_angle * DEG_TO_RAD);
+    }
 
     return 0;
 }
@@ -498,7 +504,8 @@ void killerFeature(int color)
         }
         else
         {
-            if (sensor.Locator.getStrength() >= 70 && abs(goodAngle(ballAngle - gateAngle)) < 15)
+            int angle_err = goodAngle(ballAngle - gateAngle);
+            if (sensor.Locator.getStrength() >= 70 && abs(angle_err) < 15)
             {
                 moveAngle = gateAngle;
                 drv.drive(moveAngle, (int)deltaAngle, 80);
@@ -510,7 +517,7 @@ void killerFeature(int color)
                     moveAngle -= (180 - ballAngle) * 0.6f;
                 if (ballAngle < 0 && ballAngle > -150)
                     moveAngle -= (-180 - ballAngle) * 0.6f;*/
-                if (goodAngle(ballAngle - gateAngle) > 0)
+                if (angle_err > 0)
                     moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
                 else
                     moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
@@ -639,8 +646,8 @@ void playGoalkeeperCamera(int color)
             leftBallDir = Vector2(-1.5f, 0);
             rightBallDir = Vector2(1.5f, 0);
         }
-        else
-            menu.writeLineClean(1, "GK " + std::to_string(gateAngle) + "  " + std::to_string(cam_dist));
+        
+        menu.writeLineClean(1, "GK " + std::to_string(gateAngle) + "  " + std::to_string(cam_dist));
 
         if (cam_height > 0)
         {
@@ -842,12 +849,15 @@ void playForwardGoyda(int color)
             if (lineAngle == 360)
             {
                 moveAngle = ballAngle + (ballAngle > 0) ? 15 : -15;
-                if (abs(ballAngle) < 25)
+                int angle_err = goodAngle(ballAngle - cam_angle);
+                if (abs(angle_err) <= 25)
                 {
                     moveAngle = ballAngle;
                 }
-                else
+                else if (angle_err > 25)
                     moveAngle = ballAngle + constrain(st * goRoundBallCoefGk, 0, 90);
+                else if (angle_err < 25)
+                    moveAngle = ballAngle - constrain(st * goRoundBallCoefGk, 0, 90);
                 // double k = 0.5;
 
                 // int delta = 0;
@@ -991,7 +1001,8 @@ void goalPush(int color)
         }
         else
         {
-            if (sensor.Locator.getStrength() >= 70 && abs(ballAngle) > 165)
+            int angle_err = goodAngle(ballAngle - gateAngle - 180);
+            if (sensor.Locator.getStrength() >= 70 && abs(angle_err) > 165)
             {
                 moveAngle = gateAngle;
                 drv.drive(moveAngle, (int)deltaAngle, 80);
@@ -999,7 +1010,7 @@ void goalPush(int color)
             else
             {
                 moveAngle = ballAngle;
-                if (ballAngle > 0)
+                if (angle_err > 0)
                     moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
                 else
                     moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
