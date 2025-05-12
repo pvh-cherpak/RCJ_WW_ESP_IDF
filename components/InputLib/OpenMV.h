@@ -25,7 +25,7 @@ public:
     float obst_angle = 0, obst_dist = 0;
     float g_obst_angle = 0, g_obst_dist = 0;
 
-    int16_t dist_offset_x = 0, dist_offset_y = 0;
+    float dist_offset_x = 0, dist_offset_y = 0;
 public:
     void init(int GPIO);
     void update();
