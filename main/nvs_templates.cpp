@@ -64,11 +64,11 @@ void restore_MPU_offsets_blob()
 
 void get_OpenMV_offset(float *offset_x, float *offset_y)
 {
-	if(!get_variable_f(NVS_CAM, "x", offset_x)){
+	if(!get_variable_f(NVS_CAM, "x_f", offset_x)){
 		restore_OpenMV_offset();
 		esp_restart();
 	}
-	if(!get_variable_f(NVS_CAM, "y", offset_y)){
+	if(!get_variable_f(NVS_CAM, "y_f", offset_y)){
 		restore_OpenMV_offset();
 		esp_restart();
 	}	
@@ -82,8 +82,8 @@ void set_OpenMV_offset(float offset_x, float offset_y)
 
 	nvs_handle_t nvs_handle;
 	ESP_ERROR_CHECK(nvs_open(NVS_CAM, NVS_READWRITE, &nvs_handle));
-	ESP_ERROR_CHECK(nvs_set_u32(nvs_handle, "x_f", offset_x));
-	ESP_ERROR_CHECK(nvs_set_u32(nvs_handle, "y_f", offset_y));
+	ESP_ERROR_CHECK(nvs_set_u32(nvs_handle, "x_f", buf_x));
+	ESP_ERROR_CHECK(nvs_set_u32(nvs_handle, "y_f", buf_y));
 	nvs_commit(nvs_handle);
 	nvs_close(nvs_handle);
 }

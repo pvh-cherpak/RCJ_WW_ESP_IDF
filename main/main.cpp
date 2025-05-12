@@ -50,8 +50,11 @@ void sensor_init(uint8_t robot_type)
 	// ESP_LOGI("MPU", "offsets_pointer: %p", conf.offsets);
 	ESP_LOGI("MPU", "XAxes YAxes ZAxes XGyro YDyro ZGyro");
 	ESP_LOGI("MPU", "offsets: %d, %d, %d, %d, %d, %d", offset[0], offset[1], offset[2], offset[3], offset[4], offset[5]);
-	
-	get_OpenMV_offset(&sensor.Cam.dist_offset_x, &sensor.Cam.dist_offset_x);
+
+	float x, y;
+	get_OpenMV_offset(&x, &y);
+	sensor.Cam.dist_offset_x = x;
+	sensor.Cam.dist_offset_y = y;
 	ESP_LOGI("GP", "dist offsets:  %d, %d", sensor.Cam.dist_offset_x, sensor.Cam.dist_offset_y);
 
 	if (robot_type == 1)

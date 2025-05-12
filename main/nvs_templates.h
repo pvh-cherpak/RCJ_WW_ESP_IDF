@@ -6,7 +6,7 @@
 #include "esp_system.h"
 
 #include "stdio.h"
-#include "string.h""
+#include "string.h"
 
 bool get_variable(const char* NVS_namespace, const char* NVS_key, int16_t& value);
 

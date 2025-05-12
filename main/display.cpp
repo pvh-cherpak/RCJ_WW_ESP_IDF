@@ -18,7 +18,7 @@ static const std::vector<std::string> info_menu_text =
     {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Ball str:", "Line X:", "Exit"};
 
 static const std::vector<std::string> another_menu_text =
-    {"-Another  menu-", "Line calib", "Dribbler: ", "Na vse babki", "neutral", "mpu calib", "dist calib"};
+    {"-Another  menu-", "Line calib", "Dribbler: ", "50505050", "-", "mpu calib", "dist calib"};
     
 static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 
@@ -241,10 +241,10 @@ void another_menu(button_handle_t &encoder_button)
                 menu.drawFullMenu(another_menu_output_text);
                 break;
             case 3:
-                dribbler.na_vse_babki();
+                drv.drive(50,50,50,50);
                 break;
             case 4:
-                dribbler.neutral();
+                drv.drive(0,0,0,0);
                 break;
             case 5:
                 menu.clearDisplay();
