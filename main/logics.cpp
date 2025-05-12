@@ -688,7 +688,7 @@ void playGoalkeeperCamera(int color)
             // speedX = (int)(-lineX * 80);
             // speedY = (int)(-lineY * 80);
             //deltaAngle = -robotAngle * 0.25;
-            deltaAngle = (gateAngle == 360) ? -robotAngle * 0.5 : -(int)goodAngle(180 - gateAngle) * 0.25;
+            deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
             drv.drive(goodAngle(lineAngle + 180), deltaAngle, 80);
             continue;
         }
@@ -735,7 +735,7 @@ void playGoalkeeperCamera(int color)
             if (abs(ballAngle) > 80 && err < 0)
             {
                 //deltaAngle = -robotAngle * 0.25;
-                deltaAngle = (gateAngle == 360) ? -robotAngle * 0.5 : -(int)goodAngle(180 - gateAngle) * 0.25;
+                deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
                 ball_strength = sensor.Locator.getStrength();
                 if (ballAngle > 0)
                 {
@@ -932,7 +932,7 @@ void playForwardGoyda(int color)
 
 void goalRotate(int color)
 {
-    int sign = 1; //(sensor.IMU.getYaw() < 0) ? -1 : 1;
+    int sign = (sensor.IMU.getYaw() < 0) ? -1 : 1;
     while (isBall())
     {
         sensor.update();
@@ -960,7 +960,7 @@ void goalDriveBack(int color)
     }
 
     ballAngle = sensor.Locator.getBallAngleLocal();
-    int sign = 1; //(sensor.IMU.getYaw() < 0) ? -1 : 1;
+    int sign = (sensor.IMU.getYaw() < 0) ? -1 : 1;
     while (abs(ballAngle) < 40 && !isBall())
     {
         sensor.update();
@@ -1062,7 +1062,7 @@ void playForwardDribble2(int color)
                 cam_angle = -sensor.Cam.gate(color).center_angle;
                 cam_dist = sensor.Cam.gate(color).distance;
                 lineAngle = sensor.LineSensor.getAngleDelayed();
-                dribbler.smart_dribble((abs(cam_angle) > 10 || cam_dist > 50) ? 50 : 0);
+                // dribbler.smart_dribble((abs(cam_angle) > 10 || cam_dist > 50) ? 50 : 0);
 
                 if (lineAngle == 360)
                 {
@@ -1073,9 +1073,9 @@ void playForwardDribble2(int color)
                         moveAngle = goodAngle(lineAngle + 180);
                         speed = (lineAngle == 360) ? 0 : 60;
                         cam_angle = -sensor.Cam.gate(color).center_angle;
-                        deltaAngle = ((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+                        deltaAngle = goodAngle(cam_angle + 180) * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
                         deltaAngle = constrain(deltaAngle, -30, 30);
-                        drv.drive(moveAngle, (int)(deltaAngle * 0.5), speed);
+                        drv.drive(moveAngle, (int)(deltaAngle), speed);
                     }
 
                     if (!isBall())
@@ -1084,7 +1084,7 @@ void playForwardDribble2(int color)
                     }
 
                     // return;
-                    int delta_angle = ((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+                    int delta_angle = goodAngle(cam_angle + 180) * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
                     delta_angle = constrain(delta_angle, -40, 40);
                     drv.drive(cam_angle, delta_angle, 80);
 
@@ -1112,7 +1112,7 @@ void playForwardDribble2(int color)
                         {
                             sensor.update();
                             cam_angle = -sensor.Cam.gate(color).center_angle;
-                            deltaAngle = ((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+                            deltaAngle = goodAngle(cam_angle + 180) * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
                             deltaAngle = constrain(deltaAngle, -40, 40);
                             drv.drive(0, (int)(deltaAngle * 0.5), 0);
                         }
