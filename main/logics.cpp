@@ -68,7 +68,7 @@ float considerLineTime = 10;
 float lineSensorPriority[16] = {0, 0.8, 0.2, 0.2, 0.2, 0.6, 0.8, 0, 0, 0.8, 0.6, 0.2, 0.2, 0.2, 0.8, 0};
 int activeSensors = 8;
 int maxGoalkeeperAngle = 80;
-float goRoundBallCoefGk = 0.62f;
+float goRoundBallCoefGk = 0.72f; //0.62
 
 float g_kp = 50;
 float g_ki = 0;
@@ -828,7 +828,8 @@ void playForwardGoyda(int color)
         if (sensor.Locator.getStrength() < 5){
             drv.drive(0, 0, 0, 0);
             // dribbler.smart_dribble(0);
-            return;
+            //return;
+            continue;
         }
 
         int cam_angle = -sensor.Cam.gate(color).center_angle;
@@ -887,18 +888,18 @@ void playForwardGoyda(int color)
 
                 // moveAngle = ballAngle + delta;
 
-                menu.writeLineClean(0, "drive2ball");
-                menu.writeLineClean(1, std::to_string(st));
-                menu.writeLineClean(2, std::to_string(ballAngle));
+                // menu.writeLineClean(0, "drive2ball");
+                // menu.writeLineClean(1, std::to_string(st));
+                // menu.writeLineClean(2, std::to_string(ballAngle));
 
-                drv.drive(moveAngle, (int)deltaAngle, 70);
+                drv.drive(moveAngle, (int)deltaAngle, 60);
             }
             else
             {
                 drv.drive(goodAngle(lineAngle + 180), deltaAngle, 90);
-                menu.writeLineClean(0, "LINE 1");
-                menu.writeLineClean(1, std::to_string(lineAngle));
-                menu.writeLineClean(2, "");
+                // menu.writeLineClean(0, "LINE 1");
+                // menu.writeLineClean(1, std::to_string(lineAngle));
+                // menu.writeLineClean(2, "");
             }
         }
         else
@@ -921,25 +922,25 @@ void playForwardGoyda(int color)
                 if (lineAngle == 360)
                 {
                     int delta_angle = constrain(cam_angle * 0.5, -20, 20);
-                    drv.drive(cam_angle, delta_angle, 90);
-                    menu.writeLineClean(0, "move2gate");
-                    menu.writeLineClean(1, std::to_string(cam_angle));
-                    menu.writeLineClean(2, std::to_string(cam_dist));
+                    drv.drive(cam_angle, delta_angle, 70);
+                    // menu.writeLineClean(0, "move2gate");
+                    // menu.writeLineClean(1, std::to_string(cam_angle));
+                    // menu.writeLineClean(2, std::to_string(cam_dist));
                     if (abs(cam_angle) < 10 && cam_dist < 35)
                     {
                         drv.drive(0, 0, 0, 0);
-                        menu.writeLineClean(0, "WAIT");
-                        menu.writeLineClean(1, "");
-                        menu.writeLineClean(2, "");
+                        // menu.writeLineClean(0, "WAIT");
+                        // menu.writeLineClean(1, "");
+                        // menu.writeLineClean(2, "");
                         // make_pause(1000);
                     }
                 }
                 else
                 {
                     drv.drive(goodAngle(lineAngle + 180), 0, 90);
-                    menu.writeLineClean(0, "LINE 2");
-                    menu.writeLineClean(1, std::to_string(lineAngle));
-                    menu.writeLineClean(2, "");
+                    // menu.writeLineClean(0, "LINE 2");
+                    // menu.writeLineClean(1, std::to_string(lineAngle));
+                    // menu.writeLineClean(2, "");
                 }
             }
         }
