@@ -81,7 +81,7 @@ float rightPrev = 0;
 
 float gb_kp = 1.;
 float gb_ki = 0;
-float gb_kd = 5;
+float gb_kd = 0;
 float gkBallIntegral = 0;
 float gkBallPrev = 0;
 
@@ -563,23 +563,23 @@ void playGoalkeeperCamera(int color)
         }
 
         float global_x, global_y;
-        int get_pos_callback = getGlobalPosition_2gates(global_x, global_y, color);
-        BTDebug.send();
-        if (get_pos_callback == 0)
-        {
-            menu.writeLineClean(3, "GP X " + std::to_string(global_x));
-            menu.writeLineClean(4, "GP Y " + std::to_string(global_y));
-        }
-        else if (get_pos_callback == 1)
-        {
-            menu.writeLineClean(3, "FAILED: no gate");
-            menu.writeLineClean(4, "");
-        }
-        else if (get_pos_callback == 2)
-        {
-            menu.writeLineClean(3, "FAILED: parallel");
-            menu.writeLineClean(4, "");
-        }
+        // int get_pos_callback = getGlobalPosition_2gates(global_x, global_y, color);
+        // BTDebug.send();
+        // if (get_pos_callback == 0)
+        // {
+        //     menu.writeLineClean(3, "GP X " + std::to_string(global_x));
+        //     menu.writeLineClean(4, "GP Y " + std::to_string(global_y));
+        // }
+        // else if (get_pos_callback == 1)
+        // {
+        //     menu.writeLineClean(3, "FAILED: no gate");
+        //     menu.writeLineClean(4, "");
+        // }
+        // else if (get_pos_callback == 2)
+        // {
+        //     menu.writeLineClean(3, "FAILED: parallel");
+        //     menu.writeLineClean(4, "");
+        // }
         Vector2 rightBallDir(1.0, 0.0);
         Vector2 leftBallDir(-1.0, 0.0);
 
@@ -634,13 +634,13 @@ void playGoalkeeperCamera(int color)
         int cam_height = sensor.Cam.gate(color).height;
         int cam_dist = sensor.Cam.gate(color).distance;
 
-        if (globalGateAngle < -135 || globalGateAngle > 135)
-        {
-            leftBallDir = Vector2(-1.5f, 0);
-            rightBallDir = Vector2(1.5f, 0);
-        }
-        else
-            menu.writeLineClean(1, "GK " + std::to_string(gateAngle) + "  " + std::to_string(cam_dist));
+        // if (globalGateAngle < -135 || globalGateAngle > 135)
+        // {
+        //     leftBallDir = Vector2(-1.5f, 0);
+        //     rightBallDir = Vector2(1.5f, 0);
+        // }
+        
+        menu.writeLineClean(1, "GK " + std::to_string(globalGateAngle) + "  " + std::to_string(cam_dist));
 
         if (cam_height > 0)
         {
@@ -689,7 +689,7 @@ void playGoalkeeperCamera(int color)
             // speedY = (int)(-lineY * 80);
             //deltaAngle = -robotAngle * 0.25;
             deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
-            drv.drive(goodAngle(lineAngle + 180), deltaAngle, 80);
+            drv.drive(goodAngle(lineAngle + 180), 0, 100);
             continue;
         }
         else
@@ -709,7 +709,10 @@ void playGoalkeeperCamera(int color)
             //     speedY = 0;
             // }
 
-            int err = -constrain((-1. / 84000 * cam_dist * cam_dist * cam_dist * cam_dist + 1. / 672 * cam_dist * cam_dist * cam_dist - 31. / 1680 * cam_dist * cam_dist - 11. / 84 * cam_dist), 0, 100);
+            //int err = -constrain((-1. / 84000 * cam_dist * cam_dist * cam_dist * cam_dist + 1. / 672 * cam_dist * cam_dist * cam_dist - 31. / 1680 * cam_dist * cam_dist - 11. / 84 * cam_dist), 0, 100);
+            int err = -constrain((0. + 0.628449*cam_dist - 0.0637014*cam_dist*cam_dist + 0.00194066*cam_dist*cam_dist*cam_dist - 0.0000172587*cam_dist*cam_dist*cam_dist*cam_dist + 
+                                  4.62172e-8*cam_dist*cam_dist*cam_dist*cam_dist*cam_dist - 2.788e-12 * cam_dist*cam_dist*cam_dist*cam_dist*cam_dist*cam_dist),
+                                0, 100);
             if (cam_dist < 15)
                 err = 50;
             else if (cam_dist < 20)
@@ -717,6 +720,7 @@ void playGoalkeeperCamera(int color)
             else if (cam_dist < 25)
                 err = 0;
             speedY = err;
+            // int err = speedY = 0;
 
             // speedY = (int)(err * gate_kp + (err - gatePrev) * gate_kd + gateIntegral);
 
@@ -732,7 +736,8 @@ void playGoalkeeperCamera(int color)
             gateIntegral += (err * gate_ki);
             gateIntegral = constrain(gateIntegral, -limitGateIntegral, limitGateIntegral);
 
-            if (abs(ballAngle) > 80 && err < 0)
+            // если мяч сзади он должен сюда заходить
+            if (abs(ballAngle) > 80 && speedY <= 0)
             {
                 //deltaAngle = -robotAngle * 0.25;
                 deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
@@ -758,8 +763,9 @@ void playGoalkeeperCamera(int color)
         //     ballAngle *= 2;
 
         ballAngle = constrain(ballAngle, -maxGoalkeeperAngle - robotAngle, maxGoalkeeperAngle - robotAngle);
+        int ballAngleGlobal = goodAngle(ballAngle - gateAngle - 180);
 
-        float ball_err = ballAngle;
+        float ball_err = ballAngleGlobal;
 
         float ballSpeed = gb_kp * ball_err + gkBallIntegral + gb_kd * (ball_err - gkBallPrev);
         // if (ball_strength > prevBallStrength){
@@ -812,11 +818,11 @@ void playForwardGoyda(int color)
 
         sensor.update();
 
-        // if (sensor.Locator.getStrength() < 5){
-        //     drv.drive(0, 0, 0, 0);
-        //     // dribbler.smart_dribble(0);
-        //     return;
-        // }
+        if (sensor.Locator.getStrength() < 5){
+            drv.drive(0, 0, 0, 0);
+            // dribbler.smart_dribble(0);
+            return;
+        }
 
         int cam_angle = -sensor.Cam.gate(color).center_angle;
         int cam_dist = sensor.Cam.gate(color).distance;
