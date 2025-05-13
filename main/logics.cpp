@@ -891,11 +891,11 @@ void playForwardGoyda(int color)
                 menu.writeLineClean(1, std::to_string(st));
                 menu.writeLineClean(2, std::to_string(ballAngle));
 
-                drv.drive(moveAngle, (int)deltaAngle, 50);
+                drv.drive(moveAngle, (int)deltaAngle, 70);
             }
             else
             {
-                drv.drive(goodAngle(lineAngle + 180), deltaAngle, 60);
+                drv.drive(goodAngle(lineAngle + 180), deltaAngle, 90);
                 menu.writeLineClean(0, "LINE 1");
                 menu.writeLineClean(1, std::to_string(lineAngle));
                 menu.writeLineClean(2, "");
@@ -921,7 +921,7 @@ void playForwardGoyda(int color)
                 if (lineAngle == 360)
                 {
                     int delta_angle = constrain(cam_angle * 0.5, -20, 20);
-                    drv.drive(cam_angle, delta_angle, 60);
+                    drv.drive(cam_angle, delta_angle, 90);
                     menu.writeLineClean(0, "move2gate");
                     menu.writeLineClean(1, std::to_string(cam_angle));
                     menu.writeLineClean(2, std::to_string(cam_dist));
@@ -936,7 +936,7 @@ void playForwardGoyda(int color)
                 }
                 else
                 {
-                    drv.drive(goodAngle(lineAngle + 180), 0, 60);
+                    drv.drive(goodAngle(lineAngle + 180), 0, 90);
                     menu.writeLineClean(0, "LINE 2");
                     menu.writeLineClean(1, std::to_string(lineAngle));
                     menu.writeLineClean(2, "");

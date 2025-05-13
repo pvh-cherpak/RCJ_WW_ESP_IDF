@@ -55,7 +55,7 @@ void sensor_init(uint8_t robot_type)
 	get_OpenMV_offset(&x, &y);
 	sensor.Cam.dist_offset_x = x;
 	sensor.Cam.dist_offset_y = y;
-	ESP_LOGI("GP", "dist offsets:  %d, %d", sensor.Cam.dist_offset_x, sensor.Cam.dist_offset_y);
+	//ESP_LOGI("GP", "dist offsets:  %d, %d", sensor.Cam.dist_offset_x, sensor.Cam.dist_offset_y);
 
 	if (robot_type == 1)
 	{ //keeper
