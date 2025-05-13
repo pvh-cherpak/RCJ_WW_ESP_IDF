@@ -157,7 +157,7 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B)
             switch (user_pointer_pos)
             {
             case 1:
-                playForwardDribble2(0);
+                playForwardGoyda(0);
                 break;
             case 2:
                 playGoalkeeperCamera(0);
@@ -245,7 +245,7 @@ void another_menu(button_handle_t &encoder_button)
                 break;
             case 4:
                 drv.drive(0,0,0,0);
-                break;
+                break; //мы щас в 
             case 5:
                 menu.clearDisplay();
                 menu.writeLine(1, "calibrating...", false);
