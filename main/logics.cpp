@@ -344,13 +344,14 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
 }
 
 int getGlobalPosition_dist(float &x, float &y, int color){
+    x = 0; y = 0;
     int our_gate = sensor.Cam.GlobalYellow.center_angle;
     int other_gate = sensor.Cam.GlobalBlue.center_angle;
     if (color == 1)
         std::swap(our_gate, other_gate);
 
-    // if (our_gate == 360 || other_gate == 360)
-    //     return 1;
+    if (our_gate == 360 && other_gate == 360)
+        return 1;
 
     float our_x = 0, our_y = -100;
     float other_x = 0, other_y = 100;
@@ -361,16 +362,75 @@ int getGlobalPosition_dist(float &x, float &y, int color){
     float real_dist_y = pixel_dist_to_real(sensor.Cam.Yellow.distance);
     float real_dist_b = pixel_dist_to_real(sensor.Cam.Blue.distance);
 
-    if (sensor.Cam.Yellow.center_angle == 360){
-        x = -real_dist_b * sin(sensor.Cam.GlobalBlue.center_angle * DEG_TO_RAD);
-        y = (color == 1 ? -100 : 100) - real_dist_b * cos(sensor.Cam.GlobalBlue.center_angle * DEG_TO_RAD);
+    // версия до 13.05
+    // if (sensor.Cam.Yellow.center_angle == 360){
+    //     x = -real_dist_b * sin(sensor.Cam.GlobalBlue.center_angle * DEG_TO_RAD);
+    //     y = (color == 1 ? -100 : 100) - real_dist_b * cos(sensor.Cam.GlobalBlue.center_angle * DEG_TO_RAD);
+    // }
+    // else if (sensor.Cam.Blue.center_angle == 360){
+    //     x = -real_dist_y * sin(sensor.Cam.GlobalYellow.center_angle * DEG_TO_RAD);
+    //     y = -100 - real_dist_y * cos(sensor.Cam.GlobalYellow.center_angle * DEG_TO_RAD);
+    // }
+
+    float real_dist_our = (color ? real_dist_b : real_dist_y);
+    float real_dist_other = (color ? real_dist_y : real_dist_b);
+
+    int robotAngle = sensor.IMU.getYaw();
+
+    if (our_gate != 360)
+    {
+        float global_ang = goodAngle(sensor.Cam.gate(color).clos_angle + robotAngle);
+        
+        x = -real_dist_our * sin(global_ang * DEG_TO_RAD);
+        if (goodAngle(sensor.Cam.gate(color).right_angle + robotAngle) >= 0)
+            x -= 30;
+        else if (goodAngle(sensor.Cam.gate(color).left_angle + robotAngle) <= 0)
+            x += 30;
+        y = -100 - real_dist_our * cos(global_ang * DEG_TO_RAD);
     }
-    else if (sensor.Cam.Blue.center_angle == 360){
-        x = -real_dist_y * sin(sensor.Cam.GlobalYellow.center_angle * DEG_TO_RAD);
-        y = -100 - real_dist_y * cos(sensor.Cam.GlobalYellow.center_angle * DEG_TO_RAD);
+    else
+    {
+        float global_ang = goodAngle(sensor.Cam.gate(color ^ 1).clos_angle + robotAngle);
+
+        x = -real_dist_other * sin(global_ang * DEG_TO_RAD);
+        if (goodAngle(sensor.Cam.gate(color ^ 1).right_angle + robotAngle) <= 0)
+            x += 30;
+        else if (goodAngle(sensor.Cam.gate(color ^ 1).left_angle + robotAngle) >= 0)
+            x -= 30;
+        y = 100 - real_dist_other * cos(global_ang * DEG_TO_RAD);
     }
 
     return 0;
+}
+
+float limitSpeed(float angle, float speed, float gx, float gy)
+{
+    float robot_angle = sensor.IMU.getYaw();
+    angle += robot_angle;
+    Vector2 sp(speed * sin(angle * DEG_TO_RAD), speed * cos(angle * DEG_TO_RAD));
+
+    // горизонтальная линия аута
+    if (abs(gy) > 90)
+    {
+        sp.y = (gy > 0 ? -80 : 80);
+    }
+    // штрафная зона
+    if (abs(gy) > 75 && abs(gx) <= 50)
+    {
+        sp.y = (gy > 0 ? -80 : 80);
+        if (abs(gy) > 90 && abs(gx) >= 30)
+        {
+            sp.x = (gx > 0 ? 80 : -80);
+        }
+    }
+
+    // вертикальная линия аута
+    if (abs(gx) > 65)
+    {
+        sp.x = (gx > 0 ? -80 : 80);
+    }
+
+    return atan2(sp.x, sp.y) * RAD_TO_DEG - robot_angle;
 }
 
 bool isBall()
@@ -1004,15 +1064,20 @@ void goalPush(int color)
         if (gateAngle == 360)
             break;
         lineAngle = sensor.LineSensor.getAngleDelayed();
-        deltaAngle = goodAngle(gateAngle + 180) * 0.25f;
+
+        int offset_angle = (int)goodAngle(gateAngle - 45);
+        if (abs((int)goodAngle(gateAngle + 45)) < abs(offset_angle))
+            offset_angle = (int)goodAngle(gateAngle + 45);
+
+        deltaAngle = goodAngle(offset_angle) * 0.25f;
         if (lineAngle != 360)
         {
             drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
         }
         else
         {
-            int angle_err = goodAngle(ballAngle - gateAngle - 180);
-            if (sensor.Locator.getStrength() >= 70 && abs(angle_err) > 165)
+            int angle_err = goodAngle(ballAngle - gateAngle);
+            if (sensor.Locator.getStrength() >= 70 && abs(angle_err) <= 15)
             {
                 moveAngle = gateAngle;
                 drv.drive(moveAngle, (int)deltaAngle, 80);
@@ -1021,9 +1086,9 @@ void goalPush(int color)
             {
                 moveAngle = ballAngle;
                 if (angle_err > 0)
-                    moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
-                else
                     moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
+                else
+                    moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
                 drv.drive(moveAngle, (int)deltaAngle, 50);
             }
         }
