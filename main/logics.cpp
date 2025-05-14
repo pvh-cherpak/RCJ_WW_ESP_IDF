@@ -637,6 +637,8 @@ void playGoalkeeperCamera(int color)
         if (stateGame != 0)
         {
             kfTimer = millis();
+            drv.driveXY(-sensor.IMU.getYaw(), 0, 80);
+            make_pause(500);
             killerFeature(1 ^ color);
             // Serial.println("KILLER!!!");
             continue;
@@ -789,10 +791,11 @@ void playGoalkeeperCamera(int color)
             //     speedY = 0;
             // }
 
-            //int err = -constrain((-1. / 84000 * cam_dist * cam_dist * cam_dist * cam_dist + 1. / 672 * cam_dist * cam_dist * cam_dist - 31. / 1680 * cam_dist * cam_dist - 11. / 84 * cam_dist), 0, 100);
-            int err = -constrain((0. + 0.628449 * cam_dist - 0.0637014 * cam_dist * cam_dist + 0.00194066 * cam_dist * cam_dist * cam_dist - 0.0000172587 * cam_dist * cam_dist * cam_dist * cam_dist +
-                                  4.62172e-8 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist - 2.788e-12 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist),
-                                 0, 100);
+            int err = -constrain((0. + 0.628449*cam_dist - 0.0637014*cam_dist*cam_dist + 0.00194066*cam_dist*cam_dist*cam_dist - 0.0000172587*cam_dist*cam_dist*cam_dist*cam_dist
+                                 + 4.62172e-8*cam_dist*cam_dist*cam_dist*cam_dist*cam_dist - 2.788e-12*cam_dist*cam_dist*cam_dist*cam_dist*cam_dist*cam_dist), 0, 100);
+            // int err = -constrain((0. + 0.628449 * cam_dist - 0.0637014 * cam_dist * cam_dist + 0.00194066 * cam_dist * cam_dist * cam_dist - 0.0000172587 * cam_dist * cam_dist * cam_dist * cam_dist +
+            //                       4.62172e-8 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist - 2.788e-12 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist),
+            //                      0, 100);
             if (cam_dist < 15)
                 err = 50;
             else if (cam_dist < 20)
@@ -876,6 +879,10 @@ void playGoalkeeperCamera(int color)
         int sp = sqrt(speedX * speedX + speedY * speedY);
         float angle = atan2(speedX, speedY) * RAD_TO_DEG;
         angle += goodAngle(gateAngle - 180);
+        if (globalGateAngle > 0 && globalGateAngle < 135)
+            angle += 20;
+        if (globalGateAngle < 0 && globalGateAngle > -135)
+            angle -= 20;
         drv.drive(angle, (int)deltaAngle, constrain(sp, 0, 100));
 
         // if (sp > 100)
