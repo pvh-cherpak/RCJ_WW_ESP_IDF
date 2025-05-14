@@ -663,7 +663,7 @@ void playGoalkeeperCamera(int color)
         //     rightBallDir = Vector2(1.5f, 0);
         // }
 
-        menu.writeLineClean(1, "GK " + std::to_string(globalGateAngle) + "  " + std::to_string(cam_dist));
+        // menu.writeLineClean(1, "GK " + std::to_string(globalGateAngle) + "  " + std::to_string(cam_dist));
 
         if (cam_height > 0)
         {
@@ -780,7 +780,7 @@ void playGoalkeeperCamera(int color)
             }
         }
 
-        ESP_LOGI("playGoalkeeperCamera", "speedY = %d", speedY);
+        // ESP_LOGI("playGoalkeeperCamera", "speedY = %d", speedY);
 
         // if (abs(ballAngle) < 15)
         //     ballAngle *= 2;
@@ -808,7 +808,7 @@ void playGoalkeeperCamera(int color)
             speedY += (int)(abs(ballSpeed) * leftBallDir.y);
         }
 
-        menu.writeLineClean(2, "sp " + std::to_string(speedX) + ";" + std::to_string(speedY));
+        // menu.writeLineClean(2, "sp " + std::to_string(speedX) + ";" + std::to_string(speedY));
 
         deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
 
@@ -967,12 +967,12 @@ void playForwardGoyda(int color)
 void goalRotate(int color)
 {
     int sign = (sensor.IMU.getYaw() < 0) ? -1 : 1;
-    menu.clearDisplay();
+    //menu.clearDisplay();
     while (isBall())
     {
-        menu.writeLineClean(0, "GoalRotate");
+        //menu.writeLineClean(0, "GoalRotate");
         sensor.update();
-        int rotateSpeed = abs(sensor.Cam.gate(color).center_angle) > 140 ? 30 : 90;        // 42 : 100
+        int rotateSpeed = abs(sensor.Cam.gate(color).center_angle) > 150 ? 30 : 90;        // 42 : 100
         dribbler.smart_dribble(abs(sensor.Cam.gate(color).center_angle) > 120 ? 110 : 60); // 110
         drv.drive(0, rotateSpeed * sign, 0);
 
@@ -984,7 +984,7 @@ void goalRotate(int color)
         // }
         // Debug.SendInfo();
     }
-    menu.writeLineClean(0, "END GoalRotate");
+    //menu.writeLineClean(0, "END GoalRotate");
 }
 
 void goalDriveBack(int color)
@@ -1049,6 +1049,7 @@ void goalPush(int color)
 
 void playForwardDribble2(int color)
 {
+    menu.clearDisplay();
     color = 1 ^ color;
     while (true)
     {
@@ -1070,7 +1071,7 @@ void playForwardDribble2(int color)
 
         if (!isBall())
         {
-            menu.writeLineClean(0, "ball");
+            //menu.writeLineClean(0, "ball");
             dribbler.smart_dribble((abs(ballAngle) < 40) ? 40 : 0);
             // dribbler.neutral();
             int deltaAngle = ballAngle * 0.3; //(ballAngle < 45 ? 0.3 : 0.5);
@@ -1087,14 +1088,14 @@ void playForwardDribble2(int color)
         }
         else
         {
-            menu.writeLineClean(0, "gate...");
+            //menu.writeLineClean(0, "gate...");
             dribbler.smart_dribble(50);
             drv.drive(0, 0, 0, 0);
             make_pause(200);
             sensor.BallSensor.update();
             while (isBall())
             {
-                menu.writeLineClean(0, "gate");
+                //menu.writeLineClean(0, "gate");
                 sensor.update();
 
                 cam_angle = -sensor.Cam.gate(color).center_angle;
@@ -1112,7 +1113,7 @@ void playForwardDribble2(int color)
                         speed = (lineAngle == 360) ? 0 : 60;
                         cam_angle = -sensor.Cam.gate(color).center_angle;
                         deltaAngle = goodAngle(cam_angle + 180) * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
-                        deltaAngle = constrain(deltaAngle, -30, 30);
+                        deltaAngle = constrain(deltaAngle, -40, 40);
                         drv.drive(moveAngle, (int)(deltaAngle), speed);
                     }
 
@@ -1122,8 +1123,8 @@ void playForwardDribble2(int color)
                     }
 
                     // return;
-                    int delta_angle = goodAngle(cam_angle + 180) * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
-                    delta_angle = constrain(delta_angle, -40, 40);
+                    int delta_angle = goodAngle(cam_angle + 180) * 0.3; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+                    delta_angle = constrain(delta_angle, -15, 15);
                     drv.drive(cam_angle, delta_angle, 80);
 
                     sensor.update();
@@ -1136,7 +1137,7 @@ void playForwardDribble2(int color)
                     }
                     cam_dist = sensor.Cam.gate(color).distance;
                     // Serial.println(cam_dist);
-                    if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist < 30)
+                    if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist < 20)
                     {
                         // return;
                         drv.drive(0, 0, 0, 0);
@@ -1147,11 +1148,11 @@ void playForwardDribble2(int color)
 
                         cam_angle = -sensor.Cam.gate(color).center_angle;
 
-                        while (abs(cam_angle) < 130 && isBall())
+                        while (abs(cam_angle) < 160 && isBall())
                         {
                             sensor.update();
                             cam_angle = -sensor.Cam.gate(color).center_angle;
-                            deltaAngle = goodAngle(cam_angle + 180) * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+                            deltaAngle = goodAngle(cam_angle + 180); //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
                             deltaAngle = constrain(deltaAngle, -40, 40);
                             drv.drive(0, (int)(deltaAngle * 0.5), 0);
                         }
@@ -1169,9 +1170,9 @@ void playForwardDribble2(int color)
                         make_pause(500);
 
                         // if (abs(sensor.IMU.getYaw()) < 135 || cam_dist < 30)
-                        //     goalRotate(color);
+                        goalRotate(color);
                         // else
-                            goalDriveBack(color);
+                        //goalDriveBack(color);
 
                         goto fwDribbleBegin;
                     }
