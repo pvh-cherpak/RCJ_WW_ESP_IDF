@@ -212,7 +212,8 @@ void info_menu(button_handle_t &encoder_button)
         menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
         menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
         menu.writeLineClean(5, "B gate: " + std::to_string(sensor.Cam.Blue.center_angle), false);
-        menu.writeLineClean(6, "Y dist: " + std::to_string((int)sensor.Cam.Yellow.distance) + " " + std::to_string((int)sensor.Cam.Yellow.clos_angle), false);
+        menu.writeLineClean(6, "Y gate: " + std::to_string(sensor.Cam.Yellow.center_angle), false);
+        // menu.writeLineClean(6, "Y dist: " + std::to_string((int)sensor.Cam.Yellow.distance) + " " + std::to_string((int)sensor.Cam.Yellow.clos_angle), false);
 
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
         {
