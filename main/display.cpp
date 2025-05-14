@@ -20,7 +20,7 @@ static const std::vector<std::string> another_menu_text =
     {"-Another  menu-", "Line calib", "Dribbler: ", "50505050", "-", "mpu calib", "dist calib"};
 
 static const std::vector<std::string> debug_menu_text =
-    {"-Debug  menu-", "Zakrut"};
+    {"-Debug  menu-", "Zakrut", "petrovichY", "petrovichB"};
 
 static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 
@@ -169,7 +169,7 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B)
             switch (user_pointer_pos)
             {
             case 1:
-                playForwardGoyda(0);
+                playForwardDribble2(0);
                 break;
             case 2:
                 playGoalkeeperCamera(0);
@@ -398,6 +398,13 @@ void debug_menu(button_handle_t &encoder_button)
                 MPU_zakrut(0);
                 dribbler.smart_dribble(0);
                 break;
+            case 2:
+                playForwardGoyda(0);
+                break;
+            case 3:
+                playForwardGoyda(1);
+                break;
+                
             default:
                 ESP_LOGI(OLED_tag, "Button click");
                 break;
