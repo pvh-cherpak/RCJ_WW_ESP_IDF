@@ -967,8 +967,10 @@ void playForwardGoyda(int color)
 void goalRotate(int color)
 {
     int sign = (sensor.IMU.getYaw() < 0) ? -1 : 1;
+    menu.clearDisplay();
     while (isBall())
     {
+        menu.writeLineClean(0, "GoalRotate");
         sensor.update();
         int rotateSpeed = abs(sensor.Cam.gate(color).center_angle) > 140 ? 30 : 90;        // 42 : 100
         dribbler.smart_dribble(abs(sensor.Cam.gate(color).center_angle) > 120 ? 110 : 60); // 110
@@ -982,6 +984,7 @@ void goalRotate(int color)
         // }
         // Debug.SendInfo();
     }
+    menu.writeLineClean(0, "END GoalRotate");
 }
 
 void goalDriveBack(int color)
@@ -999,7 +1002,7 @@ void goalDriveBack(int color)
     {
         sensor.update();
         ballAngle = sensor.Locator.getBallAngleLocal();
-        drv.driveXY(40 * sign, 0, 0);
+        drv.driveXY(60 * sign, 0, 0);
     }
 }
 
@@ -1061,9 +1064,9 @@ void playForwardDribble2(int color)
         int st = sensor.Locator.getStrength();
         int ballAngle = sensor.Locator.getBallAngleLocal();
         int lineAngle = sensor.LineSensor.getAngleDelayed();
-
-        if (sensor.Cam.gate(color).width >= 0)
-            goalPush(color);
+        
+        //if (sensor.Cam.gate(color).width >= 0)
+        //    goalPush(color);
 
         if (!isBall())
         {
@@ -1131,6 +1134,7 @@ void playForwardDribble2(int color)
                         drv.drive(goodAngle(lineAngle + 180), delta_angle, 80);
                         continue;
                     }
+                    cam_dist = sensor.Cam.gate(color).distance;
                     // Serial.println(cam_dist);
                     if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist < 30)
                     {
@@ -1151,17 +1155,22 @@ void playForwardDribble2(int color)
                             deltaAngle = constrain(deltaAngle, -40, 40);
                             drv.drive(0, (int)(deltaAngle * 0.5), 0);
                         }
+                        
+                        cam_angle = -sensor.Cam.gate(color).center_angle;
+                        cam_dist = sensor.Cam.gate(color).distance;
 
                         if (!isBall())
                         {
                             goto fwDribbleBegin;
                         }
+                        
+                        // может это в goalDriveBack?
+                        dribbler.smart_dribble(110);
+                        make_pause(500);
 
-                        make_pause(200);
-
-                        if (abs(sensor.IMU.getYaw()) < 150 || cam_dist < 30)
-                            goalRotate(color);
-                        else
+                        // if (abs(sensor.IMU.getYaw()) < 135 || cam_dist < 30)
+                        //     goalRotate(color);
+                        // else
                             goalDriveBack(color);
 
                         goto fwDribbleBegin;
