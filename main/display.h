@@ -26,6 +26,7 @@ void another_menu(button_handle_t &encoder_button);
 void edit_dribbler_speed(button_handle_t &encoder_button);
 void LineCalibrate(button_handle_t &encoder_button);
 void BTCheck(button_handle_t &encoder_button);
+void debug_menu(button_handle_t &encoder_button);
 
 class DisplayMenu_t{
 private:

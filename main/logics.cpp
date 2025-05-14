@@ -178,7 +178,8 @@ void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, 
 void calibrateDistOffset(int color)
 {
     sensor.update();
-    while (abs(sensor.IMU.getYaw()) > 10){
+    while (abs(sensor.IMU.getYaw()) > 10)
+    {
         // ESP_LOGI("GP", "to 0");
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.update();
@@ -187,22 +188,26 @@ void calibrateDistOffset(int color)
 
     std::vector<int> angles, dist;
 
-    while (abs(sensor.IMU.getYaw()) < 170){
+    while (abs(sensor.IMU.getYaw()) < 170)
+    {
         // ESP_LOGI("GP", "to 170");
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.update();
-        if (sensor.Cam.gate(color).clos_angle != 360 && sensor.Cam.gate(color).distance > 3){
+        if (sensor.Cam.gate(color).clos_angle != 360 && sensor.Cam.gate(color).distance > 3)
+        {
             angles.push_back(sensor.Cam.gate(color).clos_angle);
             dist.push_back(sensor.Cam.gate(color).distance);
         }
         drv.drive(0, 15, 0);
     }
 
-    while (abs(sensor.IMU.getYaw()) > 5){
+    while (abs(sensor.IMU.getYaw()) > 5)
+    {
         // ESP_LOGI("GP", "back to 0");
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.update();
-        if (sensor.Cam.gate(color).clos_angle != 360 && sensor.Cam.gate(color).distance > 3){
+        if (sensor.Cam.gate(color).clos_angle != 360 && sensor.Cam.gate(color).distance > 3)
+        {
             angles.push_back(sensor.Cam.gate(color).clos_angle);
             dist.push_back(sensor.Cam.gate(color).distance);
         }
@@ -213,7 +218,8 @@ void calibrateDistOffset(int color)
 
     float min_x = 0, max_x = 0, min_y = 0, max_y = 0;
     int min_dist = 1000, max_dist = 0;
-    for (int i = 0; i < dist.size(); ++i){
+    for (int i = 0; i < dist.size(); ++i)
+    {
         Vector2 vec(angles[i]);
         vec = vec * dist[i];
         min_x = std::min(min_x, vec.x);
@@ -230,16 +236,17 @@ void calibrateDistOffset(int color)
 
     sensor.Cam.dist_offset_x -= (min_x + max_x) / 2;
     sensor.Cam.dist_offset_y -= (min_y + max_y) / 2;
-    
+
     set_OpenMV_offset(sensor.Cam.dist_offset_x, sensor.Cam.dist_offset_y);
 }
 
 float pixel_dist_to_real(float x)
 {
-    return 3.91243e-6 *x*x*x*x - 0.000655948 * x*x*x + 0.05185 * x*x - 1.0362*x + 52.2298;
+    return 3.91243e-6 * x * x * x * x - 0.000655948 * x * x * x + 0.05185 * x * x - 1.0362 * x + 52.2298;
 }
 
-bool getRayIntersection(float x1, float y1, float ang1, float x2, float y2, float ang2, float& out_x, float& out_y) {
+bool getRayIntersection(float x1, float y1, float ang1, float x2, float y2, float ang2, float &out_x, float &out_y)
+{
     float a1 = cos(ang1 * DEG_TO_RAD);
     float b1 = -sin(ang1 * DEG_TO_RAD);
     float c1 = -a1 * x1 - b1 * y1;
@@ -283,13 +290,13 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
     //                             (float)sensor.Cam.GlobalBlue.left_angle,   (float)sensor.Cam.GlobalBlue.right_angle,
     //                             (float)sensor.Cam.GlobalYellow.center_angle,   (float)sensor.Cam.GlobalBlue.center_angle
     //                         };
-                            
-    std::vector<float> xs = { 0, 0 };
-    std::vector<float> ys = { -100, 100 };
-    std::vector<float> angs = {(float)sensor.Cam.GlobalYellow.center_angle,   (float)sensor.Cam.GlobalBlue.center_angle
-                            };
 
-    if (color == 1){
+    std::vector<float> xs = {0, 0};
+    std::vector<float> ys = {-100, 100};
+    std::vector<float> angs = {(float)sensor.Cam.GlobalYellow.center_angle, (float)sensor.Cam.GlobalBlue.center_angle};
+
+    if (color == 1)
+    {
         std::swap(angs[0], angs[2]);
         std::swap(angs[1], angs[3]);
         std::swap(angs[4], angs[5]);
@@ -299,9 +306,12 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
 
     ESP_LOGI("GP", "Angles: %d, %d, %d, %d", (int)angs[0], (int)angs[2], (int)angs[1], (int)angs[3]);
 
-    for (int i = 0; i < xs.size(); ++i) {
-        for (int j = i + 1; j < xs.size(); ++j) {
-            if (getRayIntersection(xs[i], ys[i], angs[i], xs[j], ys[j], angs[j], x, y)) {
+    for (int i = 0; i < xs.size(); ++i)
+    {
+        for (int j = i + 1; j < xs.size(); ++j)
+        {
+            if (getRayIntersection(xs[i], ys[i], angs[i], xs[j], ys[j], angs[j], x, y))
+            {
                 ans_x.push_back(x);
                 ans_y.push_back(y);
                 ESP_LOGI("GP", "%d,%d:  %d;%d", i, j, (int)x, (int)y);
@@ -309,9 +319,11 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
         }
     }
 
-    if (ans_x.empty()) return 2;
+    if (ans_x.empty())
+        return 2;
 
-    for (int i = 0; i <= ans_x.size() / 2; ++i) {
+    for (int i = 0; i <= ans_x.size() / 2; ++i)
+    {
         int min_index = 0;
         for (int j = 0; j < ans_x.size(); ++j)
             if (ans_x[j] < ans_x[min_index])
@@ -323,7 +335,8 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
         ans_x[min_index] = 1e9;
     }
 
-    for (int i = 0; i <= ans_y.size() / 2; ++i) {
+    for (int i = 0; i <= ans_y.size() / 2; ++i)
+    {
         int min_index = 0;
         for (int j = 0; j < ans_y.size(); ++j)
             if (ans_y[j] < ans_y[min_index])
@@ -334,7 +347,7 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
             y = ans_y[min_index];
         ans_y[min_index] = 1e9;
     }
-    
+
     ESP_LOGI("GP", "median:  %d;%d", (int)x, (int)y);
 
     // x = -(c1 * b2 - c2 * b1) / (a1 * b2 - a2 * b1);
@@ -343,7 +356,8 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
     return 0;
 }
 
-int getGlobalPosition_dist(float &x, float &y, int color){
+int getGlobalPosition_dist(float &x, float &y, int color)
+{
     int our_gate = sensor.Cam.GlobalYellow.center_angle;
     int other_gate = sensor.Cam.GlobalBlue.center_angle;
     if (color == 1)
@@ -354,18 +368,20 @@ int getGlobalPosition_dist(float &x, float &y, int color){
 
     float our_x = 0, our_y = -100;
     float other_x = 0, other_y = 100;
-    
-    menu.writeLineClean(0, "Y dist " + std::to_string((int)(sensor.Cam.Yellow.distance)) + " "  + std::to_string((int)(pixel_dist_to_real(sensor.Cam.Yellow.distance))));
-    menu.writeLineClean(1, "Y dist " + std::to_string((int)(sensor.Cam.Blue.distance)) + " "  + std::to_string((int)(pixel_dist_to_real(sensor.Cam.Blue.distance))));
-    
+
+    menu.writeLineClean(0, "Y dist " + std::to_string((int)(sensor.Cam.Yellow.distance)) + " " + std::to_string((int)(pixel_dist_to_real(sensor.Cam.Yellow.distance))));
+    menu.writeLineClean(1, "Y dist " + std::to_string((int)(sensor.Cam.Blue.distance)) + " " + std::to_string((int)(pixel_dist_to_real(sensor.Cam.Blue.distance))));
+
     float real_dist_y = pixel_dist_to_real(sensor.Cam.Yellow.distance);
     float real_dist_b = pixel_dist_to_real(sensor.Cam.Blue.distance);
 
-    if (sensor.Cam.Yellow.center_angle == 360){
+    if (sensor.Cam.Yellow.center_angle == 360)
+    {
         x = -real_dist_b * sin(sensor.Cam.GlobalBlue.center_angle * DEG_TO_RAD);
         y = (color == 1 ? -100 : 100) - real_dist_b * cos(sensor.Cam.GlobalBlue.center_angle * DEG_TO_RAD);
     }
-    else if (sensor.Cam.Blue.center_angle == 360){
+    else if (sensor.Cam.Blue.center_angle == 360)
+    {
         x = -real_dist_y * sin(sensor.Cam.GlobalYellow.center_angle * DEG_TO_RAD);
         y = -100 - real_dist_y * cos(sensor.Cam.GlobalYellow.center_angle * DEG_TO_RAD);
     }
@@ -375,7 +391,7 @@ int getGlobalPosition_dist(float &x, float &y, int color){
 
 bool isBall()
 {
-    if (false) //sensor.cfg.robotType == 2)
+    if (sensor.cfg.robotType == 2)
     {
         return sensor.BallSensor.ballCatched();
     }
@@ -646,7 +662,7 @@ void playGoalkeeperCamera(int color)
         //     leftBallDir = Vector2(-1.5f, 0);
         //     rightBallDir = Vector2(1.5f, 0);
         // }
-        
+
         menu.writeLineClean(1, "GK " + std::to_string(globalGateAngle) + "  " + std::to_string(cam_dist));
 
         if (cam_height > 0)
@@ -717,9 +733,9 @@ void playGoalkeeperCamera(int color)
             // }
 
             //int err = -constrain((-1. / 84000 * cam_dist * cam_dist * cam_dist * cam_dist + 1. / 672 * cam_dist * cam_dist * cam_dist - 31. / 1680 * cam_dist * cam_dist - 11. / 84 * cam_dist), 0, 100);
-            int err = -constrain((0. + 0.628449*cam_dist - 0.0637014*cam_dist*cam_dist + 0.00194066*cam_dist*cam_dist*cam_dist - 0.0000172587*cam_dist*cam_dist*cam_dist*cam_dist + 
-                                  4.62172e-8*cam_dist*cam_dist*cam_dist*cam_dist*cam_dist - 2.788e-12 * cam_dist*cam_dist*cam_dist*cam_dist*cam_dist*cam_dist),
-                                0, 100);
+            int err = -constrain((0. + 0.628449 * cam_dist - 0.0637014 * cam_dist * cam_dist + 0.00194066 * cam_dist * cam_dist * cam_dist - 0.0000172587 * cam_dist * cam_dist * cam_dist * cam_dist +
+                                  4.62172e-8 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist - 2.788e-12 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist),
+                                 0, 100);
             if (cam_dist < 15)
                 err = 50;
             else if (cam_dist < 20)
@@ -825,7 +841,8 @@ void playForwardGoyda(int color)
 
         sensor.update();
 
-        if (sensor.Locator.getStrength() < 5){
+        if (sensor.Locator.getStrength() < 5)
+        {
             drv.drive(0, 0, 0, 0);
             // dribbler.smart_dribble(0);
             //return;
@@ -1044,7 +1061,7 @@ void playForwardDribble2(int color)
         int st = sensor.Locator.getStrength();
         int ballAngle = sensor.Locator.getBallAngleLocal();
         int lineAngle = sensor.LineSensor.getAngleDelayed();
-        
+
         if (sensor.Cam.gate(color).width >= 0)
             goalPush(color);
 
@@ -1156,5 +1173,36 @@ void playForwardDribble2(int color)
                 }
             }
         }
+    }
+}
+
+void MPU_zakrut(int color)
+{
+    sensor.IMU.update();
+    sensor.BallSensor.update();
+    int sign = ((sensor.IMU.Yaw) < 0) ? -1 : 1;
+    int start_angle = sensor.IMU.Yaw;
+
+    while (isBall())
+    {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        sensor.IMU.update();
+        sensor.BallSensor.update();
+
+        int rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 10 : 40; // 42 : 100
+        dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 110 : 60);         // 110 : 60
+        drv.drive(0, rotateSpeed * sign, 0);
+    }
+}
+
+void vyravnivanije(int color)
+{
+    while (abs(-sensor.Cam.gate(color).center_angle) < 170 && isBall())
+    {
+        sensor.update();
+        int cam_angle = -sensor.Cam.gate(color).center_angle;
+        deltaAngle = goodAngle(cam_angle + 180); //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+        deltaAngle = constrain(deltaAngle, -40, 40);
+        drv.drive(0, (int)(deltaAngle * 0.5), 0);
     }
 }

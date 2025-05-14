@@ -43,4 +43,8 @@ void goalPush(int color);
 
 void playForwardDribble2(int color);
 
+void MPU_zakrut(int color);
+
+void vyravnivanije(int color);
+
 #endif

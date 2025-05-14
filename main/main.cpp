@@ -67,18 +67,19 @@ void sensor_init(uint8_t robot_type)
 			ADC_UNIT_2,
 			ADC_CHANNEL_6,
 			true,
-			false};
+			false, true};
 		conf.robotType = robot_type;
 		conf.CAM_GPIO = 36;
 		conf.locator_offset = 0;
 		conf.IMU_active = true;
 		conf.inverse_locator = false;
 
+
 		sensor.init(conf);
 	}
 	else
 	{ //forward
-		conf.LineSensor_config = {{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false, true};
+		conf.LineSensor_config = {{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, false};
 		conf.CAM_GPIO = 35;
 		conf.robotType = robot_type;
 		conf.locator_offset = 90;
@@ -101,6 +102,7 @@ extern "C"
 	void app_main(void)
 	{
 		// nvs_set_variables(1);
+		
 
 		esp_err_t err = nvs_flash_init();
 		if ((err == ESP_ERR_NVS_NO_FREE_PAGES) || (err == ESP_ERR_NVS_NEW_VERSION_FOUND))
@@ -117,6 +119,13 @@ extern "C"
 		{
 			esp_restart();
 		};
+
+		// sensor.LineSensor.init({{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false, true});
+		// while (true){
+		// 	sensor.LineSensor.update();
+		// 	sensor.LineSensor.writeValues();
+		// 	vTaskDelay(100 / portTICK_PERIOD_MS);
+		// }
 
 		start_i2c_legacy();
 		menu.init();

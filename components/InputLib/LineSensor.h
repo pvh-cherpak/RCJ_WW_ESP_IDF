@@ -18,6 +18,7 @@ struct LineSensor_config_t
     adc_channel_t ADC_chanel;
     bool stupid_pin;
     bool inversed_without_offset;
+    bool al_seners = true;
 };
 
 
@@ -87,6 +88,8 @@ private:
     uint16_t green_value[16];
     uint16_t white_value[16];
     int actual_value[16];
+
+    bool rabotaet[16] = {1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1};
     
     TickType_t line_time [16];
 

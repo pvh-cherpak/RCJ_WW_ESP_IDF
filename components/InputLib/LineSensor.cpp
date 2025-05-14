@@ -10,6 +10,9 @@ const char *NVS_GREEN_VALUE_GROUP = "GREEN_VALUES";
 void LineSensor_t::init(LineSensor_config_t config)
 {
   CONFIG = config;
+
+  for(int i = 0; i < 16; i++)
+     actual_value[i] = 0;
   
   for (int i = 0; i < 4; i++)
   {
@@ -213,8 +216,10 @@ void LineSensor_t::getLineDirection_Delayed(float &x, float &y)
 
 void LineSensor_t::read_line_sensors()
 {
-  for (int channel = 0; channel < 16; channel++)
+  for (int channel = 0; channel < 16; channel ++)
   {
+    if(!rabotaet[channel] && !CONFIG.al_seners)
+      continue;
     for (int bit = 0; bit < 4; bit++)
       ESP_ERROR_CHECK(gpio_set_level(CONFIG.mult_in[bit], MULT_CHANEL[channel][bit]));
     ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, CONFIG.ADC_chanel, &actual_value[channel]));

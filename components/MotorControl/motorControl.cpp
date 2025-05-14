@@ -211,7 +211,7 @@ void Dribbler::xDriblerTask(void *arg)
                 cur_speed -= 5;
                 dribble(cur_speed);
                 // ESP_LOGI("Drb_task", "cur_speed = %d", cur_speed);
-                vTaskDelay(10);
+                vTaskDelay(5);
                 if (uxQueueMessagesWaiting(Queue) != 0)
                     break;
             }

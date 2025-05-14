@@ -2,7 +2,6 @@
 #include "global.h"
 #include "logics.h"
 
-
 static const char *OLED_tag = "SSD1106";
 static SemaphoreHandle_t encoder_button_sem = xSemaphoreCreateBinary();
 static SemaphoreHandle_t encoder_double_click_sem = xSemaphoreCreateBinary();
@@ -12,17 +11,21 @@ DisplayMenu_t menu;
 
 static const std::vector<std::string> start_menu_text =
     {"---Main menu---", "Yellow Forward", "Yellow Goalkeeper", "Blue Forward",
-     "Blue Goalkeeper", "Sensors Check", "Another", "BT"};
+     "Blue Goalkeeper", "Sensors Check", "Another", "Debug menu"};
 
 static const std::vector<std::string> info_menu_text =
     {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Ball str:", "Line X:", "Exit"};
 
 static const std::vector<std::string> another_menu_text =
     {"-Another  menu-", "Line calib", "Dribbler: ", "50505050", "-", "mpu calib", "dist calib"};
-    
+
+static const std::vector<std::string> debug_menu_text =
+    {"-Debug  menu-", "Zakrut"};
+
 static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 
-void DisplayMenu_t::init(){
+void DisplayMenu_t::init()
+{
     display._address = I2C_ADDRESS;
     display._flip = false;
     display._i2c_num = I2C_NUM_0;
@@ -32,7 +35,8 @@ void DisplayMenu_t::init(){
     dev = &display;
 }
 
-void DisplayMenu_t::clearDisplay(){
+void DisplayMenu_t::clearDisplay()
+{
     ssd1306_clear_screen(&display, false);
     ssd1306_contrast(&display, 0xff);
 }
@@ -71,13 +75,16 @@ void DisplayMenu_t::writeLineClean(int page, const std::string &text, bool inver
     }
 }
 
-void DisplayMenu_t::writeLine(int page, const std::string &text, bool invert){
+void DisplayMenu_t::writeLine(int page, const std::string &text, bool invert)
+{
     ssd1306_display_text(dev, page, text.c_str(), text.size(), invert);
 }
 
 // если выбрали другую строку, перерисовываем
-void DisplayMenu_t::updateChosen(const std::vector<std::string> &menu_text, int item_index){
-    if (item_index != chosen_item){
+void DisplayMenu_t::updateChosen(const std::vector<std::string> &menu_text, int item_index)
+{
+    if (item_index != chosen_item)
+    {
         //writeLineClean(chosen_item, " " + menu_text[chosen_item], false);
         //writeLineClean(item_index, ">" + menu_text[item_index], false);
         writeLine(chosen_item, " ", false);
@@ -87,23 +94,28 @@ void DisplayMenu_t::updateChosen(const std::vector<std::string> &menu_text, int 
 }
 
 // обновляем текст строки с учётом того, нужно ли выводить стрелочку слева
-void DisplayMenu_t::updateLine(const std::vector<std::string> &menu_text, int line_index){
-    if (line_index == chosen_item){
+void DisplayMenu_t::updateLine(const std::vector<std::string> &menu_text, int line_index)
+{
+    if (line_index == chosen_item)
+    {
         writeLineClean(line_index, ">" + menu_text[line_index], false);
     }
-    else{
+    else
+    {
         writeLineClean(line_index, " " + menu_text[line_index], false);
     }
 }
 
 // чистим экран и отрисовываем меню полностью
-void DisplayMenu_t::drawFullMenu(const std::vector<std::string> &menu_text){
+void DisplayMenu_t::drawFullMenu(const std::vector<std::string> &menu_text)
+{
     clearDisplay();
     for (int i = 0; i < menu_text.size(); i++)
         writeLineClean(i, " " + menu_text[i], false);
 }
 
-void DisplayMenu_t::setChosenItem(int new_item){
+void DisplayMenu_t::setChosenItem(int new_item)
+{
     chosen_item = new_item;
 }
 
@@ -176,7 +188,7 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B)
                 another_menu(encoder_button);
                 break;
             case 7:
-                BTCheck(encoder_button);
+                debug_menu(encoder_button);
                 break;
             default:
                 ESP_LOGI(OLED_tag, "Button click");
@@ -201,8 +213,9 @@ void info_menu(button_handle_t &encoder_button)
         menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
         menu.writeLineClean(5, "B gate: " + std::to_string(sensor.Cam.Blue.center_angle), false);
         menu.writeLineClean(6, "Y dist: " + std::to_string((int)sensor.Cam.Yellow.distance) + " " + std::to_string((int)sensor.Cam.Yellow.clos_angle), false);
-        
-        if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE){
+
+        if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
+        {
             // возвращаемся в стартовое меню
             menu.drawFullMenu(start_menu_text);
             encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 0);
@@ -241,17 +254,17 @@ void another_menu(button_handle_t &encoder_button)
                 menu.drawFullMenu(another_menu_output_text);
                 break;
             case 3:
-                drv.drive(50,50,50,50);
+                drv.drive(50, 50, 50, 50);
                 break;
             case 4:
-                drv.drive(0,0,0,0);
-                break; //мы щас в 
+                drv.drive(0, 0, 0, 0);
+                break; //мы щас в
             case 5:
                 menu.clearDisplay();
                 menu.writeLine(1, "calibrating...", false);
 
                 save_MPU_offsets_blob(sensor.IMU.calibrate(10));
-                
+
                 menu.writeLine(1, "done", false);
                 vTaskDelay(3000 / portTICK_PERIOD_MS);
                 menu.clearDisplay();
@@ -264,8 +277,9 @@ void another_menu(button_handle_t &encoder_button)
                 ESP_LOGI(OLED_tag, "Button click");
                 break;
             }
-            
-        if (iot_button_get_event(encoder_button) == BUTTON_LONG_PRESS_HOLD){
+
+        if (iot_button_get_event(encoder_button) == BUTTON_LONG_PRESS_HOLD)
+        {
             switch (user_pointer_pos)
             {
             case 2:
@@ -282,7 +296,8 @@ void another_menu(button_handle_t &encoder_button)
             ESP_LOGI(OLED_tag, "Button hold");
         }
 
-        if (xSemaphoreTake(encoder_double_click_sem, 0) == pdTRUE){
+        if (xSemaphoreTake(encoder_double_click_sem, 0) == pdTRUE)
+        {
             switch (user_pointer_pos)
             {
             case 2:
@@ -295,23 +310,25 @@ void another_menu(button_handle_t &encoder_button)
         }
 
         dribbler.smart_dribble(dribbler_speed);
-        
+
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
 
-void edit_dribbler_speed(button_handle_t &encoder_button){
+void edit_dribbler_speed(button_handle_t &encoder_button)
+{
     encoder.setNewLimits(0, 180, 5, dribbler_speed, true);
 
     // пока не отпустили энкодер, обновляем переменную
-    while (iot_button_get_event(encoder_button) == BUTTON_LONG_PRESS_HOLD){
+    while (iot_button_get_event(encoder_button) == BUTTON_LONG_PRESS_HOLD)
+    {
         dribbler_speed = encoder.getCurValue();
         another_menu_output_text[2] = another_menu_text[2] + std::to_string(dribbler_speed);
         menu.writeLineClean(2, "*" + another_menu_output_text[2], false);
         dribbler.smart_dribble(dribbler_speed);
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
-    
+
     menu.writeLineClean(2, ">" + another_menu_output_text[2], false);
     encoder.setNewLimits(0, another_menu_output_text.size() - 2, 1, 1);
 }
@@ -335,7 +352,7 @@ void LineCalibrate(button_handle_t &encoder_button)
         sensor.LineSensor.calibrateWhite();
 
     sensor.LineSensor.saveGreenWhite();
-    
+
     menu.clearDisplay();
 }
 
@@ -347,8 +364,51 @@ void BTCheck(button_handle_t &encoder_button)
     {
         sensor.update();
         BTDebug.send();
-        
+
         vTaskDelay(50 / portTICK_PERIOD_MS);
+    }
+}
+
+void debug_menu(button_handle_t &encoder_button)
+{
+    int user_pointer_pos = 1;
+    int menu_size = debug_menu_text.size();
+
+    encoder.setNewLimits(0, debug_menu_text.size() - 2, 1, 0);
+
+    // отрисовываем стартовое меню
+    menu.drawFullMenu(debug_menu_text);
+
+    while (true)
+    {
+        user_pointer_pos = encoder.getCurValue() + 1;
+
+        // обновляем выбранную строку и перерисовываем, если нужно
+        menu.updateChosen(debug_menu_text, user_pointer_pos);
+        // menu.writeLine (4, std::to_string(-sensor.Cam.gate(0).center_angle));
+
+        if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
+            switch (user_pointer_pos)
+            {
+            case 1:
+                dribbler.smart_dribble(50);
+                vyravnivanije(0);
+                xSemaphoreTake(encoder_button_sem, portMAX_DELAY);
+                MPU_zakrut(0);
+                dribbler.smart_dribble(0);
+                break;
+            default:
+                ESP_LOGI(OLED_tag, "Button click");
+                break;
+            }
+        if (iot_button_get_event(encoder_button) == BUTTON_LONG_PRESS_HOLD)
+        {
+            encoder.setNewLimits(0, start_menu_text.size() - 2, 1, 5);
+            menu.drawFullMenu(start_menu_text);
+            menu.setChosenItem(1);
+            return;
+        }
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
 
