@@ -1047,6 +1047,12 @@ void goalPush(int color)
     }
 }
 
+float FwBallAnglIntegral = 0;
+float FwBallAnglPrev = 0;
+float Fw_kd = 5;
+float Fw_ki = 0;
+float Fw_kp = 0.4;
+
 void playForwardDribble2(int color)
 {
     menu.clearDisplay();
@@ -1065,7 +1071,7 @@ void playForwardDribble2(int color)
         int st = sensor.Locator.getStrength();
         int ballAngle = sensor.Locator.getBallAngleLocal();
         int lineAngle = sensor.LineSensor.getAngleDelayed();
-        
+
         //if (sensor.Cam.gate(color).width >= 0)
         //    goalPush(color);
 
@@ -1074,12 +1080,21 @@ void playForwardDribble2(int color)
             //menu.writeLineClean(0, "ball");
             dribbler.smart_dribble((abs(ballAngle) < 40) ? 40 : 0);
             // dribbler.neutral();
-            int deltaAngle = ballAngle * 0.3; //(ballAngle < 45 ? 0.3 : 0.5);
+            int deltaAngle = ballAngle * 0.1; //(ballAngle < 45 ? 0.3 : 0.5);
             if (lineAngle == 360)
             {
                 moveAngle = ballAngle;
 
-                drv.drive(moveAngle, (int)(deltaAngle), 60);
+                float ballAnfl_err = ballAngle;
+
+                float robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
+                // if (ball_strength > prevBallStrength){
+                //     ballSpeed += constrain((ball_strength - prevBallStrength) * gk_st_kd, -50, 50);
+                // }
+                FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
+                FwBallAnglPrev = ballAnfl_err;
+
+                drv.drive(moveAngle, (int)(robotAnglSpeed), 60);  
             }
             else
             {
@@ -1156,7 +1171,7 @@ void playForwardDribble2(int color)
                             deltaAngle = constrain(deltaAngle, -40, 40);
                             drv.drive(0, (int)(deltaAngle * 0.5), 0);
                         }
-                        
+
                         cam_angle = -sensor.Cam.gate(color).center_angle;
                         cam_dist = sensor.Cam.gate(color).distance;
 
@@ -1164,7 +1179,7 @@ void playForwardDribble2(int color)
                         {
                             goto fwDribbleBegin;
                         }
-                        
+
                         // может это в goalDriveBack?
                         dribbler.smart_dribble(110);
                         make_pause(500);
