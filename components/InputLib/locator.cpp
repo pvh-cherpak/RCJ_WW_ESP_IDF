@@ -5,7 +5,7 @@ void locator_t::init(int offset, bool inverse)
     this->inverse=inverse;
     this->offset=offset;
     uint8_t command = 0x00;
-    (i2c_master_write_to_device(I2C_NUM_0, LOCATOR_ADDRESS, &command, 1, I2C_TIMEOUT_TIME_TICS));
+    ESP_ERROR_CHECK(i2c_master_write_to_device(I2C_NUM_0, LOCATOR_ADDRESS, &command, 1, I2C_TIMEOUT_TIME_TICS));
 }
 
 void locator_t::update()
@@ -37,7 +37,7 @@ uint8_t locator_t::ReadHeading_1200()
 {
     uint8_t heading;
     uint8_t command = 0x04;
-    (I2C_NUM_0, LOCATOR_ADDRESS, &command, 1, &heading, 1, I2C_TIMEOUT_TIME_TICS);
+    i2c_master_write_read_device(I2C_NUM_0, LOCATOR_ADDRESS, &command, 1, &heading, 1, I2C_TIMEOUT_TIME_TICS);
     return heading;
 }
 
@@ -45,7 +45,7 @@ uint8_t locator_t::ReadHeading_600()
 {
     uint8_t heading;
     uint8_t command = 0x06;
-    (I2C_NUM_0, LOCATOR_ADDRESS, &command, 1, &heading, 1, I2C_TIMEOUT_TIME_TICS);
+    i2c_master_write_read_device(I2C_NUM_0, LOCATOR_ADDRESS, &command, 1, &heading, 1, I2C_TIMEOUT_TIME_TICS);
     return heading;
 }
 
@@ -53,7 +53,7 @@ uint8_t locator_t::ReadStrenght_1200()
 {
     uint8_t heading;
     uint8_t command = 0x05;
-    (I2C_NUM_0, LOCATOR_ADDRESS, &command, 1, &heading, 1, I2C_TIMEOUT_TIME_TICS);
+    i2c_master_write_read_device(I2C_NUM_0, LOCATOR_ADDRESS, &command, 1, &heading, 1, I2C_TIMEOUT_TIME_TICS);
     return heading;
 }
 
@@ -61,7 +61,7 @@ uint8_t locator_t::ReadStrenght_600()
 {
     uint8_t heading;
     uint8_t command = 0x07;
-    (I2C_NUM_0, LOCATOR_ADDRESS, &command, 1, &heading, 1, I2C_TIMEOUT_TIME_TICS);
+    i2c_master_write_read_device(I2C_NUM_0, LOCATOR_ADDRESS, &command, 1, &heading, 1, I2C_TIMEOUT_TIME_TICS);
     return heading;
 }
 

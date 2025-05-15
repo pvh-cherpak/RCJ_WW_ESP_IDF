@@ -972,8 +972,8 @@ void goalRotate(int color)
     {
         //menu.writeLineClean(0, "GoalRotate");
         sensor.update();
-        int rotateSpeed = abs(sensor.Cam.gate(color).center_angle) > 150 ? 30 : 90;        // 42 : 100
-        dribbler.smart_dribble(abs(sensor.Cam.gate(color).center_angle) > 120 ? 110 : 60); // 110
+        int rotateSpeed = abs(sensor.Cam.gate(color).center_angle) > 150 ? 30 : 90;        // 42 : 100 // > 150 ? 30 : 90
+        dribbler.smart_dribble(abs(sensor.Cam.gate(color).center_angle) > 130 ? 110 : 60); // 110 // > 120 ? 110 : 60
         drv.drive(0, rotateSpeed * sign, 0);
 
         // if (omnicam().gates[color].center_angle > 0){
@@ -1078,19 +1078,14 @@ void playForwardDribble2(int color)
         if (!isBall())
         {
             //menu.writeLineClean(0, "ball");
-            dribbler.smart_dribble((abs(ballAngle) < 40) ? 40 : 0);
+            dribbler.smart_dribble((abs(ballAngle) < 50) ? 60 : 0);
             // dribbler.neutral();
-            int deltaAngle = ballAngle * 0.1; //(ballAngle < 45 ? 0.3 : 0.5);
+            int deltaAngle = ballAngle * 0.3; //(ballAngle < 45 ? 0.3 : 0.5);
             if (lineAngle == 360)
             {
                 moveAngle = ballAngle;
-
                 float ballAnfl_err = ballAngle;
-
                 float robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
-                // if (ball_strength > prevBallStrength){
-                //     ballSpeed += constrain((ball_strength - prevBallStrength) * gk_st_kd, -50, 50);
-                // }
                 FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
                 FwBallAnglPrev = ballAnfl_err;
 
@@ -1104,9 +1099,21 @@ void playForwardDribble2(int color)
         else
         {
             //menu.writeLineClean(0, "gate...");
-            dribbler.smart_dribble(50);
-            drv.drive(0, 0, 0, 0);
-            make_pause(200);
+            dribbler.smart_dribble(70);
+            drv.driveXY(0, 30, 0); // чтобы лучше задриблить 
+            int start = millis();
+            while (millis() - start < 300)
+            {
+                sensor.update();
+                lineAngle = sensor.LineSensor.getAngleDelayed();
+                if (lineAngle != 360){
+                    drv.drive(goodAngle(lineAngle + 180), 0, 80);
+                    break;
+                }
+                vTaskDelay(10 / portTICK_PERIOD_MS);
+            }
+            // drv.drive(0, 0, 0, 0);
+            // make_pause(200);
             sensor.BallSensor.update();
             while (isBall())
             {
@@ -1127,7 +1134,8 @@ void playForwardDribble2(int color)
                         moveAngle = goodAngle(lineAngle + 180);
                         speed = (lineAngle == 360) ? 0 : 60;
                         cam_angle = -sensor.Cam.gate(color).center_angle;
-                        deltaAngle = goodAngle(cam_angle + 180) * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+                        deltaAngle = goodAngle(cam_angle + 180);
+                        deltaAngle = abs(cam_angle) < 90 ? deltaAngle * 0.3 : deltaAngle * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
                         deltaAngle = constrain(deltaAngle, -40, 40);
                         drv.drive(moveAngle, (int)(deltaAngle), speed);
                     }

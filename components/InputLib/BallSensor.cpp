@@ -13,7 +13,6 @@ void BallSensor_t::update()
 {
     isBall = gpio_get_level(GPIO);
     if (isBall){
-        ESP_LOGI("ball", " %d", (int)esp_timer_get_time());
         lastIsBallTime = esp_timer_get_time();
     }
 }

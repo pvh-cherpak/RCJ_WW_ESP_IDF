@@ -93,7 +93,7 @@ uint8_t msg[CAM_MSG_SIZE];
 void OpenMVCommunication_t::update()
 {
     size_t length = 0;
-    ESP_ERROR_CHECK(uart_get_buffered_data_len(uart_num, &length));
+    (uart_get_buffered_data_len(uart_num, &length));
     //ESP_LOGI("OpenMV", "available data length=%d", length);
     if (length > CAM_UART_READ_LIMIT)
     {
@@ -130,7 +130,7 @@ void OpenMVCommunication_t::update()
 
     if (pos_start != -1 && fit(pos_write - pos_start) >= CAM_MSG_SIZE)
     {
-        ESP_LOGI("OpenMV", "READ DATA, pos_start = %d", pos_start);
+        // ESP_LOGI("OpenMV", "READ DATA, pos_start = %d", pos_start);
 
         // сохраняем нужные данные в массив для сообщения и парсим
         pos_start = fit(pos_start + 2);
