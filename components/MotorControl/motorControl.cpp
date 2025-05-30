@@ -1,11 +1,13 @@
 #include "esp_log.h"
 #include "motorControl.h"
+#include "esp_timer.h"
 
 static const char *motor_tag = "motors";
 
 
 MotorControl drv;
 Dribbler dribbler;
+Kicker kicker;
 
 void MotorControl::init()
 {
@@ -289,28 +291,48 @@ void Dribbler::smart_dribble(int speed)
     }
     programm_speed = speed;
 }
-// {
-//     speed += 50;
-//     if (speed > 110)
-//         speed = 110;
-//     if (speed < cur_speed)
-//     {
-//         while (speed < cur_speed)
-//         {
-//             cur_speed -= 10;
-//             dribble(cur_speed);
-//             // ESP_LOGI("Drb", "cur_speed = %d", cur_speed);
-//             vTaskDelay(5);
-//         }
-//     }
-//     else
-//     {
-//         while (speed > cur_speed)
-//         {
-//             cur_speed += 10;
-//             dribble(cur_speed);
-//             // ESP_LOGI("Drb", "cur_speed = %d", cur_speed);
-//             vTaskDelay(5);
-//         }
-//     }
-// }
+
+void Kicker::init(gpio_num_t kicker_pin){
+    pin = kicker_pin;
+    gpio_set_direction(pin, GPIO_MODE_OUTPUT);
+
+    ESP_LOGI("Kicker::init()", "sozdanie ocheredi");
+    Queue = xQueueCreate(10, sizeof(int));
+    if (Queue == NULL) {
+        ESP_LOGE("Kicker", "error pri sozdanii ocheredi!");
+        return;
+    }
+
+    ESP_LOGI("Kicker::init()", "start taski");
+    
+    if (xTaskCreatePinnedToCore(xKickerTask, "Kicker_task", 8096, NULL, 2, &Task, 0) != pdPASS) {
+        ESP_LOGE("Kicker_task", "chotot poshlo ne tak pri sozdanii taski");
+        vTaskDelay(10);
+        esp_restart();
+    }
+}
+
+void Kicker::kick(){
+    gpio_set_level(pin, 1);
+    kick_time = esp_timer_get_time();
+}
+
+void Kicker::return_kicker(){
+    if (esp_timer_get_time() - kick_time >= return_time_mcs){
+        gpio_set_level(pin, 0);
+        kick_time = INT64_MAX;
+    }
+}
+
+void Kicker::xKickerTask(void *arg){
+    ESP_LOGI("Kicker_task", "Ya, rodilsa");
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    while (true)
+    {
+        vTaskDelay(pdMS_TO_TICKS(50));
+        kicker.return_kicker();
+    }
+    ESP_LOGE("Kicker_task", "taska sdohla");
+    esp_restart();
+    vTaskDelete(NULL);
+}
