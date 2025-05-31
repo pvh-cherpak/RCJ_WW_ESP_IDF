@@ -205,6 +205,11 @@ void Dribbler::xDriblerTask(void *arg)
         speed += 50;
         if (speed > 140)
             speed = 140;
+        if(speed < 50){
+            cur_speed = speed;
+            dribble(speed);
+            continue;
+        }
         if (speed < cur_speed)
             while (speed < cur_speed)
             {
@@ -288,6 +293,10 @@ void Dribbler::smart_dribble(int speed)
         return;
     }
     programm_speed = speed;
+}
+
+void Dribbler::brake(){
+    smart_dribble(-10);
 }
 // {
 //     speed += 50;

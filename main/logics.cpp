@@ -1218,24 +1218,38 @@ void MPU_zakrut(int color)
 
     while (isBall())
     {
+        menu.writeLineClean(0, "2");
+        ESP_LOGI("debug", "2");
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.IMU.update();
         sensor.BallSensor.update();
 
-        int rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 10 : 40; // 42 : 100
-        dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 110 : 60);         // 110 : 60
+        int rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 90 ? 70 : -70;
+        dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 90 ? 110 : -10);
         drv.drive(0, rotateSpeed * sign, 0);
     }
+    
+    ESP_LOGI("debug", "exit 2");
+    menu.writeLineClean(0, "exit 2");
 }
 
 void vyravnivanije(int color)
 {
-    while (abs(-sensor.Cam.gate(color).center_angle) < 170 && isBall())
+    sensor.update();
+    //while (abs(-sensor.Cam.gate(color).center_angle) < 170 && isBall())
+    while (abs(sensor.IMU.getYaw()) > 15 && isBall())
     {
+        menu.writeLineClean(0, "1");
+        ESP_LOGI("debug", "1");
         sensor.update();
         int cam_angle = -sensor.Cam.gate(color).center_angle;
-        deltaAngle = goodAngle(cam_angle + 180); //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+        deltaAngle = -sensor.IMU.getYaw(); //goodAngle(cam_angle + 180); //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+        if (deltaAngle > -30 && deltaAngle <= 0) deltaAngle = -30;
+        if (deltaAngle < 30 && deltaAngle > 0) deltaAngle = 30;
+        menu.writeLineClean(0, "1 " + std::to_string((int)deltaAngle));
         deltaAngle = constrain(deltaAngle, -40, 40);
         drv.drive(0, (int)(deltaAngle * 0.5), 0);
     }
+    ESP_LOGI("debug", "exit 1");
+    menu.writeLineClean(0, "exit 1");
 }

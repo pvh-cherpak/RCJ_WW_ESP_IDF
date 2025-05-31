@@ -63,6 +63,7 @@ class Dribbler{
         void smart_dribble(int speed);
         void neutral();
         void na_vse_babki();
+        void brake();
        
 };
 
