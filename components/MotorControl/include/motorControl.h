@@ -53,8 +53,6 @@ class Dribbler{
     private:
         TaskHandle_t Task = NULL;
         int programm_speed = 0;
-
-    
     
         static void xDriblerTask(void *arg);
     
@@ -65,6 +63,21 @@ class Dribbler{
         void na_vse_babki();
         void brake();
        
+};
+
+class Kicker{
+    TaskHandle_t Task = NULL;
+    
+    gpio_num_t pin = GPIO_NUM_0;
+    int64_t kick_time = INT64_MAX;
+    int64_t return_time_mcs = 200000;
+    
+    static void xKickerTask(void *arg);
+
+    public:
+        void init(gpio_num_t kicker_pin);
+        void kick();
+        void return_kicker();
 };
 
 #endif

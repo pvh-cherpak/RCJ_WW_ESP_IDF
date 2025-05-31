@@ -151,7 +151,10 @@ extern "C"
 		// BTDebug.init();
 
 		drv.init();
-		dribbler.init();
+		if (robot_type == 2)
+			dribbler.init();
+		else if (robot_type == 1)
+			kicker.init(GPIO_NUM_16);
 		//err_log.init();
 
 		int GPIO_A, GPIO_B;
