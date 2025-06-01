@@ -156,6 +156,7 @@ extern "C"
 		else if (robot_type == 1)
 			kicker.init(GPIO_NUM_16);
 		//err_log.init();
+		real_dist.init();
 
 		int GPIO_A, GPIO_B;
 		if (robot_type == 1)

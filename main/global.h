@@ -12,6 +12,7 @@
 #include "display.h"
 #include "debug_log.h"
 #include "BTDebug.h"
+#include "RealDist.h"
 
 const double DEG_TO_RAD = acos(-1) / 180;
 const double RAD_TO_DEG = 180 / acos(-1);
@@ -24,6 +25,7 @@ extern MotorControl drv;
 extern Dribbler dribbler;
 extern Kicker kicker;
 extern ErrLog_t err_log;
+extern RealDist real_dist;
 extern const char *NVS_IDENTIFIER_GROUP;
 // extern BTDebug_t BTDebug;
 
