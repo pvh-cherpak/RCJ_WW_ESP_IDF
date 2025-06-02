@@ -1113,7 +1113,7 @@ void playForwardDribble2(int color)
         int cam_dist = sensor.Cam.gate(color).distance;
 
         int st = sensor.Locator.getStrength();
-        int ballAngle = sensor.Locator.getBallAngleLocal();
+        int ballAngle = 0; //sensor.Locator.getBallAngleLocal();
         int lineAngle = sensor.LineSensor.getAngleDelayed();
 
         //if (sensor.Cam.gate(color).width >= 0)
