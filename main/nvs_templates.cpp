@@ -28,6 +28,7 @@ void get_MPU_offsets_blob(int16_t *offsets)
 {
     nvs_handle_t nvs_handle;
 	esp_err_t err = nvs_open(NVS_UMU, NVS_READONLY, &nvs_handle);
+
 	if (err == ESP_ERR_NVS_NOT_FOUND){
 		restore_MPU_offsets_blob();
 		esp_restart();

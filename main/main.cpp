@@ -154,7 +154,7 @@ extern "C"
 		if (robot_type == 2)
 			dribbler.init();
 		else if (robot_type == 1)
-			kicker.init(GPIO_NUM_16);
+			kicker.init(GPIO_NUM_23);
 		//err_log.init();
 		real_dist.init();
 
