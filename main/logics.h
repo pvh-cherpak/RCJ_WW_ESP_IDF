@@ -17,8 +17,6 @@ void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, 
 
 void calibrateDistOffset(int color);
 
-void calibrateRealDist(int color);
-
 bool getRayIntersection(float x1, float y1, float ang1, float x2, float y2, float ang2, float &out_x, float &out_y);
 
 float pixel_dist_to_real(float dist);

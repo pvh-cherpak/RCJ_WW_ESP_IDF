@@ -9,8 +9,8 @@
 const int DIST_CALIB_SECTORS = 8;
 const int DIST_CALIB_MAX_POINTS = 40;
 const int DIST_CALIB_MAX_DIST = 300;
-const int DIST_CALIB_ROTATE_STEPS = 16;
-const int DIST_CALIB_PLACES = 10;
+const int DIST_CALIB_ROTATE_STEPS = 8;
+const int DIST_CALIB_PLACES = 9;
 
 void sort_points(int *xarr, int *yarr, int n);
 int linear_interpolate(int x, int *xs, int *ys, int n);

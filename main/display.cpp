@@ -211,9 +211,11 @@ void info_menu(button_handle_t &encoder_button)
         menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
         menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
         menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
-        menu.writeLineClean(5, "B gate: " + std::to_string(sensor.Cam.Blue.center_angle), false);
-        // menu.writeLineClean(6, "Y gate: " + std::to_string(sensor.Cam.Yellow.center_angle), false);
-        menu.writeLineClean(6, "Is ball: " + std::to_string(sensor.BallSensor.ballCatched()), false);
+        int gateAngle = -sensor.Cam.Yellow.clos_angle;
+        int gateDist = sensor.Cam.Yellow.distance;
+        menu.writeLineClean(5, "Y gate: " + std::to_string(gateAngle) + " " + std::to_string(gateDist), false);
+        menu.writeLineClean(6, "Y dist: " + std::to_string(real_dist.convertDist(gateDist, gateAngle)));
+        // menu.writeLineClean(6, "Is ball: " + std::to_string(sensor.BallSensor.ballCatched()), false);
         // menu.writeLineClean(6, "Y dist: " + std::to_string((int)sensor.Cam.Yellow.distance) + " " + std::to_string((int)sensor.Cam.Yellow.clos_angle), false);
 
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
@@ -273,7 +275,8 @@ void another_menu(button_handle_t &encoder_button)
                 menu.drawFullMenu(another_menu_output_text);
                 break;
             case 6:
-                calibrateDistOffset(0);
+                calibrateRealDist(0);
+                menu.drawFullMenu(another_menu_output_text);
                 break;
             default:
                 ESP_LOGI(OLED_tag, "Button click");
@@ -370,6 +373,76 @@ void BTCheck(button_handle_t &encoder_button)
 
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
+}
+
+int place_distances[DIST_CALIB_PLACES] = {30, 50, 70, 90, 110, 130, 150, 170, 200};
+
+void calibrateRealDist(int color){
+    int speed = 0;
+
+    int angles[DIST_CALIB_PLACES][DIST_CALIB_ROTATE_STEPS];
+    int pixel_dist[DIST_CALIB_PLACES][DIST_CALIB_ROTATE_STEPS];
+
+    // for (int i = 0; i < DIST_CALIB_PLACES; ++i)
+    //     for (int j = 0; j < DIST_CALIB_ROTATE_STEPS; ++j)
+    //         angles[i][j] = pixel_dist[i][j] = 0;
+
+    int min_rotate_speed = 20;
+
+    menu.clearDisplay();
+
+    const int MEASUREMENTS = 5;
+    int ang_measure[MEASUREMENTS], dist_measure[MEASUREMENTS];
+
+    for (int i = 0; i < DIST_CALIB_PLACES; ++i){
+        menu.writeLineClean(0, "place " + std::to_string(place_distances[i]) + " cm");
+        menu.writeLineClean(1, "click...");
+        xSemaphoreTake(encoder_button_sem, portMAX_DELAY);
+
+        menu.writeLineClean(0, "place " + std::to_string(place_distances[i]) + " cm");
+        for (int j = 0; j < DIST_CALIB_ROTATE_STEPS; ++j){
+            int target_angle = j * (360 / DIST_CALIB_ROTATE_STEPS);
+            sensor.update();
+            while (abs(goodAngle(sensor.IMU.getYaw() - target_angle)) > 5)
+            {
+                vTaskDelay(10 / portTICK_PERIOD_MS);
+                sensor.update();
+
+                speed = -goodAngle(sensor.IMU.getYaw() - target_angle) * 0.5;
+                if (speed < 0 && speed > -min_rotate_speed) speed = -min_rotate_speed;
+                if (speed > 0 && speed < min_rotate_speed) speed = min_rotate_speed;
+
+                drv.drive(0, speed, 0);
+                
+                menu.writeLineClean(1, "angle " + std::to_string(target_angle) + " " + std::to_string(sensor.IMU.getYaw()));
+
+                if (xSemaphoreTake(encoder_double_click_sem, 0)) return;
+            }
+
+            drv.drive(0, 0, 0, 0);
+            
+            for (int k = 0; k < MEASUREMENTS; ++k){
+                vTaskDelay(100 / portTICK_PERIOD_MS);
+                sensor.update();
+                while (sensor.Cam.gate(color).center_angle == 360){
+                    menu.writeLineClean(2, "!! No gates");
+                    vTaskDelay(10 / portTICK_PERIOD_MS);
+                    sensor.update();
+                }
+                menu.writeLineClean(2, "");
+
+                ang_measure[k] = -sensor.Cam.gate(color).clos_angle;
+                dist_measure[k] = sensor.Cam.gate(color).distance;
+            }
+            
+            sort_points(dist_measure, ang_measure, MEASUREMENTS);
+
+            angles[i][j] = ang_measure[MEASUREMENTS / 2];
+            pixel_dist[i][j] = dist_measure[MEASUREMENTS / 2];
+        }
+    }
+
+    real_dist.updatePoints(place_distances, (int*)angles, (int*)pixel_dist);
 }
 
 void debug_menu(button_handle_t &encoder_button)

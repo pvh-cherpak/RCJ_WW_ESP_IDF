@@ -1,5 +1,6 @@
 #include "RealDist.h"
 #include <cmath>
+#include "esp_log.h"
 
 RealDist real_dist;
 
@@ -114,6 +115,14 @@ void RealDist::init()
         }
         else
             ESP_ERROR_CHECK(err);
+
+    ESP_LOGI("RD", "points:");
+    for (int i = 0; i < DIST_CALIB_SECTORS; ++i){
+        ESP_LOGI("RD", "SECTOR %d (%d points)", i, pcount[i]);
+        for (int j = 0; j < pcount[i]; ++j){
+            ESP_LOGI("RD", "%d;%d", xs[i][j], ys[i][j]);
+        }
+    }
 }
 
 // int dist_cm[DIST_CALIB_PLACES] - реальное расстояние для каждого места на поле
@@ -128,12 +137,16 @@ void RealDist::updatePoints(int *dist_cm, int *angles, int *pixel_dist)
         for (int j = 0; j < DIST_CALIB_MAX_POINTS; ++j)
             xs[i][j] = ys[i][j] = 0;
 
+    ESP_LOGI("RD", "clear storage");
+
     for (int i = 0; i < DIST_CALIB_PLACES; ++i)
     {
-        for (int j = 0; j < DIST_CALIB_ROTATE_STEPS; ++i)
+        for (int j = 0; j < DIST_CALIB_ROTATE_STEPS; ++j)
         {
-
             int sect = angle_to_sector(angles[i * DIST_CALIB_ROTATE_STEPS + j]);
+            
+            ESP_LOGI("RD", "%d;%d;  %d;%d => %d (%d)", i, j, angles[i * DIST_CALIB_ROTATE_STEPS + j], pixel_dist[i * DIST_CALIB_ROTATE_STEPS + j], sect, pcount[sect]);
+
             xs[sect][pcount[sect]] = pixel_dist[i * DIST_CALIB_ROTATE_STEPS + j];
             ys[sect][pcount[sect]] = dist_cm[i];
 
@@ -144,6 +157,14 @@ void RealDist::updatePoints(int *dist_cm, int *angles, int *pixel_dist)
 
     for (int i = 0; i < DIST_CALIB_SECTORS; ++i)
         sort_points(xs[i], ys[i], pcount[i]);
+
+    ESP_LOGI("RD", "points:");
+    for (int i = 0; i < DIST_CALIB_SECTORS; ++i){
+        ESP_LOGI("RD", "SECTOR %d (%d points)", i, pcount[i]);
+        for (int j = 0; j < pcount[i]; ++j){
+            ESP_LOGI("RD", "%d;%d", xs[i][j], ys[i][j]);
+        }
+    }
 
     // сохраняем массивы xs, ys и pcount в NVS
     save2NVS();

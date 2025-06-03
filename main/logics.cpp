@@ -241,44 +241,6 @@ void calibrateDistOffset(int color)
     set_OpenMV_offset(sensor.Cam.dist_offset_x, sensor.Cam.dist_offset_y);
 }
 
-int place_distances[] = {10, 20, 30, 50, 70, 100, 130, 160, 200, 230};
-
-void calibrateRealDist(int color){
-    sensor.update();
-    
-    speed = 0;
-
-    int angles[DIST_CALIB_PLACES][DIST_CALIB_ROTATE_STEPS];
-    int pixel_dist[DIST_CALIB_PLACES][DIST_CALIB_ROTATE_STEPS];
-
-    int min_rotate_speed = 30;
-
-    for (int i = 0; i < DIST_CALIB_PLACES; ++i){
-        for (int j = 0; j < DIST_CALIB_ROTATE_STEPS; ++j){
-            int target_angle = j * (360 / DIST_CALIB_ROTATE_STEPS);
-            while (abs(goodAngle(sensor.IMU.getYaw() - target_angle)) > 5)
-            {
-                // ESP_LOGI("RD", "to %d", target_angle);
-                vTaskDelay(10 / portTICK_PERIOD_MS);
-                sensor.update();
-
-                speed = -sensor.IMU.getYaw();
-                if (speed < 0 && speed > -min_rotate_speed) speed = -min_rotate_speed;
-                if (speed > 0 && speed < min_rotate_speed) speed = min_rotate_speed;
-
-                drv.drive(0, speed, 0);
-            }
-            
-            sensor.update();
-
-            angles[i][j] = -sensor.Cam.gate(color).clos_angle;
-            pixel_dist[i][j] = sensor.Cam.gate(color).distance;
-        }
-    }
-
-    real_dist.updatePoints(place_distances, (int*)angles, (int*)pixel_dist);
-}
-
 float pixel_dist_to_real(float x)
 {
     return 3.91243e-6 * x * x * x * x - 0.000655948 * x * x * x + 0.05185 * x * x - 1.0362 * x + 52.2298;
