@@ -72,7 +72,7 @@ void OpenMVCommunication_t::init(int GPIO)
 
 const int CAM_UART_BUFFER_SIZE = 256; // модуль, по которому берутся индексы
 const int CAM_UART_READ_LIMIT = 128;  // если пришло больше - чистим буфер
-const int CAM_MSG_SIZE = 36;
+const int CAM_MSG_SIZE = 38;
 
 inline int fit(int index)
 {
@@ -215,6 +215,8 @@ void OpenMVCommunication_t::parseCorners(uint8_t *data)
     bgate.p[2].y = from_direct_code((data[10 + 16] << 8) | data[11 + 16]);
     bgate.p[3].x = from_direct_code((data[12 + 16] << 8) | data[13 + 16]);
     bgate.p[3].y = from_direct_code((data[14 + 16] << 8) | data[15 + 16]);
+    
+    ESP_LOGI("OpenMV", "%d %d %d %d", ygate.p[0].x, ygate.p[0].y, ygate.p[1].x, ygate.p[1].y);
 
     obst_angle = from_direct_code((data[32] << 8) | data[33]);
     obst_dist = from_direct_code((data[34] << 8) | data[35]);
@@ -254,7 +256,7 @@ void OpenMVCommunication_t::calculate_global_values()
     g_obst_angle = obst_angle + IMU.Yaw;
 }
 
-void OpenMVCommunication_t::calcGateInfo(blob_t blob, OmniCamBlobInfo_t gate)
+void OpenMVCommunication_t::calcGateInfo(blob_t blob, OmniCamBlobInfo_t& gate)
 {
     if (blob.p[0].x < 0){
         gate.left_angle = 360;
@@ -264,6 +266,7 @@ void OpenMVCommunication_t::calcGateInfo(blob_t blob, OmniCamBlobInfo_t gate)
         gate.distance = 1000;
         gate.width = 0;
         gate.height = 0;
+        return;
     }
 
     for (int i = 0; i < 4; ++i){

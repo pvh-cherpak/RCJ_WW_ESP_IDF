@@ -208,15 +208,19 @@ void info_menu(button_handle_t &encoder_button)
     {
         sensor.update();
         sensor.BallSensor.update();
-        menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
-        menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
-        menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
-        int gateAngle = -sensor.Cam.Yellow.clos_angle;
-        int gateDist = sensor.Cam.Yellow.distance;
-        menu.writeLineClean(5, "Y gate: " + std::to_string(gateAngle) + " " + std::to_string(gateDist), false);
-        menu.writeLineClean(6, "Y dist: " + std::to_string(real_dist.convertDist(gateDist, gateAngle)));
-        // menu.writeLineClean(6, "Is ball: " + std::to_string(sensor.BallSensor.ballCatched()), false);
-        // menu.writeLineClean(6, "Y dist: " + std::to_string((int)sensor.Cam.Yellow.distance) + " " + std::to_string((int)sensor.Cam.Yellow.clos_angle), false);
+
+        menu.writeLineClean(2, "L " + std::to_string(sensor.Cam.Yellow.left_angle));
+        menu.writeLineClean(3, "C " + std::to_string(sensor.Cam.Yellow.center_angle));
+        menu.writeLineClean(4, "R " + std::to_string(sensor.Cam.Yellow.center_angle));
+        menu.writeLineClean(5, "Dist " + std::to_string(sensor.Cam.Yellow.distance));
+
+        // menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
+        // menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
+        // menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
+        // int gateAngle = -sensor.Cam.Yellow.clos_angle;
+        // int gateDist = sensor.Cam.Yellow.distance;
+        // menu.writeLineClean(5, "Y gate: " + std::to_string(gateAngle) + " " + std::to_string(gateDist), false);
+        // menu.writeLineClean(6, "Y dist: " + std::to_string(real_dist.convertDist(gateDist, gateAngle)));
 
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
         {

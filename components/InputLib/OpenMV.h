@@ -58,7 +58,7 @@ private:
     void parseData(uint8_t *data);
     void parseCorners(uint8_t *data);
     void calculate_global_values();
-    void calcGateInfo(blob_t blob, OmniCamBlobInfo_t gate);
+    void calcGateInfo(blob_t blob, OmniCamBlobInfo_t& gate);
     
     int dist_to_polygon(int angle, blob_t b);
 private:
