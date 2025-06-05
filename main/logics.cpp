@@ -390,13 +390,11 @@ int getGlobalPosition_dist(float &x, float &y, int color)
     return 0;
 }
 
-int64_t simulCatchBallTime = INT64_MAX;
-
 bool isBall()
 {
     if (sensor.cfg.robotType == 2)
     {
-        return (esp_timer_get_time() >= simulCatchBallTime); //sensor.BallSensor.ballCatched();
+        return sensor.BallSensor.ballCatched();
     }
     else
         return (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10);
@@ -1061,8 +1059,6 @@ void playForwardDribble2(int color)
     menu.clearDisplay();
     color = 1 ^ color;
     
-    simulCatchBallTime = esp_timer_get_time() + 5000000;
-    
     while (true)
     {
     fwDribbleBegin:
@@ -1202,8 +1198,6 @@ void playForwardDribble2(int color)
                         goalRotate(color);
                         // else
                         //goalDriveBack(color);
-
-                        simulCatchBallTime = esp_timer_get_time() + 5000000;
 
                         goto fwDribbleBegin;
                     }

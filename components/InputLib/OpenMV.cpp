@@ -1,6 +1,9 @@
 #include "OpenMV.h"
 #include <esp_timer.h>
 
+const double DEG_TO_RAD = acos(-1) / 180;
+const double RAD_TO_DEG = 180 / acos(-1);
+
 /*
 void OpenMVCommunication_t::init()
 {
@@ -69,7 +72,7 @@ void OpenMVCommunication_t::init(int GPIO)
 
 const int CAM_UART_BUFFER_SIZE = 256; // модуль, по которому берутся индексы
 const int CAM_UART_READ_LIMIT = 128;  // если пришло больше - чистим буфер
-const int CAM_MSG_SIZE = 34;
+const int CAM_MSG_SIZE = 36;
 
 inline int fit(int index)
 {
@@ -138,7 +141,7 @@ void OpenMVCommunication_t::update()
         {
             msg[i] = data[fit(pos_start + i)];
         }
-        parseData(&msg[0]);
+        parseCorners(&msg[0]);
         calculate_global_values();
 
         // ищем, не было ли уже обнаружено новое начало сообщения
@@ -190,21 +193,34 @@ void OpenMVCommunication_t::parseData(uint8_t *data)
 
     obst_angle = from_direct_code((data[28] << 8) | data[29]);
     obst_dist = from_direct_code((data[30] << 8) | data[31]);
+}
 
-    float rad2deg = 180 / acos(-1);
-    float clos_x = cam_data.Gates[0].distance * sin(cam_data.Gates[0].clos_angle / rad2deg);
-    float clos_y = cam_data.Gates[0].distance * cos(cam_data.Gates[0].clos_angle / rad2deg);
-    clos_x += dist_offset_x;
-    clos_y += dist_offset_y;
-    cam_data.Gates[0].distance = sqrt(clos_x * clos_x + clos_y * clos_y);
-    cam_data.Gates[0].clos_angle = atan2(clos_x, clos_y) * rad2deg;
+void OpenMVCommunication_t::parseCorners(uint8_t *data)
+{
+    blob_t ygate, bgate;
+    ygate.p[0].x = from_direct_code((data[0] << 8) | data[1]);
+    ygate.p[0].y = from_direct_code((data[2] << 8) | data[3]);
+    ygate.p[1].x = from_direct_code((data[4] << 8) | data[5]);
+    ygate.p[1].y = from_direct_code((data[6] << 8) | data[7]);
+    ygate.p[2].x = from_direct_code((data[8] << 8) | data[9]);
+    ygate.p[2].y = from_direct_code((data[10] << 8) | data[11]);
+    ygate.p[3].x = from_direct_code((data[12] << 8) | data[13]);
+    ygate.p[3].y = from_direct_code((data[14] << 8) | data[15]);
     
-    clos_x = cam_data.Gates[1].distance * sin(cam_data.Gates[1].clos_angle / rad2deg);
-    clos_y = cam_data.Gates[1].distance * cos(cam_data.Gates[1].clos_angle / rad2deg);
-    clos_x += dist_offset_x;
-    clos_y += dist_offset_y;
-    cam_data.Gates[1].distance = sqrt(clos_x * clos_x + clos_y * clos_y);
-    cam_data.Gates[1].clos_angle = atan2(clos_x, clos_y) * rad2deg;
+    bgate.p[0].x = from_direct_code((data[0 + 16] << 8) | data[1 + 16]);
+    bgate.p[0].y = from_direct_code((data[2 + 16] << 8) | data[3 + 16]);
+    bgate.p[1].x = from_direct_code((data[4 + 16] << 8) | data[5 + 16]);
+    bgate.p[1].y = from_direct_code((data[6 + 16] << 8) | data[7 + 16]);
+    bgate.p[2].x = from_direct_code((data[8 + 16] << 8) | data[9 + 16]);
+    bgate.p[2].y = from_direct_code((data[10 + 16] << 8) | data[11 + 16]);
+    bgate.p[3].x = from_direct_code((data[12 + 16] << 8) | data[13 + 16]);
+    bgate.p[3].y = from_direct_code((data[14 + 16] << 8) | data[15 + 16]);
+
+    obst_angle = from_direct_code((data[32] << 8) | data[33]);
+    obst_dist = from_direct_code((data[34] << 8) | data[35]);
+
+    calcGateInfo(ygate, cam_data.Gates[0]);
+    calcGateInfo(bgate, cam_data.Gates[1]);
 }
 
 int local_good_angle(int angle)
@@ -224,16 +240,105 @@ void OpenMVCommunication_t::calculate_global_values()
     globa_cam_data.Gates[0].right_angle = local_good_angle(-cam_data.Gates[0].right_angle + IMU.Yaw);
     globa_cam_data.Gates[0].clos_angle = local_good_angle(-cam_data.Gates[0].clos_angle + IMU.Yaw);
     globa_cam_data.Gates[0].distance = cam_data.Gates[0].distance;
-    globa_cam_data.Gates[0].width = cam_data.Gates[0].width + IMU.Yaw;
-    globa_cam_data.Gates[0].height = cam_data.Gates[0].height + IMU.Yaw;
+    globa_cam_data.Gates[0].width = cam_data.Gates[0].width;
+    globa_cam_data.Gates[0].height = cam_data.Gates[0].height;
 
     globa_cam_data.Gates[1].left_angle = local_good_angle(-cam_data.Gates[1].left_angle + IMU.Yaw);
     globa_cam_data.Gates[1].center_angle = local_good_angle(-cam_data.Gates[1].center_angle + IMU.Yaw);
     globa_cam_data.Gates[1].right_angle = local_good_angle(-cam_data.Gates[1].right_angle + IMU.Yaw);
     globa_cam_data.Gates[1].clos_angle = local_good_angle(-cam_data.Gates[1].clos_angle + IMU.Yaw);
     globa_cam_data.Gates[1].distance = cam_data.Gates[1].distance;
-    globa_cam_data.Gates[1].width = cam_data.Gates[1].width + IMU.Yaw;
-    globa_cam_data.Gates[1].height = cam_data.Gates[1].height + IMU.Yaw;
+    globa_cam_data.Gates[1].width = cam_data.Gates[1].width;
+    globa_cam_data.Gates[1].height = cam_data.Gates[1].height;
     
     g_obst_angle = obst_angle + IMU.Yaw;
+}
+
+void OpenMVCommunication_t::calcGateInfo(blob_t blob, OmniCamBlobInfo_t gate)
+{
+    if (blob.p[0].x < 0){
+        gate.left_angle = 360;
+        gate.center_angle = 360;
+        gate.right_angle = 360;
+        gate.clos_angle = 360;
+        gate.distance = 1000;
+        gate.width = 0;
+        gate.height = 0;
+    }
+
+    for (int i = 0; i < 4; ++i){
+        int angle = atan2(blob.p[i].x - center_x, blob.p[i].y - center_y) * RAD_TO_DEG;
+        if (i == 0){
+            gate.left_angle = angle;
+            gate.right_angle = angle;
+        }
+        else{
+            if (abs(local_good_angle(angle - gate.left_angle)) <
+                abs(local_good_angle(angle - gate.right_angle))){
+                gate.left_angle = angle;
+            }
+            else{
+                gate.right_angle = angle;
+            }
+        }
+    }
+
+    gate.center_angle = local_good_angle((gate.left_angle + gate.right_angle) / 2);
+    gate.width = local_good_angle(gate.right_angle - gate.left_angle);
+
+    gate.distance = 1000;
+    for (int i = 0; i < 4; ++i){
+        int temp = dist_to_segm({center_x, center_y}, segm_from_points(blob.p[i], blob.p[(i + 1) % 4]));
+        if (temp < gate.distance)
+            gate.distance = temp;
+    }
+
+    gate.height = 0;
+    for (int i = 0; i < 4; ++i){
+        int temp = point_dist({center_x, center_y}, blob.p[i]);
+        if (temp > gate.height)
+            gate.height = temp;
+    }
+
+    gate.clos_angle = gate.center_angle;
+}
+
+segm_t segm_from_points(point_t p1, point_t p2)
+{
+    segm_t s = {p1, p2};
+    s.a = p2.y - p1.y;
+    s.b = p1.x - p2.y;
+    s.c = p1.y * p2.x - p1.x * p2.y;
+    return s;
+}
+
+int point_dist(point_t p1, point_t p2)
+{
+    return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+}
+
+int dist_to_segm(point_t p, segm_t s){
+    int edge_len = point_dist(s.beg, s.en);
+    int p_dist1 = point_dist(p, s.beg);
+    int p_dist2 = point_dist(p, s.en);
+
+    if (p_dist1 * p_dist1 > edge_len * edge_len + p_dist2 * p_dist2)
+        return p_dist2;
+
+    if (p_dist2 * p_dist2 > edge_len * edge_len + p_dist1 * p_dist1)
+        return p_dist2;
+
+    if (s.a * s.a + s.b * s.b == 0)
+        return 0;
+    
+    int eq = s.a * p.x + s.b * p.y + s.c;
+    int dist = abs(eq) / (sqrt(s.a * s.a + s.b * s.b));
+    return dist;
+}
+
+int OpenMVCommunication_t::dist_to_polygon(int angle, blob_t blob)
+{
+    // segm_t ray = segm_from_points({center_x, center_y}, {center_x + 100 * sin(angle * DEG_TO_RAD), 
+    //                                                      center_y + 100 * cos(angle * DEG_TO_RAD)});
+    return 0;
 }

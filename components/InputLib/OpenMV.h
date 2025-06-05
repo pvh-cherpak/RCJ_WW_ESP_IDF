@@ -5,6 +5,26 @@
 
 #include "mpu6050.h"
 
+struct point_t{
+    int x = 0, y = 0;
+};
+
+struct segm_t{
+    point_t beg, en;
+    int a = 0, b = 0, c = 0;
+};
+
+struct blob_t{
+    point_t p[4];
+};
+
+int local_good_angle(int angle);
+
+segm_t segm_from_points(point_t p1, point_t p2);
+int point_dist(point_t p1, point_t p2);
+
+int dist_to_segm(point_t p, segm_t s);
+
 class OpenMVCommunication_t
 {
 private:
@@ -26,6 +46,8 @@ public:
     float g_obst_angle = 0, g_obst_dist = 0;
 
     float dist_offset_x = 0, dist_offset_y = 0;
+
+    int center_x = 160, center_y = 120;
 public:
     void init(int GPIO);
     void update();
@@ -34,7 +56,11 @@ public:
     const OmniCamBlobInfo_t& gate(int color) { return (color ? Blue : Yellow); };
 private:
     void parseData(uint8_t *data);
+    void parseCorners(uint8_t *data);
     void calculate_global_values();
+    void calcGateInfo(blob_t blob, OmniCamBlobInfo_t gate);
+    
+    int dist_to_polygon(int angle, blob_t b);
 private:
     OmniCamData_t cam_data;
     OmniCamData_t globa_cam_data;
