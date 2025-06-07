@@ -21,9 +21,11 @@ struct blob_t{
 int local_good_angle(int angle);
 
 segm_t segm_from_points(point_t p1, point_t p2);
+int line_eq(segm_t s, point_t p);
 int point_dist(point_t p1, point_t p2);
 
 int dist_to_segm(point_t p, segm_t s);
+bool seg_intersect(segm_t s1, segm_t s2, point_t &p);
 
 class OpenMVCommunication_t
 {
