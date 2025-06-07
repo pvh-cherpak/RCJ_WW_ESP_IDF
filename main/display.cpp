@@ -211,8 +211,9 @@ void info_menu(button_handle_t &encoder_button)
 
         menu.writeLineClean(2, "L " + std::to_string(sensor.Cam.Yellow.left_angle));
         menu.writeLineClean(3, "C " + std::to_string(sensor.Cam.Yellow.center_angle));
-        menu.writeLineClean(4, "R " + std::to_string(sensor.Cam.Yellow.center_angle));
-        menu.writeLineClean(5, "Dist " + std::to_string(sensor.Cam.Yellow.distance));
+        menu.writeLineClean(4, "R " + std::to_string(sensor.Cam.Yellow.right_angle));
+        menu.writeLineClean(5, "W " + std::to_string(sensor.Cam.Yellow.width));
+        menu.writeLineClean(6, "Dist " + std::to_string(sensor.Cam.Yellow.distance));
 
         // menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
         // menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);

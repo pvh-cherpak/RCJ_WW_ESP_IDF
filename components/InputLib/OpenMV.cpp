@@ -216,7 +216,7 @@ void OpenMVCommunication_t::parseCorners(uint8_t *data)
     bgate.p[3].x = from_direct_code((data[12 + 16] << 8) | data[13 + 16]);
     bgate.p[3].y = from_direct_code((data[14 + 16] << 8) | data[15 + 16]);
     
-    ESP_LOGI("OpenMV", "%d %d %d %d", ygate.p[0].x, ygate.p[0].y, ygate.p[1].x, ygate.p[1].y);
+    // ESP_LOGI("OpenMV", "%d %d %d %d", ygate.p[0].x, ygate.p[0].y, ygate.p[1].x, ygate.p[1].y);
 
     obst_angle = from_direct_code((data[32] << 8) | data[33]);
     obst_dist = from_direct_code((data[34] << 8) | data[35]);
@@ -269,25 +269,32 @@ void OpenMVCommunication_t::calcGateInfo(blob_t blob, OmniCamBlobInfo_t& gate)
         return;
     }
 
+    int angles[4];
     for (int i = 0; i < 4; ++i){
         int angle = atan2(blob.p[i].x - center_x, blob.p[i].y - center_y) * RAD_TO_DEG;
+        angles[i] = angle;
         if (i == 0){
             gate.left_angle = angle;
             gate.right_angle = angle;
+            gate.center_angle = 0;
         }
         else{
-            if (abs(local_good_angle(angle - gate.left_angle)) <
-                abs(local_good_angle(angle - gate.right_angle))){
-                gate.left_angle = angle;
+            if (local_good_angle(angle - gate.center_angle) < 0){
+                if (local_good_angle(angle - gate.center_angle) < local_good_angle(gate.left_angle - gate.center_angle))
+                    gate.left_angle = angle;
             }
             else{
-                gate.right_angle = angle;
+                if (local_good_angle(angle - gate.center_angle) > local_good_angle(gate.right_angle - gate.center_angle))
+                    gate.right_angle = angle;
             }
         }
     }
 
     gate.center_angle = local_good_angle((gate.left_angle + gate.right_angle) / 2);
     gate.width = local_good_angle(gate.right_angle - gate.left_angle);
+
+    ESP_LOGI("OpenMV", "angles: %d, %d, %d, %d:   %d, %d, %d", angles[0],  angles[1], angles[2], angles[3],
+                                            gate.left_angle, gate.center_angle, gate.right_angle);
 
     gate.distance = 1000;
     for (int i = 0; i < 4; ++i){
