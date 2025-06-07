@@ -1,6 +1,5 @@
 #include "esp_log.h"
 #include "motorControl.h"
-#include "esp_timer.h"
 
 static const char *motor_tag = "motors";
 
@@ -305,32 +304,49 @@ void Kicker::init(gpio_num_t kicker_pin){
     pin = kicker_pin;
     gpio_set_direction(pin, GPIO_MODE_OUTPUT);
 
-    ESP_LOGI("Kicker::init()", "sozdanie ocheredi");
-    Queue = xQueueCreate(10, sizeof(int));
-    if (Queue == NULL) {
-        ESP_LOGE("Kicker", "error pri sozdanii ocheredi!");
-        return;
-    }
+    // ESP_LOGI("Kicker::init()", "sozdanie ocheredi");
+    // Queue = xQueueCreate(10, sizeof(int));
+    // if (Queue == NULL) {
+    //     ESP_LOGE("Kicker", "error pri sozdanii ocheredi!");
+    //     return;
+    // }
 
-    ESP_LOGI("Kicker::init()", "start taski");
+    // ESP_LOGI("Kicker::init()", "start taski");
     
-    if (xTaskCreatePinnedToCore(xKickerTask, "Kicker_task", 8096, NULL, 2, &Task, 0) != pdPASS) {
-        ESP_LOGE("Kicker_task", "chotot poshlo ne tak pri sozdanii taski");
-        vTaskDelay(10);
-        esp_restart();
-    }
+    // if (xTaskCreatePinnedToCore(xKickerTask, "Kicker_task", 8096, NULL, 2, &Task, 0) != pdPASS) {
+    //     ESP_LOGE("Kicker_task", "chotot poshlo ne tak pri sozdanii taski");
+    //     vTaskDelay(10);
+    //     esp_restart();
+    // }
+
+    
+    esp_timer_create_args_t timer_cfg = {
+        .callback = &kicker_timer_cb,
+        .dispatch_method = ESP_TIMER_TASK,
+        .name = "return_kick",
+        };
+
+    esp_timer_create(&timer_cfg, &Timer);
+}
+
+static void kicker_timer_cb(void*){
+    kicker.return_kicker();
 }
 
 void Kicker::kick(){
     gpio_set_level(pin, 1);
-    kick_time = esp_timer_get_time();
+    // kick_time = esp_timer_get_time();
+
+    // esp_timer_stop(Timer); // написано, что так надо, но мне не нравится
+    esp_timer_start_once(Timer, return_time_mcs * 1000);
 }
 
 void Kicker::return_kicker(){
-    if (esp_timer_get_time() - kick_time >= return_time_mcs){
-        gpio_set_level(pin, 0);
-        kick_time = INT64_MAX;
-    }
+    gpio_set_level(pin, 0);
+    // if (esp_timer_get_time() - kick_time >= return_time_mcs){
+    //     gpio_set_level(pin, 0);
+    //     kick_time = INT64_MAX;
+    // }
 }
 
 void Kicker::xKickerTask(void *arg){

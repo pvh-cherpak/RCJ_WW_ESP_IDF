@@ -10,6 +10,8 @@
 #include "driver/gpio.h"
 #include "driver/mcpwm.h"
 
+#include "esp_timer.h"
+
 static const gpio_num_t M1_FW = GPIO_NUM_2;
 static const gpio_num_t M1_BW = GPIO_NUM_15;
 static const gpio_num_t M2_FW = GPIO_NUM_4;
@@ -65,11 +67,14 @@ class Dribbler{
        
 };
 
+static void kicker_timer_cb(void*);
+
 class Kicker{
     TaskHandle_t Task = NULL;
+    esp_timer_handle_t Timer = NULL;
     
     gpio_num_t pin = GPIO_NUM_0;
-    int64_t kick_time = INT64_MAX;
+    // int64_t kick_time = INT64_MAX;
     int64_t return_time_mcs = 200000;
     
     static void xKickerTask(void *arg);
