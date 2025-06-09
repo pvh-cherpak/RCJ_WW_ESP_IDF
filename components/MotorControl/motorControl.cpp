@@ -322,7 +322,6 @@ void Kicker::init(gpio_num_t kicker_pin){
     
     esp_timer_create_args_t timer_cfg = {
         .callback = &kicker_timer_cb,
-        .dispatch_method = ESP_TIMER_TASK,
         .name = "return_kick",
         };
 
@@ -337,8 +336,8 @@ void Kicker::kick(){
     gpio_set_level(pin, 1);
     // kick_time = esp_timer_get_time();
 
-    // esp_timer_stop(Timer); // написано, что так надо, но мне не нравится
-    esp_timer_start_once(Timer, return_time_mcs * 1000);
+    esp_timer_stop(Timer); // написано, что так надо, но мне не нравится
+    esp_timer_start_once(Timer, return_time_mcs);
 }
 
 void Kicker::return_kicker(){

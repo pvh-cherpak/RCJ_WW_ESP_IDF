@@ -17,7 +17,7 @@ static const std::vector<std::string> info_menu_text =
     {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Ball str:", "Line X:", "Exit"};
 
 static const std::vector<std::string> another_menu_text =
-    {"-Another  menu-", "Line calib", "Dribbler: ", "50505050", "-", "mpu calib", "dist calib"};
+    {"-Another  menu-", "Line calib", "Dribbler: ", "50505050", "kick", "mpu calib", "dist calib"};
 
 static const std::vector<std::string> debug_menu_text =
     {"-Debug  menu-", "Zakrut", "petrovichY", "petrovichB"};
@@ -169,13 +169,13 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B)
             switch (user_pointer_pos)
             {
             case 1:
-                playForwardDribble2(0);
+                playForwardDribble2(0); // playForwardGoyda(0); // 
                 break;
             case 2:
                 playGoalkeeperCamera(0);
                 break;
             case 3:
-                playForwardDribble2(1);
+                playForwardGoyda(1); // playForwardDribble2(1); // 
                 break;
             case 4:
                 playGoalkeeperCamera(1);
@@ -217,11 +217,13 @@ void info_menu(button_handle_t &encoder_button)
 
         menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
         menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
-        menu.writeLineClean(4, "B: " + std::to_string(sensor.Locator.angle_600) + " " + std::to_string(sensor.Locator.angle_1200), false);
+        menu.writeLineClean(4, "Ball: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
         int gateAngle = sensor.Cam.Yellow.clos_angle;
         int gateDist = sensor.Cam.Yellow.distance;
-        menu.writeLineClean(5, "Y gate: " + std::to_string(gateAngle) + " " + std::to_string(gateDist), false);
-        menu.writeLineClean(6, "Y dist: " + std::to_string(real_dist.convertDist(gateDist, gateAngle)));
+        int gateWidth = sensor.Cam.Yellow.width;
+        menu.writeLineClean(5, "Y gate: " + std::to_string(gateAngle) + " " + std::to_string(gateWidth), false);
+        menu.writeLineClean(6, "B gate: " + std::to_string(sensor.Cam.Blue.clos_angle) + " " + std::to_string(sensor.Cam.Blue.width), false);
+        // menu.writeLineClean(6, "Y dist: " + std::to_string(real_dist.convertDist(gateDist, gateAngle)));
 
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
         {
@@ -266,8 +268,8 @@ void another_menu(button_handle_t &encoder_button)
                 drv.drive(50, 50, 50, 50);
                 break;
             case 4:
-                drv.drive(0, 0, 0, 0);
-                break; //мы щас в
+                kicker.kick();
+                break;
             case 5:
                 menu.clearDisplay();
                 menu.writeLine(1, "calibrating...", false);
