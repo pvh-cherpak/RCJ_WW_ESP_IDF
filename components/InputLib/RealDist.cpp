@@ -173,6 +173,6 @@ void RealDist::updatePoints(int *dist_cm, int *angles, int *pixel_dist)
 int RealDist::convertDist(int pixels, int angle)
 {
     int sect = angle_to_sector(angle);
-    int dist = linear_interpolate(pixels, xs[sect], ys[sect], pcount[sect]);
+    int dist = 0; //linear_interpolate(pixels, xs[sect], ys[sect], pcount[sect]);
     return dist;
 }

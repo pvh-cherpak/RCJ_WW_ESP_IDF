@@ -20,6 +20,7 @@ public:
     ~locator_t();
 public:
     const int& BallAngleLocal = ball_angle;
+    int angle_600, angle_1200;
 
 private:
     int ball_angle = 0;

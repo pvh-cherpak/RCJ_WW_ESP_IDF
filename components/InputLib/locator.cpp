@@ -31,6 +31,31 @@ void locator_t::update()
         ball_angle = -dir;
     else
         ball_angle = dir;
+
+    if (abs(ball_angle) > 180)
+        ball_angle = 360;
+        
+    angle = ReadHeading_600();
+    dir = 360 - (5 * angle) - offset;
+    if (dir > 180)
+        dir -= 360;
+    if(dir < -180)
+        dir += 360;
+    if(inverse)
+        angle_600 = -dir;
+    else
+        angle_600 = dir;
+        
+    angle = ReadHeading_1200();
+    dir = 360 - (5 * angle) - offset;
+    if (dir > 180)
+        dir -= 360;
+    if(dir < -180)
+        dir += 360;
+    if(inverse)
+        angle_1200 = -dir;
+    else
+        angle_1200 = dir;
 }
 
 uint8_t locator_t::ReadHeading_1200()

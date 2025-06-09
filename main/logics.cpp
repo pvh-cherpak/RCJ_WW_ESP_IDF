@@ -977,6 +977,11 @@ void goalRotate(int color)
         dribbler.smart_dribble(abs(sensor.Cam.gate(color).center_angle) > 130 ? 110 : 60); // 110 // > 120 ? 110 : 60
         drv.drive(0, rotateSpeed * sign, 0);
 
+        if (abs(sensor.Cam.gate(color).center_angle) < 20){
+            dribbler.smart_dribble(-10);
+            return;
+        }
+
         // if (omnicam().gates[color].center_angle > 0){
         //     drive(0, -40, 0);
         // }
@@ -1014,8 +1019,10 @@ void goalPush(int color)
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.update();
         // dribbler.smart_dribble(0);
+        
         if (sensor.Cam.gate(color).width < 0)
             break;
+
         ballAngle = sensor.Locator.getBallAngleLocal();
         int robotAngle = sensor.IMU.getYaw();
         int gateAngle = (int)sensor.Cam.gate(color).center_angle;
@@ -1072,9 +1079,14 @@ void playForwardDribble2(int color)
 
         int st = sensor.Locator.getStrength();
         int ballAngle = sensor.Locator.getBallAngleLocal();
+        if (sensor.Locator.getStrength() < 5)
+        {
+            drv.drive(0, 0, 0, 0);
+            continue;
+        }
         int lineAngle = sensor.LineSensor.getAngleDelayed();
 
-        //if (sensor.Cam.gate(color).width >= 0)
+        // if (sensor.Cam.gate(color).width >= 0)
         //    goalPush(color);
 
         if (!isBall())
@@ -1195,7 +1207,7 @@ void playForwardDribble2(int color)
                         make_pause(500);
 
                         // if (abs(sensor.IMU.getYaw()) < 135 || cam_dist < 30)
-                        goalRotate(color);
+                        MPU_zakrut(color);
                         // else
                         //goalDriveBack(color);
 
@@ -1221,17 +1233,22 @@ void MPU_zakrut(int color)
     while (isBall())
     {
         menu.writeLineClean(0, "2");
-        ESP_LOGI("debug", "2");
+        // ESP_LOGI("debug", "2");
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.IMU.update();
         sensor.BallSensor.update();
-
-        int rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 90 ? 70 : -70;
-        dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 90 ? 110 : -10);
+        
+        int rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 40 ? 30 : 90;
+        dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 110 : 60);
         drv.drive(0, rotateSpeed * sign, 0);
+
+        if (abs(goodAngle(sensor.IMU.Yaw - start_angle)) > 160){
+            dribbler.smart_dribble(-10);
+            return;
+        }
     }
     
-    ESP_LOGI("debug", "exit 2");
+    // ESP_LOGI("debug", "exit 2");
     menu.writeLineClean(0, "exit 2");
 }
 

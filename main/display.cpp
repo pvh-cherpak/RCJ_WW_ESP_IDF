@@ -217,7 +217,7 @@ void info_menu(button_handle_t &encoder_button)
 
         menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
         menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
-        menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
+        menu.writeLineClean(4, "B: " + std::to_string(sensor.Locator.angle_600) + " " + std::to_string(sensor.Locator.angle_1200), false);
         int gateAngle = sensor.Cam.Yellow.clos_angle;
         int gateDist = sensor.Cam.Yellow.distance;
         menu.writeLineClean(5, "Y gate: " + std::to_string(gateAngle) + " " + std::to_string(gateDist), false);
