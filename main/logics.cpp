@@ -557,7 +557,7 @@ void playGoalkeeperCamera(int color)
     while (true)
     {
         // sensor.update();
-        // moveAngle = -sensor.Cam.Blue.center_angle;
+        // moveAngle = sensor.Cam.Blue.center_angle;
         // deltaAngle = -sensor.IMU.getYaw() * 0.25;
         // goOverObstacleOmni(60, moveAngle, deltaAngle, 13, false);
 
@@ -653,7 +653,7 @@ void playGoalkeeperCamera(int color)
         //getLineDirection_Delayed(lineX, lineY, true);
         sensor.LineSensor.getDirectionDelayed(lineX, lineY);
 
-        int gateAngle = goodAngle(-sensor.Cam.gate(color).center_angle /* + 180*/);
+        int gateAngle = goodAngle(sensor.Cam.gate(color).center_angle /* + 180*/);
         int globalGateAngle = goodAngle(gateAngle + robotAngle);
         int cam_height = sensor.Cam.gate(color).height;
         int cam_dist = sensor.Cam.gate(color).distance;
@@ -850,7 +850,7 @@ void playForwardGoyda(int color)
             continue;
         }
 
-        int cam_angle = -sensor.Cam.gate(color).center_angle;
+        int cam_angle = sensor.Cam.gate(color).center_angle;
         int cam_dist = sensor.Cam.gate(color).distance;
 
         int st = sensor.Locator.getStrength();
@@ -928,7 +928,7 @@ void playForwardGoyda(int color)
             {
                 sensor.update();
 
-                cam_angle = -sensor.Cam.gate(color).center_angle;
+                cam_angle = sensor.Cam.gate(color).center_angle;
                 cam_dist = sensor.Cam.gate(color).distance;
 
                 st = sensor.Locator.getStrength();
@@ -1018,7 +1018,7 @@ void goalPush(int color)
             break;
         ballAngle = sensor.Locator.getBallAngleLocal();
         int robotAngle = sensor.IMU.getYaw();
-        int gateAngle = -(int)sensor.Cam.gate(color).center_angle;
+        int gateAngle = (int)sensor.Cam.gate(color).center_angle;
         if (gateAngle == 360)
             break;
         lineAngle = sensor.LineSensor.getAngleDelayed();
@@ -1067,7 +1067,7 @@ void playForwardDribble2(int color)
 
         sensor.update();
 
-        int cam_angle = -sensor.Cam.gate(color).center_angle;
+        int cam_angle = sensor.Cam.gate(color).center_angle;
         int cam_dist = sensor.Cam.gate(color).distance;
 
         int st = sensor.Locator.getStrength();
@@ -1122,7 +1122,7 @@ void playForwardDribble2(int color)
                 //menu.writeLineClean(0, "gate");
                 sensor.update();
 
-                cam_angle = -sensor.Cam.gate(color).center_angle;
+                cam_angle = sensor.Cam.gate(color).center_angle;
                 cam_dist = sensor.Cam.gate(color).distance;
                 lineAngle = sensor.LineSensor.getAngleDelayed();
                 // dribbler.smart_dribble((abs(cam_angle) > 10 || cam_dist > 50) ? 50 : 0);
@@ -1135,7 +1135,7 @@ void playForwardDribble2(int color)
                         lineAngle = sensor.LineSensor.getAngleDelayed();
                         moveAngle = goodAngle(lineAngle + 180);
                         speed = (lineAngle == 360) ? 0 : 60;
-                        cam_angle = -sensor.Cam.gate(color).center_angle;
+                        cam_angle = sensor.Cam.gate(color).center_angle;
                         deltaAngle = goodAngle(cam_angle + 180);
                         deltaAngle = abs(cam_angle) < 90 ? deltaAngle * 0.3 : deltaAngle * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
                         deltaAngle = constrain(deltaAngle, -40, 40);
@@ -1171,18 +1171,18 @@ void playForwardDribble2(int color)
 
                         make_pause(100);
 
-                        cam_angle = -sensor.Cam.gate(color).center_angle;
+                        cam_angle = sensor.Cam.gate(color).center_angle;
 
                         while (abs(cam_angle) < 160 && isBall())
                         {
                             sensor.update();
-                            cam_angle = -sensor.Cam.gate(color).center_angle;
+                            cam_angle = sensor.Cam.gate(color).center_angle;
                             deltaAngle = goodAngle(cam_angle + 180); //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
                             deltaAngle = constrain(deltaAngle, -40, 40);
                             drv.drive(0, (int)(deltaAngle * 0.5), 0);
                         }
 
-                        cam_angle = -sensor.Cam.gate(color).center_angle;
+                        cam_angle = sensor.Cam.gate(color).center_angle;
                         cam_dist = sensor.Cam.gate(color).distance;
 
                         if (!isBall())
@@ -1238,13 +1238,13 @@ void MPU_zakrut(int color)
 void vyravnivanije(int color)
 {
     sensor.update();
-    //while (abs(-sensor.Cam.gate(color).center_angle) < 170 && isBall())
+    //while (abs(sensor.Cam.gate(color).center_angle) < 170 && isBall())
     while (abs(sensor.IMU.getYaw()) > 15 && isBall())
     {
         menu.writeLineClean(0, "1");
         ESP_LOGI("debug", "1");
         sensor.update();
-        int cam_angle = -sensor.Cam.gate(color).center_angle;
+        int cam_angle = sensor.Cam.gate(color).center_angle;
         deltaAngle = -sensor.IMU.getYaw(); //goodAngle(cam_angle + 180); //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
         if (deltaAngle > -30 && deltaAngle <= 0) deltaAngle = -30;
         if (deltaAngle < 30 && deltaAngle > 0) deltaAngle = 30;

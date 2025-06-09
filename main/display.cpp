@@ -209,19 +209,19 @@ void info_menu(button_handle_t &encoder_button)
         sensor.update();
         sensor.BallSensor.update();
 
-        menu.writeLineClean(2, "L " + std::to_string(sensor.Cam.Yellow.left_angle));
-        menu.writeLineClean(3, "C " + std::to_string(sensor.Cam.Yellow.center_angle));
-        menu.writeLineClean(4, "R " + std::to_string(sensor.Cam.Yellow.right_angle));
-        menu.writeLineClean(5, "W " + std::to_string(sensor.Cam.Yellow.width));
-        menu.writeLineClean(6, "Dist " + std::to_string(sensor.Cam.Yellow.distance));
+        // menu.writeLineClean(2, "L " + std::to_string(sensor.Cam.Yellow.left_angle));
+        // menu.writeLineClean(3, "C " + std::to_string(sensor.Cam.Yellow.center_angle));
+        // menu.writeLineClean(4, "R " + std::to_string(sensor.Cam.Yellow.right_angle));
+        // menu.writeLineClean(5, "W " + std::to_string(sensor.Cam.Yellow.width));
+        // menu.writeLineClean(6, "Dist " + std::to_string(sensor.Cam.Yellow.distance));
 
-        // menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
-        // menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
-        // menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
-        // int gateAngle = -sensor.Cam.Yellow.clos_angle;
-        // int gateDist = sensor.Cam.Yellow.distance;
-        // menu.writeLineClean(5, "Y gate: " + std::to_string(gateAngle) + " " + std::to_string(gateDist), false);
-        // menu.writeLineClean(6, "Y dist: " + std::to_string(real_dist.convertDist(gateDist, gateAngle)));
+        menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
+        menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
+        menu.writeLineClean(4, "Ball angle: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
+        int gateAngle = sensor.Cam.Yellow.clos_angle;
+        int gateDist = sensor.Cam.Yellow.distance;
+        menu.writeLineClean(5, "Y gate: " + std::to_string(gateAngle) + " " + std::to_string(gateDist), false);
+        menu.writeLineClean(6, "Y dist: " + std::to_string(real_dist.convertDist(gateDist, gateAngle)));
 
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
         {
@@ -392,11 +392,11 @@ void calibrateRealDist(int color){
     //     for (int j = 0; j < DIST_CALIB_ROTATE_STEPS; ++j)
     //         angles[i][j] = pixel_dist[i][j] = 0;
 
-    int min_rotate_speed = 20;
+    int min_rotate_speed = 15;
 
     menu.clearDisplay();
 
-    const int MEASUREMENTS = 5;
+    const int MEASUREMENTS = 1;
     int ang_measure[MEASUREMENTS], dist_measure[MEASUREMENTS];
 
     for (int i = 0; i < DIST_CALIB_PLACES; ++i){
@@ -426,18 +426,21 @@ void calibrateRealDist(int color){
 
             drv.drive(0, 0, 0, 0);
             
+            ESP_LOGI("RD", "measure: place %d, sect %d", i, j);
             for (int k = 0; k < MEASUREMENTS; ++k){
                 vTaskDelay(100 / portTICK_PERIOD_MS);
                 sensor.update();
-                while (sensor.Cam.gate(color).center_angle == 360){
+                while (sensor.Cam.gate(color).distance == 1000){
                     menu.writeLineClean(2, "!! No gates");
                     vTaskDelay(10 / portTICK_PERIOD_MS);
                     sensor.update();
                 }
                 menu.writeLineClean(2, "");
 
-                ang_measure[k] = -sensor.Cam.gate(color).clos_angle;
+                ang_measure[k] = sensor.Cam.gate(color).center_angle;
                 dist_measure[k] = sensor.Cam.gate(color).distance;
+
+                ESP_LOGI("RD", "gyro %d(%d), cam %d, sect %d", sensor.IMU.getYaw(), target_angle, ang_measure[k], real_dist.angle_to_sector(ang_measure[k]));
             }
             
             sort_points(dist_measure, ang_measure, MEASUREMENTS);

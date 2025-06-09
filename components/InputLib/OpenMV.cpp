@@ -237,18 +237,18 @@ int local_good_angle(int angle)
 
 void OpenMVCommunication_t::calculate_global_values()
 {
-    globa_cam_data.Gates[0].left_angle = local_good_angle(-cam_data.Gates[0].left_angle + IMU.Yaw);
-    globa_cam_data.Gates[0].center_angle = local_good_angle(-cam_data.Gates[0].center_angle + IMU.Yaw);
-    globa_cam_data.Gates[0].right_angle = local_good_angle(-cam_data.Gates[0].right_angle + IMU.Yaw);
-    globa_cam_data.Gates[0].clos_angle = local_good_angle(-cam_data.Gates[0].clos_angle + IMU.Yaw);
+    globa_cam_data.Gates[0].left_angle = local_good_angle(cam_data.Gates[0].left_angle + IMU.Yaw);
+    globa_cam_data.Gates[0].center_angle = local_good_angle(cam_data.Gates[0].center_angle + IMU.Yaw);
+    globa_cam_data.Gates[0].right_angle = local_good_angle(cam_data.Gates[0].right_angle + IMU.Yaw);
+    globa_cam_data.Gates[0].clos_angle = local_good_angle(cam_data.Gates[0].clos_angle + IMU.Yaw);
     globa_cam_data.Gates[0].distance = cam_data.Gates[0].distance;
     globa_cam_data.Gates[0].width = cam_data.Gates[0].width;
     globa_cam_data.Gates[0].height = cam_data.Gates[0].height;
 
-    globa_cam_data.Gates[1].left_angle = local_good_angle(-cam_data.Gates[1].left_angle + IMU.Yaw);
-    globa_cam_data.Gates[1].center_angle = local_good_angle(-cam_data.Gates[1].center_angle + IMU.Yaw);
-    globa_cam_data.Gates[1].right_angle = local_good_angle(-cam_data.Gates[1].right_angle + IMU.Yaw);
-    globa_cam_data.Gates[1].clos_angle = local_good_angle(-cam_data.Gates[1].clos_angle + IMU.Yaw);
+    globa_cam_data.Gates[1].left_angle = local_good_angle(cam_data.Gates[1].left_angle + IMU.Yaw);
+    globa_cam_data.Gates[1].center_angle = local_good_angle(cam_data.Gates[1].center_angle + IMU.Yaw);
+    globa_cam_data.Gates[1].right_angle = local_good_angle(cam_data.Gates[1].right_angle + IMU.Yaw);
+    globa_cam_data.Gates[1].clos_angle = local_good_angle(cam_data.Gates[1].clos_angle + IMU.Yaw);
     globa_cam_data.Gates[1].distance = cam_data.Gates[1].distance;
     globa_cam_data.Gates[1].width = cam_data.Gates[1].width;
     globa_cam_data.Gates[1].height = cam_data.Gates[1].height;
@@ -269,11 +269,11 @@ void OpenMVCommunication_t::calcGateInfo(blob_t blob, OmniCamBlobInfo_t& gate)
         return;
     }
 
-    ESP_LOGI("OpenMV", "points: (%d;%d)-(%d;%d)-(%d;%d)-(%d;%d)",
-            blob.p[0].x, blob.p[0].y,
-            blob.p[1].x, blob.p[1].y,
-            blob.p[2].x, blob.p[2].y,
-            blob.p[3].x, blob.p[3].y);
+    // ESP_LOGI("OpenMV", "points: (%d;%d)-(%d;%d)-(%d;%d)-(%d;%d)",
+    //         blob.p[0].x, blob.p[0].y,
+    //         blob.p[1].x, blob.p[1].y,
+    //         blob.p[2].x, blob.p[2].y,
+    //         blob.p[3].x, blob.p[3].y);
 
     int angles[4];
     for (int i = 0; i < 4; ++i){
@@ -296,11 +296,12 @@ void OpenMVCommunication_t::calcGateInfo(blob_t blob, OmniCamBlobInfo_t& gate)
         }
     }
 
-    gate.center_angle = local_good_angle((gate.left_angle + gate.right_angle) / 2);
+    gate.center_angle = atan2((sin(gate.left_angle * DEG_TO_RAD) + sin(gate.right_angle * DEG_TO_RAD)) / 2,
+                              (cos(gate.left_angle * DEG_TO_RAD) + cos(gate.right_angle * DEG_TO_RAD)) / 2) * RAD_TO_DEG;
     gate.width = local_good_angle(gate.right_angle - gate.left_angle);
 
-    ESP_LOGI("OpenMV", "angles: %d, %d, %d, %d:   %d, %d, %d", angles[0],  angles[1], angles[2], angles[3],
-                                            gate.left_angle, gate.center_angle, gate.right_angle);
+    // ESP_LOGI("OpenMV", "angles: %d, %d, %d, %d:   %d, %d, %d", angles[0],  angles[1], angles[2], angles[3],
+    //                                         gate.left_angle, gate.center_angle, gate.right_angle);
     
     gate.distance = dist_to_polygon(gate.center_angle, blob);
 
@@ -379,7 +380,6 @@ bool seg_intersect(segm_t s1, segm_t s2, point_t &p)
             return true;
         } 
         else{
-            ESP_LOGI("Segm", "FAIL: one line");
             return false;
         } 
     } 
@@ -395,7 +395,6 @@ bool seg_intersect(segm_t s1, segm_t s2, point_t &p)
             return true;
         } 
         else{
-            ESP_LOGI("Segm", "FAIL: %d * %d,  %d * %d", s1_c, s1_d, s2_a, s2_b);
             return false;
         } 
     }
@@ -404,10 +403,6 @@ bool seg_intersect(segm_t s1, segm_t s2, point_t &p)
 int OpenMVCommunication_t::dist_to_polygon(int angle, blob_t blob)
 {
     point_t intersect;
-    ESP_LOGI("Test", "(0,0)-(4,4) x (2,2)-(2,-2):   %d",
-                                       seg_intersect(segm_from_points({0, 0}, {4, 4}),
-                                                     segm_from_points({2, 2}, {2, -2}),
-                                                     intersect));
     segm_t ray = segm_from_points({center_x, center_y}, {(int)(center_x + 400 * sin(angle * DEG_TO_RAD)), 
                                                          (int)(center_y + 400 * cos(angle * DEG_TO_RAD))});
 
@@ -417,19 +412,8 @@ int OpenMVCommunication_t::dist_to_polygon(int angle, blob_t blob)
         
         if (seg_intersect(ray, side, intersect)){
             int temp = point_dist(intersect, {center_x, center_y});
-            ESP_LOGI("OpenMV", "(%d;%d)-(%d;%d) x (%d;%d)-(%d;%d) -> (%d,%d)   %d",
-                                ray.beg.x, ray.beg.y, ray.en.x, ray.en.y,
-                                side.beg.x, side.beg.y, side.en.x, side.en.y,
-                                intersect.x, intersect.y,
-                                temp);
             if (temp < min_dist)
                 min_dist = temp;
-        }
-        else{
-            ESP_LOGI("OpenMV", "(%d;%d)-(%d;%d) x (%d;%d)-(%d;%d) -> FAILED",
-                                ray.beg.x, ray.beg.y, ray.en.x, ray.en.y,
-                                blob.p[i].x, blob.p[i].y, blob.p[(i + 1) % 4].x, blob.p[(i + 1) % 4].y
-                                );
         }
     }
 

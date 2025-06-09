@@ -6,10 +6,10 @@
 
 #include "esp_system.h"
 
-const int DIST_CALIB_SECTORS = 8;
+const int DIST_CALIB_SECTORS = 12;
 const int DIST_CALIB_MAX_POINTS = 40;
 const int DIST_CALIB_MAX_DIST = 300;
-const int DIST_CALIB_ROTATE_STEPS = 8;
+const int DIST_CALIB_ROTATE_STEPS = 12;
 const int DIST_CALIB_PLACES = 9;
 
 void sort_points(int *xarr, int *yarr, int n);
@@ -25,8 +25,6 @@ private:
     int ys[DIST_CALIB_SECTORS][DIST_CALIB_MAX_POINTS];
     int pcount[DIST_CALIB_SECTORS];
 
-    int angle_to_sector(int angle);
-
     void save2NVS();
     void restoreNVS();
 
@@ -34,6 +32,8 @@ public:
     void init();
     void updatePoints(int *dist_cm, int *angles, int *pixel_dist);
     int convertDist(int pixels, int angle);
+
+    int angle_to_sector(int angle);
 };
 
 #endif
