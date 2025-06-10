@@ -29,6 +29,8 @@ void killerFeature(int color);
 
 bool isBall();
 
+void petrovich_iter(int color, int offset);
+
 void goOverObstacleOmni(float generalSpeed, float generalAngle, float rot_angle, float critDist, bool rotate);
 
 void playGoalkeeperCamera(int color);

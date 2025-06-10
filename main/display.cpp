@@ -10,8 +10,8 @@ static Encoder_t encoder;
 DisplayMenu_t menu;
 
 static const std::vector<std::string> start_menu_text =
-    {"---Main menu---", "Yellow Forward", "Yellow Goalkeeper", "Blue Forward",
-     "Blue Goalkeeper", "Sensors Check", "Another", "Debug menu"};
+    {"---Main menu---", "Color: Yellow", "Forward", "Goalkeeper",
+     "Petrovich", "Sensors Check", "Another", "Debug menu"};
 
 static const std::vector<std::string> info_menu_text =
     {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Ball str:", "Line X:", "Exit"};
@@ -22,7 +22,11 @@ static const std::vector<std::string> another_menu_text =
 static const std::vector<std::string> debug_menu_text =
     {"-Debug  menu-", "Zakrut", "petrovichY", "petrovichB"};
 
+static std::vector<std::string> start_menu_output_text = start_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
+
+int playColor = 0;
+static std::vector<std::string> colors = {"Yellow", "Blue"};
 
 void DisplayMenu_t::init()
 {
@@ -162,23 +166,33 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B)
     {
         user_pointer_pos = encoder.getCurValue() + 1;
 
+        // start_menu_output_text[1] = (std::string)("Color: ") + colors[playColor];
+
         // обновляем выбранную строку и перерисовываем, если нужно
-        menu.updateChosen(start_menu_text, user_pointer_pos);
+        menu.updateChosen(start_menu_output_text, user_pointer_pos);
 
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
             switch (user_pointer_pos)
             {
             case 1:
-                playForwardDribble2(0); // playForwardGoyda(0); // 
+                playColor ^= 1;
+                start_menu_output_text[1] = (std::string)("Color: ") + colors[playColor];
+                menu.writeLineClean(1, ">" + start_menu_output_text[1]);
+                // menu.updateChosen(start_menu_output_text, 1);
+                ESP_LOGI("Menu", "playColor:  %d", playColor);
+                //playForwardDribble2(0); // playForwardGoyda(0); // 
                 break;
             case 2:
-                playGoalkeeperCamera(0);
+                playForwardDribble2(playColor);
+                // playGoalkeeperCamera(0);
                 break;
             case 3:
-                playForwardGoyda(1); // playForwardDribble2(1); // 
+                playGoalkeeperCamera(playColor);
+                // playForwardGoyda(1); // playForwardDribble2(1); // 
                 break;
             case 4:
-                playGoalkeeperCamera(1);
+                playForwardGoyda(playColor);
+                // playGoalkeeperCamera(1);
                 break;
             case 5:
                 info_menu(encoder_button);
@@ -217,7 +231,7 @@ void info_menu(button_handle_t &encoder_button)
 
         menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
         menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
-        menu.writeLineClean(4, "Ball: " + std::to_string(sensor.Locator.getBallAngleLocal()), false);
+        menu.writeLineClean(4, "Ball: " + std::to_string(sensor.Locator.getBallAngleLocal()) + " " + std::to_string(sensor.Locator.getStrength()), false);
         int gateAngle = sensor.Cam.Yellow.clos_angle;
         int gateDist = sensor.Cam.Yellow.distance;
         int gateWidth = sensor.Cam.Yellow.width;

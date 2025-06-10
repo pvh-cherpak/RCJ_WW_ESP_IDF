@@ -400,6 +400,42 @@ bool isBall()
         return (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10);
 }
 
+void petrovich_iter(int color, int offset = 0)
+{
+    sensor.update();
+
+    ballAngle = sensor.Locator.getBallAngleLocal();
+    
+    int gateAngle = (int)sensor.Cam.gate(color).center_angle;
+    lineAngle = sensor.LineSensor.getAngleDelayed();
+
+    int offset_angle = (int)goodAngle(gateAngle - offset);
+
+    deltaAngle = goodAngle(offset_angle) * 0.25f;
+    if (lineAngle != 360)
+    {
+        drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
+    }
+    else
+    {
+        int angle_err = goodAngle(ballAngle - gateAngle);
+        if (sensor.Locator.getStrength() >= 70 && abs(angle_err) <= 25)
+        {
+            moveAngle = gateAngle;
+            drv.drive(moveAngle, (int)deltaAngle, 80);
+        }
+        else
+        {
+            moveAngle = ballAngle;
+            if (angle_err > 0)
+                moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
+            else
+                moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
+            drv.drive(moveAngle, (int)deltaAngle, 50);
+        }
+    }
+}
+
 // функция, чтобы ехать в опр. направлении, объезжая препятствия
 void goOverObstacleOmni(float generalSpeed, float generalAngle, float rot_angle, float critDist, bool rotate = false)
 {
@@ -497,57 +533,9 @@ void killerFeature(int color)
             continue;
         }
 
-        int cam_height = sensor.Cam.gate(color).height;
-
-        lineAngle = sensor.LineSensor.getAngleDelayed();
-
-        deltaAngle = goodAngle(gateAngle) * 0.25f;
-
         ESP_LOGI("killerFeature", "gateAngle: %d", gateAngle);
 
-        // if (abs(goodAngle(gateAngle - ballAngle)) >= 140){
-        //     stateGame = 0;
-        //     continue;
-        // }
-
-        // if (abs(deltaAngle) <= 10 && cam_height == 0)
-        // {
-        //     deltaAngle = 50;
-        // }
-
-        if (lineAngle != 360)
-        {
-            drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
-        }
-        else
-        {
-            int angle_err = goodAngle(ballAngle - gateAngle);
-            if (sensor.Locator.getStrength() >= 70 && abs(angle_err) < 15)
-            {
-                moveAngle = gateAngle;
-                drv.drive(moveAngle, (int)deltaAngle, 80);
-            }
-            else
-            {
-                moveAngle = ballAngle;
-                /*if (ballAngle >= 0 && ballAngle < 150)
-                    moveAngle -= (180 - ballAngle) * 0.6f;
-                if (ballAngle < 0 && ballAngle > -150)
-                    moveAngle -= (-180 - ballAngle) * 0.6f;*/
-                if (angle_err > 0)
-                    moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
-                else
-                    moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
-
-                drv.drive(moveAngle, (int)deltaAngle, 50);
-            }
-        }
-
-        // if (cam_height >= 700)
-        // {
-        //     stateGame = 0;
-        //     continue;
-        // }
+        petrovich_iter(color, 0);
     }
 }
 
@@ -861,33 +849,7 @@ void playForwardGoyda(int color)
 
         int deltaAngle = sensor.Cam.gate(color).center_angle * 0.3;
         
-        if (lineAngle != 360)
-        {
-            drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
-        }
-        else
-        {
-            int angle_err = goodAngle(ballAngle - cam_angle);
-            if (sensor.Locator.getStrength() >= 70 && abs(angle_err) < 15)
-            {
-                moveAngle = cam_angle;
-                drv.drive(moveAngle, (int)deltaAngle, 80);
-            }
-            else
-            {
-                moveAngle = ballAngle;
-                if (angle_err > 0)
-                    moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
-                else
-                    moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
-
-                drv.drive(moveAngle, (int)deltaAngle, 50);
-
-                if (sensor.Cam.gate(color).distance < 50){
-                    kicker.kick();
-                }
-            }
-        }
+        petrovich_iter(color, 0);
 
         // if (abs(robotAngle) > 80)
         // {
