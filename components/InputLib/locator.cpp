@@ -6,6 +6,8 @@ void locator_t::init(int offset, bool inverse)
     this->offset=offset;
     uint8_t command = 0x00;
     ESP_ERROR_CHECK(i2c_master_write_to_device(I2C_NUM_0, LOCATOR_ADDRESS, &command, 1, I2C_TIMEOUT_TIME_TICS));
+    for (int i = 0; i < BALL_ANGLE_BUF_LEN; ++i)
+        ball_angle_buf[i] = 0;
 }
 
 void locator_t::update()
@@ -34,28 +36,17 @@ void locator_t::update()
 
     if (abs(ball_angle) > 180)
         ball_angle = 360;
-        
-    angle = ReadHeading_600();
-    dir = 360 - (5 * angle) - offset;
-    if (dir > 180)
-        dir -= 360;
-    if(dir < -180)
-        dir += 360;
-    if(inverse)
-        angle_600 = -dir;
-    else
-        angle_600 = dir;
-        
-    angle = ReadHeading_1200();
-    dir = 360 - (5 * angle) - offset;
-    if (dir > 180)
-        dir -= 360;
-    if(dir < -180)
-        dir += 360;
-    if(inverse)
-        angle_1200 = -dir;
-    else
-        angle_1200 = dir;
+    else{
+        int angle_sum = 0;
+        for (int i = 0; i < BALL_ANGLE_BUF_LEN - 1; ++i){
+            ball_angle_buf[i] = ball_angle_buf[i + 1];
+            angle_sum += ball_angle_buf[i];
+        }
+        ball_angle_buf[BALL_ANGLE_BUF_LEN - 1] = ball_angle;
+        angle_sum += ball_angle;
+
+        ball_angle = angle_sum / BALL_ANGLE_BUF_LEN;
+    }
 }
 
 uint8_t locator_t::ReadHeading_1200()

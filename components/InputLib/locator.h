@@ -3,6 +3,8 @@
 #include <driver/i2c.h>
 #include "esp_log.h"
 
+const int BALL_ANGLE_BUF_LEN = 5;
+
 class locator_t
 {
 private:
@@ -23,6 +25,8 @@ public:
     int angle_600, angle_1200;
 
 private:
+    int ball_angle_buf[BALL_ANGLE_BUF_LEN];
+
     int ball_angle = 0;
     int strength = 0;
     int offset = 0;
