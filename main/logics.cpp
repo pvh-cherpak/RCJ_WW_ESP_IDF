@@ -1054,6 +1054,10 @@ float Fw_kd = 5;
 float Fw_ki = 0;
 float Fw_kp = 0.4;
 
+#define OTLADKA_Dribble2
+#ifdef OTLADKA_Dribble2
+    const char* drible2 = "f";
+#endif
 void playForwardDribble2(int color)
 {
     menu.clearDisplay();
@@ -1063,6 +1067,7 @@ void playForwardDribble2(int color)
     {
     fwDribbleBegin:
 
+        ESP_LOGI(drible2, "-NEW ITERATION-");
         vTaskDelay(10 / portTICK_PERIOD_MS);
 
         sensor.update();
@@ -1085,6 +1090,7 @@ void playForwardDribble2(int color)
             int deltaAngle = ballAngle * 0.3; //(ballAngle < 45 ? 0.3 : 0.5);
             if (lineAngle == 360)
             {
+                ESP_LOGW(drible2, "Mach poteryan, edu k machu");
                 moveAngle = ballAngle;
                 float ballAnfl_err = ballAngle;
                 float robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
@@ -1095,11 +1101,15 @@ void playForwardDribble2(int color)
             }
             else
             {
+                ESP_LOGW(drible2, "Mach poteryan, edu k machu no vizhu liniju");
                 drv.drive(goodAngle(lineAngle + 180), (int)(deltaAngle), 80);
             }
         }
         else
         {
+            #ifdef OTLADKA_Dribble2  
+            ESP_LOGW(drible2, "Mach zachvachen, podjzzaju");
+            #endif
             //menu.writeLineClean(0, "gate...");
             dribbler.smart_dribble(70);
             drv.driveXY(0, 30, 0); // чтобы лучше задриблить 
@@ -1119,6 +1129,7 @@ void playForwardDribble2(int color)
             sensor.BallSensor.update();
             while (isBall())
             {
+                
                 //menu.writeLineClean(0, "gate");
                 sensor.update();
 
@@ -1129,6 +1140,9 @@ void playForwardDribble2(int color)
 
                 if (lineAngle == 360)
                 {
+                    #ifdef OTLADKA_Dribble2  
+                        ESP_LOGW(drible2, "Mach zachvachen, povorachivajus 1: %d", abs(cam_angle) < 130 && isBall());
+                    #endif
                     while (abs(cam_angle) < 130 && isBall())
                     {
                         sensor.update();
@@ -1141,49 +1155,53 @@ void playForwardDribble2(int color)
                         deltaAngle = constrain(deltaAngle, -40, 40);
                         drv.drive(moveAngle, (int)(deltaAngle), speed);
                     }
+                    #ifdef OTLADKA_Dribble2  
+                        ESP_LOGW(drible2, "POVERNUL 1");
+                    #endif
 
                     if (!isBall())
                     {
+                        #ifdef OTLADKA_Dribble2  
+                        ESP_LOGW(drible2, "POTERIALY MATCH");
+                        #endif
                         goto fwDribbleBegin;
                     }
 
-                    // return;
+                    sensor.update();
+
                     int delta_angle = goodAngle(cam_angle + 180) * 0.3; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
                     delta_angle = constrain(delta_angle, -15, 15);
-                    drv.drive(cam_angle, delta_angle, 80);
-
-                    sensor.update();
 
                     lineAngle = sensor.LineSensor.getAngleDelayed();
                     if (lineAngle != 360)
                     {
+                        #ifdef OTLADKA_Dribble2  
+                        ESP_LOGW(drible2, "edu k vorotam NO LINIJA");
+                        #endif
                         drv.drive(goodAngle(lineAngle + 180), delta_angle, 80);
                         continue;
+                    }
+                    else{
+                        #ifdef OTLADKA_Dribble2  
+                        ESP_LOGW(drible2, "edu k vorotam");
+                        #endif
+                        
+                        drv.drive(cam_angle, delta_angle, 80);
                     }
                     cam_dist = sensor.Cam.gate(color).distance;
                     // Serial.println(cam_dist);
                     if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist < 20)
                     {
+                        #ifdef OTLADKA_Dribble2                      
+                            ESP_LOGW(drible2, "---ATAKUJU---");
+                        #endif
                         // return;
                         drv.drive(0, 0, 0, 0);
-                        sensor.update();
                         dribbler.smart_dribble(80);
 
                         make_pause(100);
 
-                        cam_angle = -sensor.Cam.gate(color).center_angle;
-
-                        while (abs(cam_angle) < 160 && isBall())
-                        {
-                            sensor.update();
-                            cam_angle = -sensor.Cam.gate(color).center_angle;
-                            deltaAngle = goodAngle(cam_angle + 180); //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
-                            deltaAngle = constrain(deltaAngle, -40, 40);
-                            drv.drive(0, (int)(deltaAngle * 0.5), 0);
-                        }
-
-                        cam_angle = -sensor.Cam.gate(color).center_angle;
-                        cam_dist = sensor.Cam.gate(color).distance;
+                        vyravnivanije(color);
 
                         if (!isBall())
                         {
@@ -1195,7 +1213,8 @@ void playForwardDribble2(int color)
                         make_pause(500);
 
                         // if (abs(sensor.IMU.getYaw()) < 135 || cam_dist < 30)
-                        goalRotate(color);
+                        // goalRotate(color);
+                        MPU_zakrut(color);
                         // else
                         //goalDriveBack(color);
 
@@ -1232,7 +1251,7 @@ void MPU_zakrut(int color)
     }
     
     ESP_LOGI("debug", "exit 2");
-    menu.writeLineClean(0, "exit 2");
+    // menu.writeLineClean(0, "exit 2");
 }
 
 void vyravnivanije(int color)
@@ -1248,10 +1267,10 @@ void vyravnivanije(int color)
         deltaAngle = -sensor.IMU.getYaw(); //goodAngle(cam_angle + 180); //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
         if (deltaAngle > -30 && deltaAngle <= 0) deltaAngle = -30;
         if (deltaAngle < 30 && deltaAngle > 0) deltaAngle = 30;
-        menu.writeLineClean(0, "1 " + std::to_string((int)deltaAngle));
+        // menu.writeLineClean(0, "1 " + std::to_string((int)deltaAngle));
         deltaAngle = constrain(deltaAngle, -40, 40);
         drv.drive(0, (int)(deltaAngle * 0.5), 0);
     }
     ESP_LOGI("debug", "exit 1");
-    menu.writeLineClean(0, "exit 1");
+    // menu.writeLineClean(0, "exit 1");
 }

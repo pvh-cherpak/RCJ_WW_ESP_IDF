@@ -216,7 +216,7 @@ void OpenMVCommunication_t::parseCorners(uint8_t *data)
     bgate.p[3].x = from_direct_code((data[12 + 16] << 8) | data[13 + 16]);
     bgate.p[3].y = from_direct_code((data[14 + 16] << 8) | data[15 + 16]);
     
-    ESP_LOGI("OpenMV", "%d %d %d %d", ygate.p[0].x, ygate.p[0].y, ygate.p[1].x, ygate.p[1].y);
+    // ESP_LOGI("OpenMV", "%d %d %d %d", ygate.p[0].x, ygate.p[0].y, ygate.p[1].x, ygate.p[1].y);
 
     obst_angle = from_direct_code((data[32] << 8) | data[33]);
     obst_dist = from_direct_code((data[34] << 8) | data[35]);
