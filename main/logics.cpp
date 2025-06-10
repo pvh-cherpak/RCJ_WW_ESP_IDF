@@ -411,6 +411,8 @@ void petrovich_iter(int color, int offset = 0)
 
     int offset_angle = (int)goodAngle(gateAngle - offset);
 
+    menu.writeLineClean(1, std::to_string(sensor.Cam.gate(color).distance) + " px");
+
     deltaAngle = goodAngle(offset_angle) * 0.25f;
     if (lineAngle != 360)
     {
@@ -419,10 +421,14 @@ void petrovich_iter(int color, int offset = 0)
     else
     {
         int angle_err = goodAngle(ballAngle - gateAngle);
-        if (sensor.Locator.getStrength() >= 70 && abs(angle_err) <= 25)
+        if ((abs(angle_err) <= sensor.Cam.gate(color).width / 2 && abs(goodAngle(ballAngle - offset)) <= 10)
+            || (offset == 0 && isBall()))
         {
             moveAngle = gateAngle;
             drv.drive(moveAngle, (int)deltaAngle, 80);
+
+            if (sensor.Cam.gate(color).distance < 70 && isBall())
+                kicker.kick();
         }
         else
         {
@@ -431,7 +437,7 @@ void petrovich_iter(int color, int offset = 0)
                 moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
             else
                 moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
-            drv.drive(moveAngle, (int)deltaAngle, 50);
+            drv.drive(moveAngle, (int)deltaAngle, 60);
         }
     }
 }
@@ -810,6 +816,10 @@ void playGoalkeeperCamera(int color)
         angle += goodAngle(gateAngle - 180);
         drv.drive(angle, (int)deltaAngle, constrain(sp, 0, 100));
 
+        if (isBall()){
+            kicker.kick();
+        }
+
         // if (sp > 100)
         // {
         //     speedX = speedX * 100 / sp;
@@ -1023,45 +1033,53 @@ void goalPush(int color)
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.update();
         // dribbler.smart_dribble(0);
-        if (sensor.Cam.gate(color).width < 0){
+        if (sensor.Cam.gate(color).width < 90){
             menu.writeLineClean(0, "exit goalPush");
-            break;            
+            break;
         }
+
+        dribbler.smart_dribble(-10);
         menu.writeLineClean(0, "goalPush");
+
+        menu.writeLineClean(1, "w: " + std::to_string(sensor.Cam.gate(color).width));
         ballAngle = sensor.Locator.getBallAngleLocal();
         
         int gateAngle = (int)sensor.Cam.gate(color).center_angle;
         if (gateAngle == 360)
             break;
         lineAngle = sensor.LineSensor.getAngleDelayed();
+        
+        int offset = 180; //(gateAngle > 0 ? 90 : -90);
+        petrovich_iter(color, offset);
+        continue;
 
-        int offset_angle = (int)goodAngle(gateAngle - 45);
-        if (abs((int)goodAngle(gateAngle + 45)) < abs(offset_angle))
-            offset_angle = (int)goodAngle(gateAngle + 45);
+        // int offset_angle = (int)goodAngle(gateAngle - 45);
+        // if (abs((int)goodAngle(gateAngle + 45)) < abs(offset_angle))
+        //     offset_angle = (int)goodAngle(gateAngle + 45);
 
-        deltaAngle = goodAngle(offset_angle) * 0.25f;
-        if (lineAngle != 360)
-        {
-            drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
-        }
-        else
-        {
-            int angle_err = goodAngle(ballAngle - gateAngle);
-            if (sensor.Locator.getStrength() >= 70 && abs(angle_err) <= 25)
-            {
-                moveAngle = gateAngle;
-                drv.drive(moveAngle, (int)deltaAngle, 80);
-            }
-            else
-            {
-                moveAngle = ballAngle;
-                if (angle_err > 0)
-                    moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
-                else
-                    moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
-                drv.drive(moveAngle, (int)deltaAngle, 50);
-            }
-        }
+        // deltaAngle = goodAngle(offset_angle) * 0.25f;
+        // if (lineAngle != 360)
+        // {
+        //     drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
+        // }
+        // else
+        // {
+        //     int angle_err = goodAngle(ballAngle - gateAngle);
+        //     if (sensor.Locator.getStrength() >= 70 && abs(angle_err) <= 25)
+        //     {
+        //         moveAngle = gateAngle;
+        //         drv.drive(moveAngle, (int)deltaAngle, 80);
+        //     }
+        //     else
+        //     {
+        //         moveAngle = ballAngle;
+        //         if (angle_err > 0)
+        //             moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
+        //         else
+        //             moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
+        //         drv.drive(moveAngle, (int)deltaAngle, 50);
+        //     }
+        // }
     }
 }
 
@@ -1101,8 +1119,10 @@ void playForwardDribble2(int color)
         }
         int lineAngle = sensor.LineSensor.getAngleDelayed();
 
-        // if (sensor.Cam.gate(color).width >= 0)
-        //    goalPush(color);
+        menu.writeLineClean(1, "w: " + std::to_string(sensor.Cam.gate(color).width));
+
+        if (sensor.Cam.gate(color).width >= 30)
+           goalPush(color);
 
         if (!isBall())
         {
@@ -1279,7 +1299,7 @@ void MPU_zakrut(int color)
         sensor.IMU.update();
         sensor.BallSensor.update();
         
-        int rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 40 ? 30 : 90;
+        int rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 30 : 90;
         dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 110 : -10);
         drv.drive(0, rotateSpeed * sign, 0);
 

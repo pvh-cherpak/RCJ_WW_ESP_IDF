@@ -69,12 +69,16 @@ class Dribbler{
 
 static void kicker_timer_cb(void*);
 
+static void kicker_returned_timer_cb(void *);
+
 class Kicker{
     TaskHandle_t Task = NULL;
-    esp_timer_handle_t Timer = NULL;
+    esp_timer_handle_t KickTimer = NULL;
+    esp_timer_handle_t ReturnTimer = NULL;
     
     gpio_num_t pin = GPIO_NUM_0;
-    // int64_t kick_time = INT64_MAX;
+    int64_t kick_time = INT64_MAX;
+    int64_t kick_time_mcs = 200000;
     int64_t return_time_mcs = 200000;
     
     static void xKickerTask(void *arg);
@@ -83,6 +87,8 @@ class Kicker{
         void init(gpio_num_t kicker_pin);
         void kick();
         void return_kicker();
+
+        int state = 0;
 };
 
 #endif

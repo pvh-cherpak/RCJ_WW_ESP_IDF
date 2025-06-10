@@ -319,33 +319,47 @@ void Kicker::init(gpio_num_t kicker_pin){
     //     esp_restart();
     // }
 
-    
     esp_timer_create_args_t timer_cfg = {
         .callback = &kicker_timer_cb,
-        .name = "return_kick",
+        .name = "start_return",
         };
 
-    esp_timer_create(&timer_cfg, &Timer);
+    esp_timer_create(&timer_cfg, &KickTimer);
+    
+    timer_cfg = {
+        .callback = &kicker_returned_timer_cb,
+        .name = "end_return",
+        };
+
+    esp_timer_create(&timer_cfg, &ReturnTimer);
 }
 
 static void kicker_timer_cb(void*){
     kicker.return_kicker();
 }
 
-void Kicker::kick(){
-    gpio_set_level(pin, 1);
-    // kick_time = esp_timer_get_time();
+static void kicker_returned_timer_cb(void*){
+    kicker.state = 0;
+}
 
-    esp_timer_stop(Timer); // написано, что так надо, но мне не нравится
-    esp_timer_start_once(Timer, return_time_mcs);
+void Kicker::kick(){
+    if (state == 0 && KickTimer != NULL){
+        gpio_set_level(pin, 1);
+        state = 1;
+
+        esp_timer_stop(KickTimer);
+        esp_timer_start_once(KickTimer, kick_time_mcs);
+    }
 }
 
 void Kicker::return_kicker(){
-    gpio_set_level(pin, 0);
-    // if (esp_timer_get_time() - kick_time >= return_time_mcs){
-    //     gpio_set_level(pin, 0);
-    //     kick_time = INT64_MAX;
-    // }
+    if (state == 1){
+        gpio_set_level(pin, 0);
+        state = 2;
+
+        esp_timer_stop(ReturnTimer);
+        esp_timer_start_once(ReturnTimer, return_time_mcs);
+    }
 }
 
 void Kicker::xKickerTask(void *arg){
