@@ -710,7 +710,7 @@ void playGoalkeeperCamera(int color)
         if (lineAngle != 360 && (abs(globalGateAngle)) <= 135 &&
             ((robotAngle > 0 && lineAngle > 0) || (robotAngle < 0 && lineAngle < 0)))
         {
-            menu.writeLineClean(2, "Line");
+            // menu.writeLineClean(2, "Line");
             // speedX = (int)(-lineX * 80);
             // speedY = (int)(-lineY * 80);
             //deltaAngle = -robotAngle * 0.25;
@@ -720,7 +720,7 @@ void playGoalkeeperCamera(int color)
         }
         else
         {
-            menu.writeLineClean(2, "");
+            // menu.writeLineClean(2, "");
             speedX = 0;
 
             // int err = pixel_dist_to_real(cam_dist) - 48;

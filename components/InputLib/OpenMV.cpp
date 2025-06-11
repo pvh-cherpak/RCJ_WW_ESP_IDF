@@ -303,14 +303,17 @@ void OpenMVCommunication_t::calcGateInfo(blob_t blob, OmniCamBlobInfo_t& gate)
     // ESP_LOGI("OpenMV", "angles: %d, %d, %d, %d:   %d, %d, %d", angles[0],  angles[1], angles[2], angles[3],
     //                                         gate.left_angle, gate.center_angle, gate.right_angle);
     
-    gate.distance = dist_to_polygon(gate.center_angle, blob);
-
-    /*gate.distance = 1000;
-    for (int i = 0; i < 4; ++i){
-        int temp = dist_to_segm({center_x, center_y}, segm_from_points(blob.p[i], blob.p[(i + 1) % 4]));
-        if (temp < gate.distance)
-            gate.distance = temp;
-    }*/
+    if (dist_to_center){
+        gate.distance = dist_to_polygon(gate.center_angle, blob);
+    }
+    else{
+        gate.distance = 1000;
+        for (int i = 0; i < 4; ++i){
+            int temp = dist_to_segm({center_x, center_y}, segm_from_points(blob.p[i], blob.p[(i + 1) % 4]));
+            if (temp < gate.distance)
+                gate.distance = temp;
+        }
+    }
 
     gate.height = 0;
     for (int i = 0; i < 4; ++i){

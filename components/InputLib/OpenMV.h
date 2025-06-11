@@ -36,6 +36,8 @@ private:
     int GPIO_CAM_UART = 36;
     const TickType_t UART_READ_TIMEOUT_TIME_TICS = 50 / portTICK_PERIOD_MS;
 public:
+    bool dist_to_center = false;
+
     const OmniCamData_t &CamDataOmni = cam_data;
     const OmniCamBlobInfo_t &Yellow = cam_data.Gates[0];
     const OmniCamBlobInfo_t &Blue = cam_data.Gates[1];

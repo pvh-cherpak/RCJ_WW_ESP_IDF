@@ -25,7 +25,7 @@ struct LineSensor_config_t
 class LineSensor_t
 {
 private: // константы
-    const TickType_t LINE_RETENTION_TIME_TICS = 2000 / portTICK_PERIOD_MS;
+    const TickType_t LINE_RETENTION_TIME_TICS = 1000 / portTICK_PERIOD_MS;
     const float RAD_TO_DEG = 180.0f / acos(-1);
     const float DEG_TO_RAD = acos(-1) / 180.0f;
     const uint32_t MULT_CHANEL[16][4] = {
