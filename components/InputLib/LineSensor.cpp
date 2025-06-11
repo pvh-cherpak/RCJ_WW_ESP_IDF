@@ -184,7 +184,7 @@ void LineSensor_t::getLineDirection_Delayed(float &x, float &y)
   for (int i = 0; i < 16; i++)
     if (line_time[i] != portMAX_DELAY && xTaskGetTickCount() - line_time[i] < LINE_RETENTION_TIME_TICS)
     {
-      int delay = /*LINE_RETENTION_TIME_TICS - */(xTaskGetTickCount() - line_time[i]) + 1;
+      int delay = LINE_RETENTION_TIME_TICS - (xTaskGetTickCount() - line_time[i]) + 1;
       float ang;
       if(CONFIG.inversed_without_offset)
         ang = i * 22.5f;
