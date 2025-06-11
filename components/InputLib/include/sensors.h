@@ -6,6 +6,7 @@
 #include "../OpenMV.h"
 #include "../BallSensor.h"
 #include "../locator.h"
+#include "../LightGates.h"
 
 struct sensor_config_t
 {
@@ -27,6 +28,7 @@ public:
     locator_t Locator;
     OpenMVCommunication_t Cam;
     BallSensor_t BallSensor;
+    LightGates_t LightGates;
 
     bool IMU_active = true;
 public:
@@ -42,13 +44,19 @@ public:
             IMU.init(config.offsets);
         LineSensor.init(config.LineSensor_config); Locator.init(config.locator_offset, config.inverse_locator); 
         Cam.init(config.CAM_GPIO);
-        BallSensor.init();
+        if (cfg.robotType == 2)
+            BallSensor.init();
+        else if (cfg.robotType == 1)
+            LightGates.init(GPIO_NUM_39);
     }
     void update(){
         if(IMU_active)
             IMU.update();
         LineSensor.update(); Locator.update(); Cam.update();
-        BallSensor.update();
+        if (cfg.robotType == 2)
+            BallSensor.update();
+        else if (cfg.robotType == 1)
+            LightGates.update();
     }
     void testUpdate() {IMU.testUpdate(); LineSensor.testUpdate(); Locator.testUpdate();}
 };

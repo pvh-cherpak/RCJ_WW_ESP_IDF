@@ -79,7 +79,7 @@ void sensor_init(uint8_t robot_type)
 	}
 	else
 	{ //forward
-		conf.LineSensor_config = {{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, false};
+		conf.LineSensor_config = {{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true};
 		conf.CAM_GPIO = 35;
 		conf.robotType = robot_type;
 		conf.locator_offset = 90;
@@ -124,6 +124,29 @@ extern "C"
 		// while (true){
 		// 	sensor.LineSensor.update();
 		// 	sensor.LineSensor.writeValues();
+		// 	vTaskDelay(100 / portTICK_PERIOD_MS);
+		// }
+		
+		// gpio_reset_pin(GPIO_NUM_39);
+		// adc_oneshot_unit_handle_t adc_ball;
+		// adc_oneshot_unit_init_cfg_t init_config1 = {
+		// 	.unit_id = ADC_UNIT_1,
+		// 	.ulp_mode = ADC_ULP_MODE_DISABLE,
+		// };
+		// ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc_ball));
+
+		// adc_oneshot_chan_cfg_t ADC_config = {
+		// 	.atten = ADC_ATTEN_DB_12,
+		// 	.bitwidth = ADC_BITWIDTH_DEFAULT,
+		// };
+
+		// ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_ball, ADC_CHANNEL_3, &ADC_config));
+
+		// while (true){
+		// 	int ballValue;
+		// 	ESP_ERROR_CHECK(adc_oneshot_read(adc_ball, ADC_CHANNEL_3, &ballValue));
+		// 	ESP_LOGI("Balls", "%d", ballValue);
+		// 	// drv.drive(50, 50, 50, 50);
 		// 	vTaskDelay(100 / portTICK_PERIOD_MS);
 		// }
 

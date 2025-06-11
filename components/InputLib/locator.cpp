@@ -37,15 +37,15 @@ void locator_t::update()
     if (abs(ball_angle) > 180)
         ball_angle = 360;
     else{
-        int angle_sum = 0;
-        for (int i = 0; i < BALL_ANGLE_BUF_LEN - 1; ++i){
-            ball_angle_buf[i] = ball_angle_buf[i + 1];
-            angle_sum += ball_angle_buf[i];
-        }
-        ball_angle_buf[BALL_ANGLE_BUF_LEN - 1] = ball_angle;
-        angle_sum += ball_angle;
+        // int angle_sum = 0;
+        // for (int i = 0; i < BALL_ANGLE_BUF_LEN - 1; ++i){
+        //     ball_angle_buf[i] = ball_angle_buf[i + 1];
+        //     angle_sum += ball_angle_buf[i];
+        // }
+        // ball_angle_buf[BALL_ANGLE_BUF_LEN - 1] = ball_angle;
+        // angle_sum += ball_angle;
 
-        ball_angle = angle_sum / BALL_ANGLE_BUF_LEN;
+        // ball_angle = angle_sum / BALL_ANGLE_BUF_LEN;
     }
 }
 

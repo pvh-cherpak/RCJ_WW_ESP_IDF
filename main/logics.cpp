@@ -397,7 +397,7 @@ bool isBall()
         return sensor.BallSensor.ballCatched();
     }
     else
-        return (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10);
+        return sensor.LightGates.isBall(); // (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
 }
 
 void petrovich_iter(int color, int offset = 0)
@@ -411,19 +411,25 @@ void petrovich_iter(int color, int offset = 0)
 
     int offset_angle = (int)goodAngle(gateAngle - offset);
 
-    menu.writeLineClean(1, std::to_string(sensor.Cam.gate(color).distance) + " px");
+    // menu.writeLineClean(1, std::to_string(sensor.Cam.gate(color).distance) + " px");
+    // menu.writeLineClean(2, "");
+    // menu.writeLineClean(3, "");
 
     deltaAngle = goodAngle(offset_angle) * 0.25f;
     if (lineAngle != 360)
     {
+        // menu.writeLineClean(2, "LINE!!! " + std::to_string(lineAngle));
         drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
     }
     else
     {
         int angle_err = goodAngle(ballAngle - gateAngle);
-        if ((abs(angle_err) <= sensor.Cam.gate(color).width / 2 && abs(goodAngle(ballAngle - offset)) <= 10)
+        bool gate_in_front = abs(angle_err) <= sensor.Cam.gate(color).width * 0.3; // || abs(angle_err) <= 7;
+
+        if ((gate_in_front/* && abs(goodAngle(ballAngle - offset)) <= 10*/)
             || (offset == 0 && isBall()))
         {
+            // menu.writeLineClean(2, "Move2gate");
             moveAngle = gateAngle;
             drv.drive(moveAngle, (int)deltaAngle, 80);
 
@@ -432,6 +438,7 @@ void petrovich_iter(int color, int offset = 0)
         }
         else
         {
+            // menu.writeLineClean(3, "Drive2ball");
             moveAngle = ballAngle;
             if (angle_err > 0)
                 moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
@@ -700,7 +707,8 @@ void playGoalkeeperCamera(int color)
             continue;
         }
 
-        if (lineAngle != 360 && (abs(globalGateAngle)) <= 135)
+        if (lineAngle != 360 && (abs(globalGateAngle)) <= 135 &&
+            ((robotAngle > 0 && lineAngle > 0) || (robotAngle < 0 && lineAngle < 0)))
         {
             menu.writeLineClean(2, "Line");
             // speedX = (int)(-lineX * 80);
@@ -1033,7 +1041,7 @@ void goalPush(int color)
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.update();
         // dribbler.smart_dribble(0);
-        if (sensor.Cam.gate(color).width < 90){
+        if (sensor.Cam.gate(color).width < 50){
             menu.writeLineClean(0, "exit goalPush");
             break;
         }
@@ -1085,9 +1093,9 @@ void goalPush(int color)
 
 float FwBallAnglIntegral = 0;
 float FwBallAnglPrev = 0;
-float Fw_kd = 5;
+float Fw_kd = 0.0;
 float Fw_ki = 0;
-float Fw_kp = 0.4;
+float Fw_kp = 0.25;
 
 #define OTLADKA_Dribble2
 #ifdef OTLADKA_Dribble2
@@ -1121,8 +1129,8 @@ void playForwardDribble2(int color)
 
         menu.writeLineClean(1, "w: " + std::to_string(sensor.Cam.gate(color).width));
 
-        if (sensor.Cam.gate(color).width >= 30)
-           goalPush(color);
+        // if (sensor.Cam.gate(color).width >= 30)
+        //    goalPush(color);
 
         if (!isBall())
         {
@@ -1134,8 +1142,10 @@ void playForwardDribble2(int color)
             {
                 ESP_LOGW(drible2, "Mach poteryan, edu k machu");
                 moveAngle = ballAngle;
+                float robotAnglSpeed;
+
                 float ballAnfl_err = ballAngle;
-                float robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
+                robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
                 FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
                 FwBallAnglPrev = ballAnfl_err;
 
