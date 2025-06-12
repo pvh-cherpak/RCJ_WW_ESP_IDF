@@ -1118,7 +1118,7 @@ float FwBallAnglIntegral = 0;
 float FwBallAnglPrev = 0;
 float Fw_kd = 3.0;
 float Fw_ki = 0;
-float Fw_kp = 0.2;
+float Fw_kp = 0.25;
 
 // #define OTLADKA_Dribble2
 #ifdef OTLADKA_Dribble2
@@ -1160,7 +1160,7 @@ void playForwardDribble2(int color)
         if (!isBall())
         {
             //menu.writeLineClean(0, "ball");
-            dribbler.smart_dribble((abs(ballAngle) < 50) ? 60 : 0);
+            dribbler.smart_dribble((abs(ballAngle) < 60) ? 60 : 0);
             // dribbler.neutral();
             int deltaAngle = ballAngle * 0.3; //(ballAngle < 45 ? 0.3 : 0.5);
             if (lineAngle == 360)

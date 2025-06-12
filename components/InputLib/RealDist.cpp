@@ -27,22 +27,29 @@ int linear_interpolate(int x, int *xs, int *ys, int n)
         return 0;
     if (x > xs[n - 1])
         return n;
-
+        
     int l = 0, r = n - 2;
-    while (l < r)
-    {
-        int val = (l + r) / 2;
 
-        if (x < xs[val])
-            r = val - 1;
-        else if (x > xs[val + 1])
-            l = val + 1;
-        else
-        {
-            l = r = val;
-            break;
+    for (int i = 0; i < n - 2; ++i){
+        if (x >= xs[i]){
+            l = r = i;
         }
     }
+
+    // while (l < r)
+    // {
+    //     int val = (l + r) / 2;
+
+    //     if (x < xs[val])
+    //         r = val - 1;
+    //     else if (x > xs[val + 1])
+    //         l = val + 1;
+    //     else
+    //     {
+    //         l = r = val;
+    //         break;
+    //     }
+    // }
 
     int y;
     if (xs[r + 1] == xs[r])
