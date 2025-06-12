@@ -80,9 +80,9 @@ float leftPrev = 0;
 float rightIntegral = 0;
 float rightPrev = 0;
 
-float gb_kp = 1.5;
+float gb_kp = 2;
 float gb_ki = 0;
-float gb_kd = 1;
+float gb_kd = 0.5;
 float gkBallIntegral = 0;
 float gkBallPrev = 0;
 

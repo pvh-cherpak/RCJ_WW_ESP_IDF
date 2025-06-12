@@ -9,7 +9,7 @@ class LightGates_t{
 	adc_oneshot_unit_handle_t adc_light;
     adc_unit_t adc_unit_light = ADC_UNIT_1;
     adc_channel_t adc_channel_light = ADC_CHANNEL_3;
-    int isBallThreshold = 2000;
+    int isBallThreshold = 3500;
     
     bool isBallValue = false;
 
