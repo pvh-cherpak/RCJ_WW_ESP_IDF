@@ -80,11 +80,17 @@ float leftPrev = 0;
 float rightIntegral = 0;
 float rightPrev = 0;
 
-float gb_kp = 1.;
+float gb_kp = 1.5;
 float gb_ki = 0;
-float gb_kd = 0;
+float gb_kd = 1;
 float gkBallIntegral = 0;
 float gkBallPrev = 0;
+
+float gb_kp2 = 5;
+float gb_ki2 = 0;
+float gb_kd2 = 2;
+float gkBallIntegral2 = 0;
+float gkBallPrev2 = 0;
 
 float gkReactOnBallDiap = 0;
 
@@ -574,7 +580,7 @@ void playGoalkeeperCamera(int color)
 
         if (sensor.Locator.getStrength() < 5)
         {
-            menu.writeLineClean(1, "No ball");
+            // menu.writeLineClean(1, "No ball");
             drv.drive(0, 0, 0, 0);
             continue;
         }
@@ -675,7 +681,7 @@ void playGoalkeeperCamera(int color)
         else
         {
             drv.driveXY(0, 0, 20);
-            menu.writeLineClean(1, "No gates");
+            // menu.writeLineClean(1, "No gates");
             continue;
             // gateAngle = lastGateAngle - robotAngle;
             // cam_height = 110;
@@ -793,12 +799,29 @@ void playGoalkeeperCamera(int color)
 
         float ball_err = ballAngleGlobal;
 
-        float ballSpeed = gb_kp * ball_err + gkBallIntegral + gb_kd * (ball_err - gkBallPrev);
+        float ballSpeed;
+
+        std::string s = "     ";
+        if (sensor.Locator.getStrength() < 60)
+            s[0] = '|';
+        if (abs(goodAngle(ballAngle + robotAngle)) < 90)
+            s[3] = '_';
+        menu.writeLineClean(2, s);
+        
+        if (sensor.Locator.getStrength() < 60 && abs(goodAngle(ballAngle + robotAngle)) < 60){
+            ballSpeed = gb_kp2 * ball_err + gkBallIntegral2 + gb_kd2 * (ball_err - gkBallPrev2);
+        }
+        else{
+            ballSpeed = gb_kp * ball_err + gkBallIntegral + gb_kd * (ball_err - gkBallPrev);
+        }
         // if (ball_strength > prevBallStrength){
         //     ballSpeed += constrain((ball_strength - prevBallStrength) * gk_st_kd, -50, 50);
         // }
         gkBallIntegral += (ball_err)*gb_ki;
         gkBallPrev = ball_err;
+        
+        gkBallIntegral2 += (ball_err)*gb_ki2;
+        gkBallPrev2 = ball_err;
 
         if (ballSpeed > 0)
         {

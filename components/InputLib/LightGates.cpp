@@ -1,4 +1,5 @@
 #include "LightGates.h"
+#include "esp_log.h"
 
 void LightGates_t::init(gpio_num_t pin_num){
     lightPin = pin_num;
@@ -21,7 +22,8 @@ void LightGates_t::init(gpio_num_t pin_num){
 
 void LightGates_t::update(){
     int luminosity;
-    ESP_ERROR_CHECK(adc_oneshot_read(adc_light, adc_channel_light, &luminosity));
+    adc_oneshot_read(adc_light, adc_channel_light, &luminosity);
+    // ESP_LOGI("LG", "lumin: %d", luminosity);
     isBallValue = (luminosity >= isBallThreshold);
 }
 
