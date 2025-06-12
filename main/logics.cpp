@@ -1116,11 +1116,11 @@ void goalPush(int color)
 
 float FwBallAnglIntegral = 0;
 float FwBallAnglPrev = 0;
-float Fw_kd = 0.0;
+float Fw_kd = 3.0;
 float Fw_ki = 0;
-float Fw_kp = 0.25;
+float Fw_kp = 0.2;
 
-#define OTLADKA_Dribble2
+// #define OTLADKA_Dribble2
 #ifdef OTLADKA_Dribble2
     const char* drible2 = "f";
 #endif
@@ -1133,7 +1133,9 @@ void playForwardDribble2(int color)
     {
     fwDribbleBegin:
 
-        ESP_LOGI(drible2, "-NEW ITERATION-");
+        #ifdef OTLADKA_Dribble2
+            ESP_LOGI(drible2, "-NEW ITERATION-");
+        #endif
         vTaskDelay(10 / portTICK_PERIOD_MS);
 
         sensor.update();
@@ -1150,7 +1152,7 @@ void playForwardDribble2(int color)
         }
         int lineAngle = sensor.LineSensor.getAngleDelayed();
 
-        menu.writeLineClean(1, "w: " + std::to_string(sensor.Cam.gate(color).width));
+        // menu.writeLineClean(1, "w: " + std::to_string(sensor.Cam.gate(color).width));
 
         // if (sensor.Cam.gate(color).width >= 30)
         //    goalPush(color);
@@ -1163,7 +1165,9 @@ void playForwardDribble2(int color)
             int deltaAngle = ballAngle * 0.3; //(ballAngle < 45 ? 0.3 : 0.5);
             if (lineAngle == 360)
             {
-                ESP_LOGW(drible2, "Mach poteryan, edu k machu");
+                #ifdef OTLADKA_Dribble2
+                    ESP_LOGW(drible2, "Mach poteryan, edu k machu");
+                #endif
                 moveAngle = ballAngle;
                 float robotAnglSpeed;
 
@@ -1172,18 +1176,20 @@ void playForwardDribble2(int color)
                 FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
                 FwBallAnglPrev = ballAnfl_err;
 
-                drv.drive(moveAngle, (int)(robotAnglSpeed), 60);  
+                drv.drive(moveAngle, (int)(robotAnglSpeed), 70);  
             }
             else
             {
-                ESP_LOGW(drible2, "Mach poteryan, edu k machu no vizhu liniju");
+                #ifdef OTLADKA_Dribble2
+                    ESP_LOGW(drible2, "Mach poteryan, edu k machu no vizhu liniju");
+                #endif
                 drv.drive(goodAngle(lineAngle + 180), (int)(deltaAngle), 80);
             }
         }
         else
         {
             #ifdef OTLADKA_Dribble2  
-            ESP_LOGW(drible2, "Mach zachvachen, podjzzaju");
+                ESP_LOGW(drible2, "Mach zachvachen, podjzzaju");
             #endif
             //menu.writeLineClean(0, "gate...");
             dribbler.smart_dribble(70);
@@ -1237,7 +1243,7 @@ void playForwardDribble2(int color)
                     if (!isBall())
                     {
                         #ifdef OTLADKA_Dribble2  
-                        ESP_LOGW(drible2, "POTERIALY MATCH");
+                            ESP_LOGW(drible2, "POTERIALY MATCH");
                         #endif
                         goto fwDribbleBegin;
                     }
@@ -1251,14 +1257,14 @@ void playForwardDribble2(int color)
                     if (lineAngle != 360)
                     {
                         #ifdef OTLADKA_Dribble2  
-                        ESP_LOGW(drible2, "edu k vorotam NO LINIJA");
+                            ESP_LOGW(drible2, "edu k vorotam NO LINIJA");
                         #endif
                         drv.drive(goodAngle(lineAngle + 180), delta_angle, 80);
                         continue;
                     }
                     else{
                         #ifdef OTLADKA_Dribble2  
-                        ESP_LOGW(drible2, "edu k vorotam");
+                            ESP_LOGW(drible2, "edu k vorotam");
                         #endif
                         
                         drv.drive(cam_angle, delta_angle, 80);

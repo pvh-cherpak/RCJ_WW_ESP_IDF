@@ -85,6 +85,7 @@ void sensor_init(uint8_t robot_type)
 		conf.locator_offset = 90;
 		conf.IMU_active = true;
 		conf.inverse_locator = true;
+		conf.LineSensor_config.offset = 22;
 
 		sensor.init(conf);
 

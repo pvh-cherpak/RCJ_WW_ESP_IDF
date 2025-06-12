@@ -190,6 +190,7 @@ void LineSensor_t::getLineDirection_Delayed(float &x, float &y)
         ang = i * 22.5f;
       else
         ang = (16 - i) * 22.5f;
+      ang += CONFIG.offset;
       k += delay;
       sumX += sin(ang * DEG_TO_RAD) * delay;
       sumY += cos(ang * DEG_TO_RAD) * delay;
