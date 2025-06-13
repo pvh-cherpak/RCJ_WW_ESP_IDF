@@ -705,13 +705,13 @@ void playGoalkeeperCamera(int color)
             ballMoveTime = millis();
         }
 
-        if (millis() - ballMoveTime >= 5000)
-        {
-            drv.driveXY(0, 70, 0);
-            make_pause(100);
-            stateGame = 1;
-            continue;
-        }
+        // if (millis() - ballMoveTime >= 5000)
+        // {
+        //     drv.driveXY(0, 70, 0);
+        //     make_pause(100);
+        //     stateGame = 1;
+        //     continue;
+        // }
 
         if (lineAngle != 360 && (abs(globalGateAngle)) <= 135 &&
             ((robotAngle > 0 && lineAngle > 0) || (robotAngle < 0 && lineAngle < 0)))
