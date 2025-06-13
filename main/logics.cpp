@@ -1233,7 +1233,7 @@ void playForwardDribble2(int color)
                         cam_angle = sensor.Cam.gate(color).center_angle;
                         deltaAngle = goodAngle(cam_angle + 180);
                         deltaAngle = abs(cam_angle) < 90 ? deltaAngle * 0.3 : deltaAngle * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
-                        deltaAngle = constrain(deltaAngle, -40, 40);
+                        deltaAngle = constrain(deltaAngle, -20, 40);
                         drv.drive(moveAngle, (int)(deltaAngle), speed);
                     }
                     #ifdef OTLADKA_Dribble2  
