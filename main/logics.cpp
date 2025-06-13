@@ -1234,6 +1234,7 @@ void playForwardDribble2(int color)
                         deltaAngle = goodAngle(cam_angle + 180);
                         deltaAngle = abs(cam_angle) < 90 ? deltaAngle * 0.3 : deltaAngle * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
                         deltaAngle = constrain(deltaAngle, -40, 40);
+                        deltaAngle = abs(deltaAngle);
                         drv.drive(moveAngle, (int)(deltaAngle), speed);
                     }
                     #ifdef OTLADKA_Dribble2  
