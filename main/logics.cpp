@@ -1330,6 +1330,8 @@ void MPU_zakrut(int color)
     int sign = ((sensor.IMU.Yaw) < 0) ? -1 : 1;
     int start_angle = sensor.IMU.Yaw;
 
+    int rotateSpeed = 0;
+
     while (isBall())
     {
         menu.writeLineClean(0, "2");
@@ -1338,8 +1340,14 @@ void MPU_zakrut(int color)
         sensor.IMU.update();
         sensor.BallSensor.update();
         
-        int rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 30 : 90;
-        dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 110 : -10);
+        if (sign > 0){
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 30 : 90;
+            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 110 : -10);
+        }
+        else if (sign < 0){
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 30 : 60;
+            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 110 : -10);
+        }
         drv.drive(0, rotateSpeed * sign, 0);
 
         if (abs(goodAngle(sensor.IMU.Yaw - start_angle)) > 160){
