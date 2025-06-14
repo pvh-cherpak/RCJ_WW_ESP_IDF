@@ -705,13 +705,13 @@ void playGoalkeeperCamera(int color)
             ballMoveTime = millis();
         }
 
-        if (millis() - ballMoveTime >= 5000)
-        {
-            drv.driveXY(0, 70, 0);
-            make_pause(100);
-            stateGame = 1;
-            continue;
-        }
+        // if (millis() - ballMoveTime >= 5000)
+        // {
+        //     drv.driveXY(0, 70, 0);
+        //     make_pause(100);
+        //     stateGame = 1;
+        //     continue;
+        // }
 
         if (lineAngle != 360 && (abs(globalGateAngle)) <= 135 &&
             ((robotAngle > 0 && lineAngle > 0) || (robotAngle < 0 && lineAngle < 0)))
@@ -1233,8 +1233,7 @@ void playForwardDribble2(int color)
                         cam_angle = sensor.Cam.gate(color).center_angle;
                         deltaAngle = goodAngle(cam_angle + 180);
                         deltaAngle = abs(cam_angle) < 90 ? deltaAngle * 0.3 : deltaAngle * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
-                        deltaAngle = constrain(deltaAngle, -40, 40);
-                        deltaAngle = abs(deltaAngle);
+                        deltaAngle = constrain(deltaAngle, -20, 40);
                         drv.drive(moveAngle, (int)(deltaAngle), speed);
                     }
                     #ifdef OTLADKA_Dribble2  
@@ -1331,6 +1330,8 @@ void MPU_zakrut(int color)
     int sign = ((sensor.IMU.Yaw) < 0) ? -1 : 1;
     int start_angle = sensor.IMU.Yaw;
 
+    int rotateSpeed = 0;
+
     while (isBall())
     {
         menu.writeLineClean(0, "2");
@@ -1339,8 +1340,14 @@ void MPU_zakrut(int color)
         sensor.IMU.update();
         sensor.BallSensor.update();
         
-        int rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 30 : 90;
-        dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 110 : -10);
+        if (sign > 0){
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 30 : 90;
+            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 110 : -10);
+        }
+        else if (sign < 0){
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 30 : 60;
+            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 110 : -10);
+        }
         drv.drive(0, rotateSpeed * sign, 0);
 
         if (abs(goodAngle(sensor.IMU.Yaw - start_angle)) > 160){
