@@ -705,13 +705,13 @@ void playGoalkeeperCamera(int color)
             ballMoveTime = millis();
         }
 
-        // if (millis() - ballMoveTime >= 5000)
-        // {
-        //     drv.driveXY(0, 70, 0);
-        //     make_pause(100);
-        //     stateGame = 1;
-        //     continue;
-        // }
+        if (millis() - ballMoveTime >= 5000)
+        {
+            drv.driveXY(0, 70, 0);
+            make_pause(100);
+            stateGame = 1;
+            continue;
+        }
 
         if (lineAngle != 360 && (abs(globalGateAngle)) <= 135 &&
             ((robotAngle > 0 && lineAngle > 0) || (robotAngle < 0 && lineAngle < 0)))
@@ -1348,7 +1348,14 @@ void MPU_zakrut(int color)
             rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 30 : 60;
             dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 110 : -10);
         }
-        drv.drive(0, rotateSpeed * sign, 0);
+
+        lineAngle = sensor.LineSensor.getAngleDelayed();
+        if (lineAngle == 360){
+            drv.drive(0, rotateSpeed * sign, 0);
+        }
+        else{
+            drv.drive(lineAngle, 0, -80);
+        }
 
         if (abs(goodAngle(sensor.IMU.Yaw - start_angle)) > 160){
             dribbler.smart_dribble(-10);

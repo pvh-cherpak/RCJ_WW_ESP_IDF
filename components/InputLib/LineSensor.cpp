@@ -7,6 +7,10 @@
 const char *NVS_WHITE_VALUE_GROUP = "WHITE_VALUES";
 const char *NVS_GREEN_VALUE_GROUP = "GREEN_VALUES";
 
+const float angles_for_gk[16] = {
+  19.1, 30.8, 63.3, 81.0, 99.0, 117.0, 153.0, 171.0, 189.0, 207.3, 243.0, 261.0, 279.0, 296.7, 329.2, 340.9
+};
+
 void LineSensor_t::init(LineSensor_config_t config)
 {
   CONFIG = config;
@@ -189,7 +193,7 @@ void LineSensor_t::getLineDirection_Delayed(float &x, float &y)
       if(CONFIG.inversed_without_offset)
         ang = i * 22.5f;
       else
-        ang = (16 - i) * 22.5f;
+        ang = angles_for_gk[15 - i];
       ang += CONFIG.offset;
       k += delay;
       sumX += sin(ang * DEG_TO_RAD) * delay;
