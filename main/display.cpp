@@ -20,7 +20,7 @@ static const std::vector<std::string> another_menu_text =
     {"-Another  menu-", "Line calib", "Dribbler: ", "50505050", "kick", "mpu calib", "dist calib"};
 
 static const std::vector<std::string> debug_menu_text =
-    {"-Debug  menu-", "Zakrut", "petrovichY", "petrovichB"};
+    {"-Debug  menu-", "Zakrut", "Penalty K", "Penalty D"};
 
 static std::vector<std::string> start_menu_output_text = start_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
@@ -236,8 +236,8 @@ void info_menu(button_handle_t &encoder_button)
         int gateDist = sensor.Cam.Yellow.distance;
         int gateWidth = sensor.Cam.Yellow.width;
         menu.writeLineClean(5, "Y gate: " + std::to_string(gateAngle) + " " + std::to_string(sensor.Cam.Yellow.distance), false);
-        // menu.writeLineClean(6, "B gate: " + std::to_string(sensor.Cam.Blue.clos_angle) + " " + std::to_string(sensor.Cam.Blue.distance), false);
-        menu.writeLineClean(6, "Y dist: " + std::to_string(real_dist.convertDist(gateDist, gateAngle)));
+        menu.writeLineClean(6, "B gate: " + std::to_string(sensor.Cam.Blue.clos_angle) + " " + std::to_string(sensor.Cam.Blue.distance), false);
+        // menu.writeLineClean(6, "Y dist: " + std::to_string(real_dist.convertDist(gateDist, gateAngle)));
         ESP_LOGI("Sensor", "BallAngle: %d", sensor.Locator.getBallAngleLocal());
 
         if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
@@ -501,10 +501,10 @@ void debug_menu(button_handle_t &encoder_button)
                 drv.drive(0, 0, 0, 0);
                 break;
             case 2:
-                playForwardGoyda(0);
+                penaltyKicker(playColor);
                 break;
             case 3:
-                playForwardGoyda(1);
+                penaltyDribbler(playColor);
                 break;
                 
             default:

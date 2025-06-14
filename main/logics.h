@@ -29,7 +29,7 @@ void killerFeature(int color);
 
 bool isBall();
 
-void petrovich_iter(int color, int offset);
+void petrovich_iter(int color, int offset, bool useLine);
 
 void goOverObstacleOmni(float generalSpeed, float generalAngle, float rot_angle, float critDist, bool rotate);
 
@@ -48,5 +48,9 @@ void playForwardDribble2(int color);
 void MPU_zakrut(int color);
 
 void vyravnivanije(int color);
+
+void penaltyDribbler(int color);
+
+void penaltyKicker(int color);
 
 #endif
