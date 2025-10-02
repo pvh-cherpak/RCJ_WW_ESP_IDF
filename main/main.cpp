@@ -67,7 +67,8 @@ void sensor_init(uint8_t robot_type)
 			ADC_UNIT_2,
 			ADC_CHANNEL_6,
 			true,
-			false, true};
+			false,
+			true};
 		conf.robotType = robot_type;
 		conf.CAM_GPIO = 36;
 		conf.locator_offset = 0;
@@ -79,15 +80,18 @@ void sensor_init(uint8_t robot_type)
 	}
 	else
 	{ //forward
-		conf.LineSensor_config = {{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true};
-		conf.CAM_GPIO = 35;
+		conf.LineSensor_config = {{GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_28, GPIO_NUM_27}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true};
+		conf.CAM_GPIO = 19;
 		conf.robotType = robot_type;
 		conf.locator_offset = 90;
-		conf.IMU_active = true;
+		conf.IMU_active = false;
 		conf.inverse_locator = true;
 		conf.LineSensor_config.offset = 22;
 
-		sensor.init(conf);
+		// sensor.init(conf);
+
+		drv.~MotorControl();
+		new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_25, GPIO_NUM_26, GPIO_NUM_2, GPIO_NUM_4, GPIO_NUM_17, GPIO_NUM_16);
 
 		// sensor.IMU_active=false;
 		// sensor.Cam.init(conf.CAM_GPIO);
