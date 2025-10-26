@@ -8,6 +8,8 @@
 #include "../locator.h"
 #include "../LightGates.h"
 
+#include "esp_log.h"
+
 struct sensor_config_t
 {
     LineSensor_config_t LineSensor_config;
@@ -18,7 +20,6 @@ struct sensor_config_t
     bool inverse_locator = false;
     int16_t *offsets = nullptr;
 };
-
 
 class sensor_t
 {
@@ -40,10 +41,20 @@ public:
     void init(sensor_config_t config){
         cfg = config;
         IMU_active = config.IMU_active;
+        
+        ESP_LOGI("sensor init", "start IMU init");
         if (IMU_active)
             IMU.init(config.offsets);
-        LineSensor.init(config.LineSensor_config); Locator.init(config.locator_offset, config.inverse_locator); 
-        Cam.init(config.CAM_GPIO);
+        
+        ESP_LOGI("sensor init", "start LineSensor init");
+        LineSensor.init(config.LineSensor_config);
+
+        ESP_LOGI("sensor init", "start Locator init");
+        Locator.init(config.locator_offset, config.inverse_locator); 
+
+        ESP_LOGI("sensor init", "start Camera init");
+        Cam.init(config.CAM_GPIO, -90);
+
         if (cfg.robotType == 2)
             BallSensor.init();
         else if (cfg.robotType == 1)

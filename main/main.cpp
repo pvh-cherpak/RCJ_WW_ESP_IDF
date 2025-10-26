@@ -75,20 +75,19 @@ void sensor_init(uint8_t robot_type)
 		conf.IMU_active = true;
 		conf.inverse_locator = false;
 
-
 		sensor.init(conf);
 	}
 	else
 	{ //forward
-		conf.LineSensor_config = {{GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_28, GPIO_NUM_27}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true};
+		conf.LineSensor_config = {{GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true};
 		conf.CAM_GPIO = 19;
 		conf.robotType = robot_type;
-		conf.locator_offset = 90;
-		conf.IMU_active = false;
-		conf.inverse_locator = true;
+		conf.locator_offset = 0;
+		conf.IMU_active = true;
+		conf.inverse_locator = false;
 		conf.LineSensor_config.offset = 22;
-
-		// sensor.init(conf);
+		
+		sensor.init(conf);
 
 		drv.~MotorControl();
 		new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_25, GPIO_NUM_26, GPIO_NUM_2, GPIO_NUM_4, GPIO_NUM_17, GPIO_NUM_16);
@@ -106,9 +105,6 @@ extern "C"
 {
 	void app_main(void)
 	{
-		// nvs_set_variables(1);
-		
-
 		esp_err_t err = nvs_flash_init();
 		if ((err == ESP_ERR_NVS_NO_FREE_PAGES) || (err == ESP_ERR_NVS_NEW_VERSION_FOUND))
 		{
@@ -125,35 +121,7 @@ extern "C"
 			esp_restart();
 		};
 
-		// sensor.LineSensor.init({{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false, true});
-		// while (true){
-		// 	sensor.LineSensor.update();
-		// 	sensor.LineSensor.writeValues();
-		// 	vTaskDelay(100 / portTICK_PERIOD_MS);
-		// }
-		
-		// gpio_reset_pin(GPIO_NUM_39);
-		// adc_oneshot_unit_handle_t adc_ball;
-		// adc_oneshot_unit_init_cfg_t init_config1 = {
-		// 	.unit_id = ADC_UNIT_1,
-		// 	.ulp_mode = ADC_ULP_MODE_DISABLE,
-		// };
-		// ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc_ball));
-
-		// adc_oneshot_chan_cfg_t ADC_config = {
-		// 	.atten = ADC_ATTEN_DB_12,
-		// 	.bitwidth = ADC_BITWIDTH_DEFAULT,
-		// };
-
-		// ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_ball, ADC_CHANNEL_3, &ADC_config));
-
-		// while (true){
-		// 	int ballValue;
-		// 	ESP_ERROR_CHECK(adc_oneshot_read(adc_ball, ADC_CHANNEL_3, &ballValue));
-		// 	ESP_LOGI("Balls", "%d", ballValue);
-		// 	// drv.drive(50, 50, 50, 50);
-		// 	vTaskDelay(100 / portTICK_PERIOD_MS);
-		// }
+		// nvs_set_variables(2); 
 
 		start_i2c_legacy();
 		menu.init();
@@ -178,13 +146,14 @@ extern "C"
 
 		// BTDebug.init();
 
-		drv.init();
 		if (robot_type == 2)
 			dribbler.init();
 		else if (robot_type == 1)
 			kicker.init(GPIO_NUM_23);
+
 		//err_log.init();
 		real_dist.init();
+		drv.init();
 
 		int GPIO_A, GPIO_B;
 		if (robot_type == 1)
@@ -194,95 +163,55 @@ extern "C"
 		}
 		else
 		{
-			GPIO_A = 36;
+			GPIO_A = 34;
 			GPIO_B = 39;
 		}
 
-		// drv.drive(50, 50, 0, 0);
+		// drv.drive(50, 50, 50, 50);
 
-		// while (true){
-		// 	sensor.LineSensor.update();
-		// 	sensor.LineSensor.writeValues();
-		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
+		// while (true) {
+		// 	sensor.BallSensor.update();
+		// 	ESP_LOGI("test", "is ball: %d", sensor.BallSensor.IsBall);
+		// 	vTaskDelay(10 / portTICK_PERIOD_MS);
 		// }
 
-		start_menu(robot_type, GPIO_A, GPIO_B);
-
-		// // это тесты камеры
-		// vTaskDelay(1000 / portTICK_PERIOD_MS);
-		// OpenMVCommunication_t cam;
-		// cam.init();
 		// while (true)
 		// {
-		// 	cam.update();
-		// 	ESP_LOGI("cam", "r center_angle: %d", cam.yellow.center_angle);
-		// 	ESP_LOGI("cam", "r clos_angle: %d", cam.yellow.clos_angle);
-		// 	ESP_LOGI("cam", "r distance: %d", cam.yellow.distance);
-		// 	ESP_LOGI("cam", "r height: %d", cam.yellow.height);
-		// 	ESP_LOGI("cam", "r left_angle: %d", cam.yellow.left_angle);
-		// 	ESP_LOGI("cam", "r right_angle: %d", cam.yellow.right_angle);
-		// 	ESP_LOGI("cam", "r width: %d", cam.yellow.width);
-
-		// 	ESP_LOGI("cam", "r center_angle: %d", cam.blue.center_angle);
-		// 	ESP_LOGI("cam", "r clos_angle: %d", cam.blue.clos_angle);
-		// 	ESP_LOGI("cam", "r distance: %d", cam.blue.distance);
-		// 	ESP_LOGI("cam", "r height: %d", cam.blue.height);
-		// 	ESP_LOGI("cam", "r left_angle: %d", cam.blue.left_angle);
-		// 	ESP_LOGI("cam", "r right_angle: %d", cam.blue.right_angle);
-		// 	ESP_LOGI("cam", "r width: %d", cam.blue.width);
-		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
+		// 	sensor.Locator.update();
+		// 	drv.drive(sensor.Locator.BallAngleLocal, sensor.Locator.BallAngleLocal * 0.5, 0);
+		// 	vTaskDelay(10 / portTICK_PERIOD_MS);
 		// }
 
-		// тест блютуза
-		/*
-		BTDebug.init();
-		bool flag = false;
-		while (1)
-		{
-			for (int y = -110; y < 110; y += 10)
-				for (int x = -80; x < 80; x += 10)
-				{
-					flag = !flag;
-					if (flag)
-						BTDebug.addCString("GOOOO000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000L");
-					else
-						BTDebug.addCString("GOJDAAAAAAA");
-					
-					BTDebug.setPosition(x, y);
-					BTDebug.send();
-					sensor.testUpdate();
-					
-				}
-		}
-		*/
+		// ESP_LOGI("ads", "asd");
+		// dribble(180);
+		// vTaskDelay(pdMS_TO_TICKS(5000));
+		// dribble(50);
+		// vTaskDelay(pdMS_TO_TICKS(5000));
+		// dribble(170);
 
-		//err_log.print_all_errors();
+		float FwBallAnglIntegral = 0;
+		float FwBallAnglPrev = 0;
+		float Fw_kd = 3.0;
+		float Fw_ki = 0;
+		float Fw_kp = 0.55;
 
-		// int speed = 30;
-		// menu.clearDisplay();
-		// while (true){
-		// 	//drv.drive(0, speed);
-		// 	//menu.writeLineClean(0, std::to_string(speed), false);
-		// 	sensor.update();
+		// while (true)
+		// {
+		// 	sensor.Locator.update();
+		// 	int moveAngle = sensor.Locator.BallAngleLocal;
+		// 	Fw_kd = abs(moveAngle) > 40 ? 0 : 3;
+		// 	float robotAnglSpeed;
 
-		// 	menu.writeLineClean(0, "blue: " + std::to_string(sensor.Cam.blue.center_angle));
-		// 	menu.writeLineClean(1, "yellow: " + std::to_string(sensor.Cam.yellow.center_angle));
-		// 	menu.writeLineClean(2, "errors: " + std::to_string(err_count));
+		// 	float ballAnfl_err = moveAngle;
+		// 	robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
+		// 	FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
+		// 	FwBallAnglPrev = ballAnfl_err;
 
-		// 	ESP_LOGI("cam", "r center_angle: %d", sensor.Cam.yellow.center_angle);
-		// 	ESP_LOGI("cam", "r height: %d", sensor.Cam.yellow.height);
-		// 	ESP_LOGI("cam", "r width: %d", sensor.Cam.yellow.width);
-
-		// 	ESP_LOGI("cam", "r center_angle: %d", sensor.Cam.blue.center_angle);
-		// 	ESP_LOGI("cam", "r height: %d", sensor.Cam.blue.height);
-		// 	ESP_LOGI("cam", "r width: %d", sensor.Cam.blue.width);
-
-		// 	vTaskDelay(30 / portTICK_PERIOD_MS);
-		// 	//speed = -speed;
+		// 	drv.drive(moveAngle, (int)(robotAnglSpeed), 60);
+		// 	vTaskDelay(10 / portTICK_PERIOD_MS);
 		// }
 
-		// vTaskDelay(5000 / portTICK_PERIOD_MS);
-		// sensor.init();
+		start_menu(robot_type, GPIO_A, GPIO_B, robot_type == 2 ? 35 : 34);
 
 		vTaskDelete(NULL);
 		// esp_restart();
@@ -336,3 +265,96 @@ uint8_t get_identifier()
 
 	return 0;
 }
+
+
+// sensor.LineSensor.init({{GPIO_NUM_26, GPIO_NUM_27, GPIO_NUM_13, GPIO_NUM_12}, ADC_UNIT_2, ADC_CHANNEL_6, false, true});
+		// while (true){
+		// 	sensor.LineSensor.update();
+		// 	sensor.LineSensor.writeValues();
+		// 	vTaskDelay(100 / portTICK_PERIOD_MS);
+		// }
+
+		// gpio_reset_pin(GPIO_NUM_39);
+		// adc_oneshot_unit_handle_t adc_ball;
+		// adc_oneshot_unit_init_cfg_t init_config1 = {
+		// 	.unit_id = ADC_UNIT_1,
+		// 	.ulp_mode = ADC_ULP_MODE_DISABLE,
+		// };
+		// ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc_ball));
+
+		// adc_oneshot_chan_cfg_t ADC_config = {
+		// 	.atten = ADC_ATTEN_DB_12,
+		// 	.bitwidth = ADC_BITWIDTH_DEFAULT,
+		// };
+
+		// ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_ball, ADC_CHANNEL_3, &ADC_config));
+
+		// while (true){
+		// 	int ballValue;
+		// 	ESP_ERROR_CHECK(adc_oneshot_read(adc_ball, ADC_CHANNEL_3, &ballValue));
+		// 	ESP_LOGI("Balls", "%d", ballValue);
+		// 	// drv.drive(50, 50, 50, 50);
+		// 	vTaskDelay(100 / portTICK_PERIOD_MS);
+		// }
+
+
+				// while (true){
+		// 	sensor.LineSensor.update();
+		// 	sensor.LineSensor.writeValues();
+		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
+		// }
+
+		// start_menu(robot_type, GPIO_A, GPIO_B);
+
+		// // это тесты камеры
+		// vTaskDelay(1000 / portTICK_PERIOD_MS);
+		// OpenMVCommunication_t cam;
+		// cam.init();
+		// while (true)
+		// {
+		// 	cam.update();
+		// 	ESP_LOGI("cam", "r center_angle: %d", cam.yellow.center_angle);
+		// 	ESP_LOGI("cam", "r clos_angle: %d", cam.yellow.clos_angle);
+		// 	ESP_LOGI("cam", "r distance: %d", cam.yellow.distance);
+		// 	ESP_LOGI("cam", "r height: %d", cam.yellow.height);
+		// 	ESP_LOGI("cam", "r left_angle: %d", cam.yellow.left_angle);
+		// 	ESP_LOGI("cam", "r right_angle: %d", cam.yellow.right_angle);
+		// 	ESP_LOGI("cam", "r width: %d", cam.yellow.width);
+
+		// 	ESP_LOGI("cam", "r center_angle: %d", cam.blue.center_angle);
+		// 	ESP_LOGI("cam", "r clos_angle: %d", cam.blue.clos_angle);
+		// 	ESP_LOGI("cam", "r distance: %d", cam.blue.distance);
+		// 	ESP_LOGI("cam", "r height: %d", cam.blue.height);
+		// 	ESP_LOGI("cam", "r left_angle: %d", cam.blue.left_angle);
+		// 	ESP_LOGI("cam", "r right_angle: %d", cam.blue.right_angle);
+		// 	ESP_LOGI("cam", "r width: %d", cam.blue.width);
+		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
+		// }
+
+		//err_log.print_all_errors();
+
+		// int speed = 30;
+		// menu.clearDisplay();
+		// while (true){
+		// 	//drv.drive(0, speed);
+		// 	//menu.writeLineClean(0, std::to_string(speed), false);
+		// 	sensor.update();
+
+		// 	menu.writeLineClean(0, "blue: " + std::to_string(sensor.Cam.blue.center_angle));
+		// 	menu.writeLineClean(1, "yellow: " + std::to_string(sensor.Cam.yellow.center_angle));
+		// 	menu.writeLineClean(2, "errors: " + std::to_string(err_count));
+
+		// 	ESP_LOGI("cam", "r center_angle: %d", sensor.Cam.yellow.center_angle);
+		// 	ESP_LOGI("cam", "r height: %d", sensor.Cam.yellow.height);
+		// 	ESP_LOGI("cam", "r width: %d", sensor.Cam.yellow.width);
+
+		// 	ESP_LOGI("cam", "r center_angle: %d", sensor.Cam.blue.center_angle);
+		// 	ESP_LOGI("cam", "r height: %d", sensor.Cam.blue.height);
+		// 	ESP_LOGI("cam", "r width: %d", sensor.Cam.blue.width);
+
+		// 	vTaskDelay(30 / portTICK_PERIOD_MS);
+		// 	//speed = -speed;
+		// }
+
+		// vTaskDelay(5000 / portTICK_PERIOD_MS);
+		// sensor.init();

@@ -23,7 +23,7 @@ void mcpwm_example_gpio_initialize();
 void set_channel(bool bBrake, int32_t iSpeed, mcpwm_timer_t timer);
 void motor_drv8833_task();
 
-static const gpio_num_t DRB = GPIO_NUM_25;
+static const gpio_num_t DRB = GPIO_NUM_23;
 
 class MotorControl
 {

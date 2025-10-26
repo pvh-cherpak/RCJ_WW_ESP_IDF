@@ -11,6 +11,14 @@ Kicker kicker;
 void MotorControl::init()
 {
     ESP_LOGI(motor_tag, "initializing mcpwm gpio...");
+    gpio_reset_pin(M1_FW);
+    gpio_reset_pin(M1_BW);
+    gpio_reset_pin(M2_FW);
+    gpio_reset_pin(M2_BW);
+    gpio_reset_pin(M3_FW);
+    gpio_reset_pin(M3_BW);
+    gpio_reset_pin(M4_FW);
+    gpio_reset_pin(M4_BW);
     mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM0A, M1_FW);
     mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM0B, M1_BW);
     mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM1A, M2_FW);
@@ -249,7 +257,9 @@ void Dribbler::init()
 
     mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_2, &pwm_config);
 
-    dribble(50);
+    dribble(180);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    dribble(90);
 
     ESP_LOGI("Dribbler::init()", "sozdanie ocheredi");
     Queue = xQueueCreate(10, sizeof(int));

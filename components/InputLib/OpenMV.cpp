@@ -47,8 +47,9 @@ void OpenMVCommunication_t::update()
 }
 */
 
-void OpenMVCommunication_t::init(int GPIO)
+void OpenMVCommunication_t::init(int GPIO, int provorot)
 {
+    angel_offset = provorot;
     GPIO_CAM_UART = GPIO;
 
     uart_config_t uart_config = {
@@ -277,7 +278,7 @@ void OpenMVCommunication_t::calcGateInfo(blob_t blob, OmniCamBlobInfo_t& gate)
 
     int angles[4];
     for (int i = 0; i < 4; ++i){
-        int angle = atan2(blob.p[i].x - center_x, blob.p[i].y - center_y) * RAD_TO_DEG;
+        int angle = local_good_angle(atan2(blob.p[i].x - center_x, blob.p[i].y - center_y) * RAD_TO_DEG + angel_offset);
         angles[i] = angle;
         if (i == 0){
             gate.left_angle = angle;

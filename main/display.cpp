@@ -17,7 +17,7 @@ static const std::vector<std::string> info_menu_text =
     {"---Info menu---", "Ball angl: ", "Line angl: ", "LP test: ", "Ball str:", "Line X:", "Exit"};
 
 static const std::vector<std::string> another_menu_text =
-    {"-Another  menu-", "Line calib", "Dribbler: ", "50505050", "kick", "mpu calib", "dist calib"};
+    {"-Another  menu-", "Line calib", "Dribbler: ", "50505050", "kick", "mpu calib", "dist calib", "deVEL"};
 
 static const std::vector<std::string> debug_menu_text =
     {"-Debug  menu-", "Zakrut", "Penalty K", "Penalty D"};
@@ -128,7 +128,7 @@ void DisplayMenu_t::showPicture(int xpos, int ypos, uint8_t *bitmap, int width, 
     ssd1306_bitmaps(dev, xpos, ypos, bitmap, width, height, invert);
 }
 
-void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B)
+void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B, int encoder_key)
 {
     // create gpio button
     button_config_t gpio_btn_cfg = {
@@ -136,7 +136,7 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B)
         .long_press_time = CONFIG_BUTTON_LONG_PRESS_TIME_MS,
         .short_press_time = CONFIG_BUTTON_SHORT_PRESS_TIME_MS,
         .gpio_button_config = {
-            .gpio_num = 34,
+            .gpio_num = encoder_key,
             .active_level = 0,
         },
     };
@@ -298,6 +298,17 @@ void another_menu(button_handle_t &encoder_button)
                 break;
             case 6:
                 calibrateRealDist(0);
+                menu.drawFullMenu(another_menu_output_text);
+                break;
+            case 7:
+                while (true)
+                {
+                    sensor.update();
+                    int angle = sensor.Locator.getBallAngleLocal();
+                    drv.drive(angle, 50);
+                    vTaskDelay(10);
+                }
+                
                 menu.drawFullMenu(another_menu_output_text);
                 break;
             default:

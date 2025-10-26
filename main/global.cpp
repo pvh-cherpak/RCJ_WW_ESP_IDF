@@ -17,8 +17,13 @@ static const char *I2C_tag = "I2C";
 void start_i2c_legacy(void) {
 	i2c_config_t conf;
 	conf.mode = I2C_MODE_MASTER;
-	conf.sda_io_num = (gpio_num_t)CONFIG_SDA_GPIO;
-	conf.scl_io_num = (gpio_num_t)CONFIG_SCL_GPIO;
+	// conf.sda_io_num = (gpio_num_t)CONFIG_SDA_GPIO;
+	// conf.scl_io_num = (gpio_num_t)CONFIG_SCL_GPIO;
+
+	conf.sda_io_num = (gpio_num_t) CONFIG_SCL_GPIO;
+	conf.scl_io_num = (gpio_num_t) CONFIG_SDA_GPIO;
+
+	
 	conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
 	conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
 	conf.master.clk_speed = 400000;

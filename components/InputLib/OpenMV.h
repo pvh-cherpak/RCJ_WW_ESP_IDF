@@ -34,6 +34,7 @@ private:
     // const TickType_t I2C_TIMEOUT_TIME_TICS = 50 / portTICK_PERIOD_MS;
     const uart_port_t uart_num = UART_NUM_1;
     int GPIO_CAM_UART = 36;
+    int angel_offset = 0;
     const TickType_t UART_READ_TIMEOUT_TIME_TICS = 50 / portTICK_PERIOD_MS;
 public:
     bool dist_to_center = false;
@@ -53,7 +54,7 @@ public:
 
     int center_x = 160, center_y = 120;
 public:
-    void init(int GPIO);
+    void init(int GPIO, int provorot);
     void update();
     OpenMVCommunication_t(IMU_t& IMUU);
     ~OpenMVCommunication_t();
