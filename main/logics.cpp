@@ -448,7 +448,7 @@ bool paradox(int color)
 
     if (lineAngle != 360) {
         if (abs(goodAngle(globalLine - globalBall)) > 90 ||
-            globalGate * globalBall < 0 && gates_on_side(color))
+            (globalGate * globalBall < 0 && gates_on_side(color)))
         {
             paradoxFirstTime = paradoxLastTime = millis();
             paradoxAngle = globalLine;
