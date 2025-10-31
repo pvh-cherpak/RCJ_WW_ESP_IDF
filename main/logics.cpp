@@ -403,7 +403,7 @@ bool isBall()
         return sensor.BallSensor.ballCatched();
     }
     else
-        return sensor.LightGates.isBall(); // (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
+        return sensor.LightGates.ballCatched(); // (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
 }
 
 void petrovich_iter(int color, int offset = 0, bool useLine = true)
