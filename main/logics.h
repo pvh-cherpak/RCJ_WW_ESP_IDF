@@ -13,6 +13,8 @@ void make_pause(int ms);
 
 void projectSpeedOnLineXY(int speedX, int speedY, float lineX, float lineY, float &resSpeedX, float &resSpeedY);
 
+bool gates_on_side(int color);
+
 void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, float &resSpeedX, float &resSpeedY);
 
 void calibrateDistOffset(int color);
@@ -28,6 +30,8 @@ int getGlobalPosition_dist(float &x, float &y, int color);
 void killerFeature(int color);
 
 bool isBall();
+
+bool paradox(int color);
 
 void petrovich_iter(int color, int offset, bool useLine);
 

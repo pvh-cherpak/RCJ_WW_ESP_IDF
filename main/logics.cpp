@@ -71,30 +71,34 @@ int activeSensors = 8;
 int maxGoalkeeperAngle = 80;
 float goRoundBallCoefGk = 0.72f; //0.62
 
-float g_kp = 50;
-float g_ki = 0;
-float g_kd = 30;
+// Вратарь (крутой)
+
+// const float g_kp = 50; // хз что это, не используется
+// const float g_ki = 0;
+// const float g_kd = 30;
 
 float leftIntegral = 0;
 float leftPrev = 0;
 float rightIntegral = 0;
 float rightPrev = 0;
 
-float gb_kp = 2;
-float gb_ki = 0;
-float gb_kd = 0.5;
+// PID мяча осторожный (близко)
+const float gb_kp = 2;
+const float gb_ki = 0;
+const float gb_kd = 0.5;
 float gkBallIntegral = 0;
 float gkBallPrev = 0;
 
-float gb_kp2 = 5;
-float gb_ki2 = 0;
-float gb_kd2 = 2;
+// PID мяча молния маквин (подалбше)
+const float gb_kp2 = 5;
+const float gb_ki2 = 0;
+const float gb_kd2 = 2;
 float gkBallIntegral2 = 0;
 float gkBallPrev2 = 0;
 
 float gkReactOnBallDiap = 0;
 
-// Вратарь по камере
+// Вратарь, возвращение к воротам по камере с PID (не используется)
 int lastGateAngle = 180;
 int lastGateTime = 0;
 int lastGateReset = 5000;
@@ -109,17 +113,25 @@ float gatePrev = 0;
 float limitGateIntegral = 150;
 float limitGateSpeed = 70;
 
+// Launch killer feature
 float ballMoveTime = 0;
 float lastBallAngle = 0;
-float ballNoMotionDiap = 10;
+const float ballNoMotionDiap = 10;
 float lastMoveBallStrength = 0;
-float ballNoMotionStrength = 15;
+const float ballNoMotionStrength = 15;
 
+// Killer feature
 float kfTimer = 0;
-float maxKfTime = 10000;
-
+const float maxKfTime = 10000;
 float prevBallStrength = 0;
-// float gk_st_kd = 100;
+
+// Paradox
+const int kParadoxStartTime = 1000;
+const int kParadoxReset = 300;
+int paradoxFirstTime = 0;
+int paradoxLastTime = 0;
+int paradoxAngle = 360;
+const int kParadoxDiap = 30;
 
 int millis()
 {
@@ -173,6 +185,16 @@ void projectSpeedOnLineXY(int speedX, int speedY, float lineX, float lineY, floa
         resSpeedX = speedX;
         resSpeedY = speedY;
     }
+}
+
+bool gates_on_side(int color)
+{
+    int yaw = sensor.IMU.getYaw();
+    int global_left_angle = (int)goodAngle(
+        sensor.Cam.gate(color).left_angle + yaw);
+    int global_right_angle = (int)goodAngle(
+        sensor.Cam.gate(color).right_angle + yaw);
+    return global_left_angle * global_right_angle > 0;
 }
 
 void projectSpeedOnLine(float speed, float moveAngle, float lineX, float lineY, float &resSpeedX, float &resSpeedY)
@@ -406,6 +428,67 @@ bool isBall()
         return sensor.LightGates.ballCatched(); // (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
 }
 
+
+bool paradox(int color)
+{
+    ballAngle = sensor.Locator.getBallAngleLocal();
+    lineAngle = sensor.LineSensor.getAngleDelayed();
+    int gateAngle = (int)sensor.Cam.gate(color).center_angle;
+    int yaw = sensor.IMU.getYaw();
+    int globalLine = (int)goodAngle(lineAngle + yaw);
+    int globalBall = (int)goodAngle(ballAngle + yaw);
+    int globalGate = (int)goodAngle(gateAngle + yaw);
+
+    // print($"G: line {globalLine};  ball {globalBall};  gate {globalGate}");
+
+    if (millis() - paradoxLastTime > kParadoxReset) {
+        paradoxFirstTime = paradoxLastTime = millis();
+        paradoxAngle = 360;
+    }
+
+    if (lineAngle != 360) {
+        if (abs(goodAngle(globalLine - globalBall)) > 90 ||
+            (globalGate * globalBall < 0 && gates_on_side(color)))
+        {
+            paradoxFirstTime = paradoxLastTime = millis();
+            paradoxAngle = globalLine;
+        } else {
+            paradoxLastTime = millis();
+        }
+
+        paradoxAngle = globalLine;
+
+        return false;
+    } else {
+        if (paradoxLastTime - paradoxFirstTime > kParadoxStartTime) {
+            if (abs(paradoxAngle) >= 45 && abs(paradoxAngle) <= 135) {
+                bool our_gate_closer = true;
+                if (sensor.Cam.gate(color).distance < sensor.Cam.gate(color ^ 1).distance) {
+                    our_gate_closer = false;
+                }
+                if (our_gate_closer) {
+                    drv.drive(-yaw, (int)deltaAngle, 50);
+                    // Debug.Log($"Paradox up");
+                } else {
+                    drv.drive(-yaw + 180, (int)deltaAngle, 50);
+                    // Debug.Log($"Paradox down");
+                }
+            } else {
+                if (globalBall < 0) {
+                    drv.drive(-yaw - 90, (int)deltaAngle, 50);
+                    // Debug.Log($"Paradox left");
+                } else {
+                    drv.drive(-yaw + 90, (int)deltaAngle, 50);
+                    // Debug.Log($"Paradox right");
+                }
+            }
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
 void petrovich_iter(int color, int offset = 0, bool useLine = true)
 {
     sensor.update();
@@ -421,36 +504,38 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
     // menu.writeLineClean(2, "");
     // menu.writeLineClean(3, "");
 
-    deltaAngle = goodAngle(offset_angle) * 0.25f;
-    if (lineAngle != 360)
-    {
-        // menu.writeLineClean(2, "LINE!!! " + std::to_string(lineAngle));
-        drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
-    }
-    else
-    {
-        int angle_err = goodAngle(ballAngle - gateAngle);
-        bool gate_in_front = abs(angle_err) <= sensor.Cam.gate(color).width * 0.3; // || abs(angle_err) <= 7;
-
-        if ((gate_in_front/* && abs(goodAngle(ballAngle - offset)) <= 10*/)
-            || (offset == 0 && isBall()))
-        {
-            // menu.writeLineClean(2, "Move2gate");
-            moveAngle = gateAngle;
-            drv.drive(moveAngle, (int)deltaAngle, 80);
-
-            if (sensor.Cam.gate(color).distance < 70 && isBall())
-                kicker.kick();
+    if (!paradox(color)) {
+        deltaAngle = goodAngle(offset_angle) * 0.25f;
+        if (lineAngle != 360) {
+            // menu.writeLineClean(2, "LINE!!! " + std::to_string(lineAngle));
+            drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
         }
-        else
-        {
-            // menu.writeLineClean(3, "Drive2ball");
-            moveAngle = ballAngle;
-            if (angle_err > 0)
-                moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
-            else
-                moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
-            drv.drive(moveAngle, (int)deltaAngle, 60);
+        else {
+            int angle_err = goodAngle(ballAngle - gateAngle);
+            bool gate_in_front = abs(angle_err) <= sensor.Cam.gate(color).width * 0.3; // || abs(angle_err) <= 7;
+
+            if ((gate_in_front/* && abs(goodAngle(ballAngle - offset)) <= 10*/)
+                || (offset == 0 && isBall()))
+            {
+                // menu.writeLineClean(2, "Move2gate");
+                moveAngle = gateAngle;
+                drv.drive(moveAngle, (int)deltaAngle, 80);
+
+                if (sensor.Cam.gate(color).distance < 70 && isBall()) {
+                    kicker.kick();
+                }
+            }
+            else {
+                // menu.writeLineClean(3, "Drive2ball");
+                moveAngle = ballAngle;
+                if (angle_err > 0) {
+                    moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
+                }
+                else {
+                    moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
+                }
+                drv.drive(moveAngle, (int)deltaAngle, 60);
+            }
         }
     }
 }
@@ -891,121 +976,6 @@ void playForwardGoyda(int color)
         int deltaAngle = sensor.Cam.gate(color).center_angle * 0.3;
         
         petrovich_iter(color, 0);
-
-        // if (abs(robotAngle) > 80)
-        // {
-        //     menu.writeLineClean(0, "rotate");
-        //     menu.writeLineClean(1, "");
-        //     menu.writeLineClean(2, "");
-        //     drv.drive(0, -robotAngle * 0.3, 0);
-        // }
-
-        // else if (!isBall())
-        // {
-        //     //smart_dribble((abs(ballAngle) < 40) ? 30 : 0);
-        //     int deltaAngle = -robotAngle; //ballAngle * 0.3;
-        //     int angle_err = goodAngle(ballAngle - cam_angle);
-        //     if (lineAngle == 360)
-        //     {
-        //         // moveAngle = ballAngle + (ballAngle > 0) ? 15 : -15;
-        //         // int angle_err = goodAngle(ballAngle - cam_angle);
-        //         // if (abs(angle_err) <= 25)
-        //         // {
-        //         //     moveAngle = ballAngle;
-        //         // }
-        //         // else if (angle_err > 25)
-        //         //     moveAngle = ballAngle + constrain(st * goRoundBallCoefGk, 0, 90);
-        //         // else if (angle_err < 25)
-        //         //     moveAngle = ballAngle - constrain(st * goRoundBallCoefGk, 0, 90);
-        //         moveAngle = ballAngle;
-        //         if (angle_err > 0)
-        //             moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
-        //         else
-        //             moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefGk, 0, 90));
-                
-        //         if (sensor.Cam.gate(color).distance < 40){
-        //             kicker.kick();
-        //         }
-
-        //         // double k = 0.5;
-
-        //         // int delta = 0;
-        //         // // if (abs(angle) <= 45){
-        //         // //   k = 3;
-        //         // // }
-        //         // if (ballAngle >= 30) {
-        //         //     //delta = sqrt(st) * k;
-        //         //     delta = st * k;
-        //         //     //speed = 150;
-        //         // }
-        //         // else if (ballAngle <= -30) {
-        //         //     //delta = -sqrt(st) * k;
-        //         //     delta = -st * k;
-        //         //     // speed = 150;
-        //         // }
-        //         // else {
-        //         //     delta = 0;
-        //         //     // speed = 230;
-        //         // }
-
-        //         // moveAngle = ballAngle + delta;
-
-        //         // menu.writeLineClean(0, "drive2ball");
-        //         // menu.writeLineClean(1, std::to_string(st));
-        //         // menu.writeLineClean(2, std::to_string(ballAngle));
-
-        //         drv.drive(moveAngle, (int)deltaAngle, 60);
-        //     }
-        //     else
-        //     {
-        //         drv.drive(goodAngle(lineAngle + 180), deltaAngle, 90);
-        //         // menu.writeLineClean(0, "LINE 1");
-        //         // menu.writeLineClean(1, std::to_string(lineAngle));
-        //         // menu.writeLineClean(2, "");
-        //     }
-        // }
-        // else
-        // {
-        //     make_pause(0);
-
-        //     while (isBall())
-        //     {
-        //         sensor.update();
-
-        //         cam_angle = sensor.Cam.gate(color).center_angle;
-        //         cam_dist = sensor.Cam.gate(color).distance;
-
-        //         st = sensor.Locator.getStrength();
-        //         ballAngle = sensor.Locator.getBallAngleLocal();
-        //         lineAngle = sensor.LineSensor.getAngleDelayed();
-
-        //         robotAngle = sensor.IMU.getYaw();
-
-        //         if (lineAngle == 360)
-        //         {
-        //             int delta_angle = constrain(cam_angle * 0.5, -20, 20);
-        //             drv.drive(cam_angle, delta_angle, 70);
-        //             // menu.writeLineClean(0, "move2gate");
-        //             // menu.writeLineClean(1, std::to_string(cam_angle));
-        //             // menu.writeLineClean(2, std::to_string(cam_dist));
-        //             if (abs(cam_angle) < 10 && cam_dist < 35)
-        //             {
-        //                 drv.drive(0, 0, 0, 0);
-        //                 // menu.writeLineClean(0, "WAIT");
-        //                 // menu.writeLineClean(1, "");
-        //                 // menu.writeLineClean(2, "");
-        //                 // make_pause(1000);
-        //             }
-        //         }
-        //         else
-        //         {
-        //             drv.drive(goodAngle(lineAngle + 180), 0, 90);
-        //             // menu.writeLineClean(0, "LINE 2");
-        //             // menu.writeLineClean(1, std::to_string(lineAngle));
-        //             // menu.writeLineClean(2, "");
-        //         }
-        //     }
-        // }
     }
 }
 
@@ -1083,34 +1053,6 @@ void goalPush(int color)
         int offset = 180; //(gateAngle > 0 ? 90 : -90);
         petrovich_iter(color, offset);
         continue;
-
-        // int offset_angle = (int)goodAngle(gateAngle - 45);
-        // if (abs((int)goodAngle(gateAngle + 45)) < abs(offset_angle))
-        //     offset_angle = (int)goodAngle(gateAngle + 45);
-
-        // deltaAngle = goodAngle(offset_angle) * 0.25f;
-        // if (lineAngle != 360)
-        // {
-        //     drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
-        // }
-        // else
-        // {
-        //     int angle_err = goodAngle(ballAngle - gateAngle);
-        //     if (sensor.Locator.getStrength() >= 70 && abs(angle_err) <= 25)
-        //     {
-        //         moveAngle = gateAngle;
-        //         drv.drive(moveAngle, (int)deltaAngle, 80);
-        //     }
-        //     else
-        //     {
-        //         moveAngle = ballAngle;
-        //         if (angle_err > 0)
-        //             moveAngle = goodAngle(ballAngle + constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
-        //         else
-        //             moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
-        //         drv.drive(moveAngle, (int)deltaAngle, 50);
-        //     }
-        // }
     }
 }
 
@@ -1163,27 +1105,29 @@ void playForwardDribble2(int color)
             dribbler.smart_dribble((abs(ballAngle) < 60) ? 60 : 0);
             // dribbler.neutral();
             int deltaAngle = ballAngle * 0.3; //(ballAngle < 45 ? 0.3 : 0.5);
-            if (lineAngle == 360)
-            {
-                #ifdef OTLADKA_Dribble2
-                    ESP_LOGW(drible2, "Mach poteryan, edu k machu");
-                #endif
-                moveAngle = ballAngle;
-                float robotAnglSpeed;
+            if (!paradox(color)) {
+                if (lineAngle == 360)
+                {
+                    #ifdef OTLADKA_Dribble2
+                        ESP_LOGW(drible2, "Mach poteryan, edu k machu");
+                    #endif
+                    moveAngle = ballAngle;
+                    float robotAnglSpeed;
 
-                float ballAnfl_err = ballAngle;
-                robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
-                FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
-                FwBallAnglPrev = ballAnfl_err;
+                    float ballAnfl_err = ballAngle;
+                    robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
+                    FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
+                    FwBallAnglPrev = ballAnfl_err;
 
-                drv.drive(moveAngle, (int)(robotAnglSpeed), 70);  
-            }
-            else
-            {
-                #ifdef OTLADKA_Dribble2
-                    ESP_LOGW(drible2, "Mach poteryan, edu k machu no vizhu liniju");
-                #endif
-                drv.drive(goodAngle(lineAngle + 180), (int)(deltaAngle), 80);
+                    drv.drive(moveAngle, (int)(robotAnglSpeed), 70);  
+                }
+                else
+                {
+                    #ifdef OTLADKA_Dribble2
+                        ESP_LOGW(drible2, "Mach poteryan, edu k machu no vizhu liniju");
+                    #endif
+                    drv.drive(goodAngle(lineAngle + 180), (int)(deltaAngle), 80);
+                }
             }
         }
         else
