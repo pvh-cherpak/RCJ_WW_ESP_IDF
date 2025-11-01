@@ -832,16 +832,20 @@ void playGoalkeeperCamera(int color)
             // int err = -constrain((0. + 0.628449 * cam_dist - 0.0637014 * cam_dist * cam_dist + 0.00194066 * cam_dist * cam_dist * cam_dist - 0.0000172587 * cam_dist * cam_dist * cam_dist * cam_dist +
             //                       4.62172e-8 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist - 2.788e-12 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist),
             //                      0, 100);
-            int err = -(cam_dist - 20) * 10;
+
+            int err = -(cam_dist - 16) * 10;
             if (err < -90)
                 err = -90;
-            if (cam_dist < 15)
+            if (cam_dist < 10)
                 err = 50;
-            else if (cam_dist < 18)
+            else if (cam_dist < 16)
                 err = 25;
-            else if (cam_dist < 23)
+            else if (cam_dist < 18)
                 err = 0;
+            
             speedY = err;
+            if (speedY < -90)
+                speedY = -90;
             // int err = speedY = 0;
 
             // speedY = (int)(err * gate_kp + (err - gatePrev) * gate_kd + gateIntegral);
@@ -894,11 +898,11 @@ void playGoalkeeperCamera(int color)
         std::string s = "     ";
         if (sensor.Locator.getStrength() < 60)
             s[0] = '|';
-        if (abs(goodAngle(ballAngle + robotAngle)) < 90)
+        if (abs(goodAngle(ballAngle + robotAngle)) < 60)
             s[3] = '_';
         menu.writeLineClean(2, s);
         
-        if (sensor.Locator.getStrength() < 60 && abs(goodAngle(ballAngle + robotAngle)) < 90){
+        if (sensor.Locator.getStrength() < 60 && abs(goodAngle(ballAngle + robotAngle)) < 60){
             ballSpeed = gb_kp2 * ball_err + gkBallIntegral2 + gb_kd2 * (ball_err - gkBallPrev2);
         }
         else{
@@ -1184,7 +1188,7 @@ void playForwardDribble2(int color)
                         cam_angle = sensor.Cam.gate(color).center_angle;
                         deltaAngle = goodAngle(cam_angle + 180);
                         deltaAngle = abs(cam_angle) < 90 ? deltaAngle * 0.3 : deltaAngle * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
-                        deltaAngle = constrain(deltaAngle, -20, 40);
+                        deltaAngle = constrain(deltaAngle, -20, 20);
                         drv.drive(moveAngle, (int)(deltaAngle), speed);
                     }
                     #ifdef OTLADKA_Dribble2  
@@ -1202,7 +1206,7 @@ void playForwardDribble2(int color)
                     sensor.update();
 
                     int delta_angle = goodAngle(cam_angle + 180) * 0.3; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
-                    delta_angle = constrain(delta_angle, -10, 15);
+                    delta_angle = constrain(delta_angle, -10, 10);
 
                     lineAngle = sensor.LineSensor.getAngleDelayed();
                     if (lineAngle != 360)
@@ -1292,12 +1296,12 @@ void MPU_zakrut(int color)
         sensor.BallSensor.update();
         
         if (sign > 0){
-            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 42 : 60;
-            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 100 : 40);
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 25 : 80;
+            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 100 : 0);
         }
         else if (sign < 0){
-            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 70 ? 42 : 60;
-            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 100 : 40);
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 25 : 80;
+            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 100 : 0);
         }
 
         lineAngle = sensor.LineSensor.getAngleDelayed();
@@ -1308,11 +1312,13 @@ void MPU_zakrut(int color)
             drv.drive(lineAngle, 0, -80);
         }
 
-        if (abs(goodAngle(sensor.IMU.Yaw - start_angle)) > 160){
-            dribbler.smart_dribble(0);
-            return;
-        }
+        // if (abs(goodAngle(sensor.IMU.Yaw - start_angle)) > 160){
+        //     dribbler.smart_dribble(0);
+        //     // return;
+        // }
     }
+
+    vTaskDelay(200 / portTICK_PERIOD_MS);
     
     // ESP_LOGI("debug", "exit 2");
     menu.writeLineClean(0, "exit 2");
