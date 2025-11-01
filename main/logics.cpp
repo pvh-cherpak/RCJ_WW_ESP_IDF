@@ -90,9 +90,9 @@ float gkBallIntegral = 0;
 float gkBallPrev = 0;
 
 // PID мяча молния маквин (подалбше)
-const float gb_kp2 = 2;
+const float gb_kp2 = 4;
 const float gb_ki2 = 0;
-const float gb_kd2 = 0.5;
+const float gb_kd2 = 2;
 float gkBallIntegral2 = 0;
 float gkBallPrev2 = 0;
 
@@ -517,7 +517,7 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
             bool gate_in_front = abs(angle_err) <= sensor.Cam.gate(color).width * 0.3; // || abs(angle_err) <= 7;
 
             if ((gate_in_front/* && abs(goodAngle(ballAngle - offset)) <= 10*/)
-                || (offset == 0 && isBall()))
+                )
             {
                 // menu.writeLineClean(2, "Move2gate");
                 moveAngle = gateAngle;
@@ -699,7 +699,7 @@ void playGoalkeeperCamera(int color)
         //     menu.writeLineClean(4, "");
         // }
         Vector2 rightBallDir(1.0, 0.0);
-        Vector2 leftBallDir(-2.0, 0.0);
+        Vector2 leftBallDir(-1.0, 0.0);
 
         // if (global_x > 35){
         //     rightBallDir = Vector2(0, -0.5f);
@@ -792,13 +792,13 @@ void playGoalkeeperCamera(int color)
             ballMoveTime = millis();
         }
 
-        // if (millis() - ballMoveTime >= 5000)
-        // {
-        //     drv.driveXY(0, 70, 0);
-        //     make_pause(100);
-        //     stateGame = 1;
-        //     continue;
-        // }
+        if (millis() - ballMoveTime >= 5000)
+        {
+            drv.driveXY(0, 70, 0);
+            make_pause(100);
+            stateGame = 1;
+            continue;
+        }
 
         if (lineAngle != 360 && (abs(globalGateAngle)) <= 135 &&
             ((robotAngle > 0 && lineAngle > 0) || (robotAngle < 0 && lineAngle < 0)))
@@ -832,14 +832,14 @@ void playGoalkeeperCamera(int color)
             // int err = -constrain((0. + 0.628449 * cam_dist - 0.0637014 * cam_dist * cam_dist + 0.00194066 * cam_dist * cam_dist * cam_dist - 0.0000172587 * cam_dist * cam_dist * cam_dist * cam_dist +
             //                       4.62172e-8 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist - 2.788e-12 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist),
             //                      0, 100);
-            int err = -(cam_dist - 16) * 10;
+            int err = -(cam_dist - 20) * 10;
             if (err < -90)
                 err = -90;
-            if (cam_dist < 10)
+            if (cam_dist < 15)
                 err = 50;
-            else if (cam_dist < 16)
-                err = 25;
             else if (cam_dist < 18)
+                err = 25;
+            else if (cam_dist < 23)
                 err = 0;
             speedY = err;
             // int err = speedY = 0;
@@ -889,7 +889,7 @@ void playGoalkeeperCamera(int color)
 
         float ball_err = ballAngleGlobal;
 
-        float ballSpeed;
+        float ballSpeed = 0;
 
         std::string s = "     ";
         if (sensor.Locator.getStrength() < 60)
@@ -913,16 +913,18 @@ void playGoalkeeperCamera(int color)
         gkBallIntegral2 += (ball_err)*gb_ki2;
         gkBallPrev2 = ball_err;
 
-        if (ballSpeed > 0)
-        {
-            speedX += (int)(abs(ballSpeed) * rightBallDir.x);
-            speedY += (int)(abs(ballSpeed) * rightBallDir.y);
-        }
-        else
-        {
-            speedX += (int)(abs(ballSpeed) * leftBallDir.x);
-            speedY += (int)(abs(ballSpeed) * leftBallDir.y);
-        }
+        speedX += ballSpeed;
+
+        // if (ballSpeed > 0)
+        // {
+        //     speedX += (int)(abs(ballSpeed) * rightBallDir.x);
+        //     speedY += (int)(abs(ballSpeed) * rightBallDir.y);
+        // }
+        // else
+        // {
+        //     speedX += (int)(abs(ballSpeed) * leftBallDir.x);
+        //     speedY += (int)(abs(ballSpeed) * leftBallDir.y);
+        // }
 
         // menu.writeLineClean(2, "sp " + std::to_string(speedX) + ";" + std::to_string(speedY));
 
@@ -934,12 +936,12 @@ void playGoalkeeperCamera(int color)
         // speedY = constrain(speedY, -50, 50);
         int sp = sqrt(speedX * speedX + speedY * speedY);
         float angle = atan2(speedX, speedY) * RAD_TO_DEG;
-        angle += goodAngle(gateAngle - 180);
+        angle = goodAngle(angle + goodAngle(gateAngle - 180));
         drv.drive(angle, (int)deltaAngle, constrain(sp, 0, 100));
 
-        if (isBall()){
-            kicker.kick();
-        }
+        // if (isBall()){
+        //     kicker.kick();
+        // }
 
         // if (sp > 100)
         // {
@@ -1094,7 +1096,7 @@ void playForwardDribble2(int color)
         int ballAngle = sensor.Locator.getBallAngleLocal();
         if (sensor.Locator.getStrength() < 5)
         {
-            drv.drive(0, 0, 0, 0);
+            drv.drive(0, 20, 0);
             continue;
         }
         int lineAngle = sensor.LineSensor.getAngleDelayed();
@@ -1290,11 +1292,11 @@ void MPU_zakrut(int color)
         sensor.BallSensor.update();
         
         if (sign > 0){
-            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 25 : 70;
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 42 : 60;
             dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 100 : 40);
         }
         else if (sign < 0){
-            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 70 ? 25 : 70;
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 70 ? 42 : 60;
             dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 100 : 40);
         }
 
