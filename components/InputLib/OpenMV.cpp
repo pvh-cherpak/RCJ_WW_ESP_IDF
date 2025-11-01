@@ -73,7 +73,7 @@ void OpenMVCommunication_t::init(int GPIO, int provorot)
 
 const int CAM_UART_BUFFER_SIZE = 512; // модуль, по которому берутся индексы
 const int CAM_UART_READ_LIMIT = 256;  // если пришло больше - чистим буфер
-const int CAM_MSG_SIZE = 38;
+const int CAM_MSG_SIZE = 46;
 
 inline int fit(int index)
 {
@@ -218,9 +218,10 @@ void OpenMVCommunication_t::parseCorners(uint8_t *data)
     bgate.p[3].y = from_direct_code((data[14 + 16] << 8) | data[15 + 16]);
     
     // ESP_LOGI("OpenMV", "%d %d %d %d", ygate.p[0].x, ygate.p[0].y, ygate.p[1].x, ygate.p[1].y);
-
-    obst_angle = from_direct_code((data[32] << 8) | data[33]);
-    obst_dist = from_direct_code((data[34] << 8) | data[35]);
+    ygate.center.x = from_direct_code((data[0 + 32] << 8) | data[1 + 32]);
+    ygate.center.y = from_direct_code((data[2 + 32] << 8) | data[3 + 32]);
+    bgate.center.x = from_direct_code((data[4 + 32] << 8) | data[5 + 32]);
+    bgate.center.y = from_direct_code((data[6 + 32] << 8) | data[7 + 32]);
 
     calcGateInfo(ygate, cam_data.Gates[0]);
     calcGateInfo(bgate, cam_data.Gates[1]);
@@ -265,6 +266,7 @@ void OpenMVCommunication_t::calcGateInfo(blob_t blob, OmniCamBlobInfo_t& gate)
         gate.right_angle = 360;
         gate.clos_angle = 360;
         gate.distance = 1000;
+        gate.center_distance = 1000;
         gate.width = 0;
         gate.height = 0;
         return;
@@ -324,6 +326,8 @@ void OpenMVCommunication_t::calcGateInfo(blob_t blob, OmniCamBlobInfo_t& gate)
     }
 
     gate.clos_angle = gate.center_angle;
+
+    gate.center_distance = sqrt(blob.center.x * blob.center.x + blob.center.y * blob.center.y);
 }
 
 segm_t segm_from_points(point_t p1, point_t p2)

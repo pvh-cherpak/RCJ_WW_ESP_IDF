@@ -16,6 +16,7 @@ struct segm_t{
 
 struct blob_t{
     point_t p[4];
+    point_t center;
 };
 
 int local_good_angle(int angle);

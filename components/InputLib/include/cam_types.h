@@ -7,6 +7,7 @@ struct OmniCamBlobInfo_t
     int16_t width = 0;
     int16_t clos_angle = 0;
     int16_t distance = 0;
+    int16_t center_distance = 0;
     int16_t height = 0;
 };
 struct OmniCamData_t

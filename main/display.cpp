@@ -235,8 +235,8 @@ void info_menu(button_handle_t &encoder_button)
         int gateAngle = sensor.Cam.Yellow.clos_angle;
         int gateDist = sensor.Cam.Yellow.distance;
         int gateWidth = sensor.Cam.Yellow.width;
-        menu.writeLineClean(5, "Y gate: " + std::to_string(gateAngle) + " " + std::to_string(sensor.Cam.Yellow.distance), false);
-        menu.writeLineClean(6, "B gate: " + std::to_string(sensor.Cam.Blue.clos_angle) + " " + std::to_string(sensor.Cam.Blue.distance), false);
+        menu.writeLineClean(5, "Y: " + std::to_string(gateAngle) + " " + std::to_string(sensor.Cam.Yellow.distance) + " " + std::to_string(sensor.Cam.Yellow.center_distance), false);
+        menu.writeLineClean(6, "B: " + std::to_string(sensor.Cam.Blue.clos_angle) + " " + std::to_string(sensor.Cam.Blue.distance) + " " + std::to_string(sensor.Cam.Blue.center_distance), false);
         // menu.writeLineClean(6, "Y dist: " + std::to_string(real_dist.convertDist(gateDist, gateAngle)));
         ESP_LOGI("Sensor", "BallAngle: %d", sensor.Locator.getBallAngleLocal());
 
