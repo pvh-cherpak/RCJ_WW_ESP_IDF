@@ -193,12 +193,15 @@ uint32_t servo_per_degree_init(uint32_t degree_of_rotation)
     return cal_pulsewidth;
 }
 
+const int drb_offset = 90;
+const int max_drb_speed = 180;
+
 void Dribbler::xDriblerTask(void *arg)
 {
     ESP_LOGI("Drb_task", "Ya, rodilsa");
     vTaskDelay(pdMS_TO_TICKS(1000));
-    int cur_speed = 50;
-    int speed = 50;
+    int cur_speed = drb_offset;
+    int speed = drb_offset;
     while (true)
     {
         // ESP_LOGI("Drb_task", "Nachalo cikla");
@@ -211,10 +214,10 @@ void Dribbler::xDriblerTask(void *arg)
             continue;
         }
             
-        speed += 50;
-        if (speed > 140)
-            speed = 140;
-        if(speed < 50){
+        speed += drb_offset;
+        if (speed > max_drb_speed)
+            speed = max_drb_speed;
+        if(speed < drb_offset){
             cur_speed = speed;
             dribble(speed);
             continue;

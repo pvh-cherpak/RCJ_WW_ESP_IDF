@@ -90,7 +90,7 @@ void sensor_init(uint8_t robot_type)
 		sensor.init(conf);
 
 		drv.~MotorControl();
-		new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_25, GPIO_NUM_26, GPIO_NUM_2, GPIO_NUM_4, GPIO_NUM_17, GPIO_NUM_16);
+		new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_26, GPIO_NUM_25, GPIO_NUM_2, GPIO_NUM_4, GPIO_NUM_17, GPIO_NUM_16);
 
 		// sensor.IMU_active=false;
 		// sensor.Cam.init(conf.CAM_GPIO);
@@ -188,6 +188,14 @@ extern "C"
 		// dribble(50);
 		// vTaskDelay(pdMS_TO_TICKS(5000));
 		// dribble(170);
+
+		// sensor.LineSensor.init({{GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true});
+		// while (true)
+		// {
+		// 	sensor.LineSensor.update();
+		// 	sensor.LineSensor.writeValues();
+		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
+		// }
 
 		float FwBallAnglIntegral = 0;
 		float FwBallAnglPrev = 0;

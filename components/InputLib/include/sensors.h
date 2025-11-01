@@ -53,7 +53,7 @@ public:
         Locator.init(config.locator_offset, config.inverse_locator); 
 
         ESP_LOGI("sensor init", "start Camera init");
-        Cam.init(config.CAM_GPIO, -90);
+        Cam.init(config.CAM_GPIO, 30);
 
         if (cfg.robotType == 2)
             BallSensor.init();
