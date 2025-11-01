@@ -23,10 +23,21 @@ void LightGates_t::init(gpio_num_t pin_num){
 void LightGates_t::update(){
     int luminosity;
     adc_oneshot_read(adc_light, adc_channel_light, &luminosity);
-    ESP_LOGI("LG", "lumin: %d", luminosity);
+    ESP_LOGV("LG", "lumin: %d", luminosity);
     isBallValue = (luminosity >= isBallThreshold);
+
+    if (isBallValue){
+        lastIsBallTime = esp_timer_get_time();
+    }
 }
 
 bool LightGates_t::isBall(){
     return isBallValue;
+}
+
+bool LightGates_t::ballCatched()
+{
+    if (esp_timer_get_time() - lastIsBallTime <= 500000) // 200 ms
+        return true;
+    return false;
 }

@@ -90,7 +90,7 @@ void sensor_init(uint8_t robot_type)
 		sensor.init(conf);
 
 		drv.~MotorControl();
-		new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_26, GPIO_NUM_25, GPIO_NUM_2, GPIO_NUM_4, GPIO_NUM_17, GPIO_NUM_16);
+		new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_26, GPIO_NUM_25 ,GPIO_NUM_2, GPIO_NUM_4, GPIO_NUM_17, GPIO_NUM_16);
 
 		// sensor.IMU_active=false;
 		// sensor.Cam.init(conf.CAM_GPIO);
@@ -105,6 +105,7 @@ extern "C"
 {
 	void app_main(void)
 	{
+
 		esp_err_t err = nvs_flash_init();
 		if ((err == ESP_ERR_NVS_NO_FREE_PAGES) || (err == ESP_ERR_NVS_NEW_VERSION_FOUND))
 		{
@@ -152,7 +153,7 @@ extern "C"
 			kicker.init(GPIO_NUM_23);
 
 		//err_log.init();
-		real_dist.init();
+		// real_dist.init();
 		drv.init();
 
 		int GPIO_A, GPIO_B;
@@ -181,6 +182,9 @@ extern "C"
 		// 	drv.drive(sensor.Locator.BallAngleLocal, sensor.Locator.BallAngleLocal * 0.5, 0);
 		// 	vTaskDelay(10 / portTICK_PERIOD_MS);
 		// }
+
+		
+
 
 		// ESP_LOGI("ads", "asd");
 		// dribble(180);
