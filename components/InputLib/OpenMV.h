@@ -5,6 +5,8 @@
 
 #include "mpu6050.h"
 
+const int kMaxObstacles = 5;
+
 struct point_t{
     int x = 0, y = 0;
 };
@@ -47,6 +49,8 @@ public:
     const OmniCamData_t &GlobalCamDataOmni = globa_cam_data;
     const OmniCamBlobInfo_t &GlobalYellow = globa_cam_data.Gates[0];
     const OmniCamBlobInfo_t &GlobalBlue = globa_cam_data.Gates[1];
+
+    OmniCamBlobInfo_t obstacles[kMaxObstacles];
 
     float obst_angle = 0, obst_dist = 0;
     float g_obst_angle = 0, g_obst_dist = 0;

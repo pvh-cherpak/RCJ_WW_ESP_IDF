@@ -1288,11 +1288,32 @@ void playForwardDribble2(int color)
     }
 }
 
+int getZakrutSign(int gateAngle)
+{
+    return 0; //// заглушка, пока не будет детекции препятствий
+
+    // print($"global gate: {goodAngle(gateAngle + getYaw())}");
+    if (abs(goodAngle(gateAngle + sensor.IMU.getYaw())) < 45)
+    {
+        // print($"ok 1");
+        if (sensor.Cam.obstacles[0].distance < 10)
+        {
+            // print($"ok 2");
+            // print($"obst.clos_angle = ${obst.clos_angle}");
+            return (sensor.Cam.obstacles[0].clos_angle > 0 ? -1 : 1);
+        }
+    }
+    return 0;
+}
+
 void MPU_zakrut(int color)
 {
     sensor.IMU.update();
     sensor.BallSensor.update();
-    int sign = ((sensor.IMU.Yaw) < 0) ? -1 : 1;
+    int sign = getZakrutSign(goodAngle(sensor.IMU.Yaw + 180));
+    if (sign == 0) {
+        sign = ((sensor.IMU.Yaw) < 0) ? -1 : 1;
+    }
     int start_angle = sensor.IMU.Yaw;
 
     int rotateSpeed = 0;
