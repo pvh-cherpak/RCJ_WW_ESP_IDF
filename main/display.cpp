@@ -231,7 +231,7 @@ void info_menu(button_handle_t &encoder_button)
 
         menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
         menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
-        menu.writeLineClean(4, "Ball: " + std::to_string(sensor.Locator.getBallAngleLocal()) + " " + std::to_string(sensor.Locator.getStrength()) + (sensor.BallSensor.ballCatched() ? " B" : " -"), false);
+        menu.writeLineClean(4, "Ball: " + std::to_string(sensor.Locator.getBallAngleLocal()) + " " + std::to_string(sensor.Locator.getStrength()) + (sensor.LightGates.ballCatched() ? " B" : " -"), false);
         int gateAngle = sensor.Cam.Yellow.clos_angle;
         int gateDist = sensor.Cam.Yellow.distance;
         int gateWidth = sensor.Cam.Yellow.width;
@@ -339,8 +339,9 @@ void another_menu(button_handle_t &encoder_button)
             switch (user_pointer_pos)
             {
             case 2:
-                dribbler_speed = 0;
-                dribbler.smart_dribble(0);
+                // min dribbler speed 
+                dribbler_speed = -5;
+                dribbler.smart_dribble(-5);
                 another_menu_output_text[2] = another_menu_text[2] + std::to_string(dribbler_speed);
                 menu.updateLine(another_menu_output_text, 2);
                 break;

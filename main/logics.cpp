@@ -90,9 +90,9 @@ float gkBallIntegral = 0;
 float gkBallPrev = 0;
 
 // PID мяча молния маквин (подалбше)
-const float gb_kp2 = 5;
+const float gb_kp2 = 2;
 const float gb_ki2 = 0;
-const float gb_kd2 = 2;
+const float gb_kd2 = 0.5;
 float gkBallIntegral2 = 0;
 float gkBallPrev2 = 0;
 
@@ -420,17 +420,19 @@ int getGlobalPosition_dist(float &x, float &y, int color)
 
 bool isBall()
 {
-    if (sensor.cfg.robotType == 2)
-    {
-        return sensor.BallSensor.ballCatched();
-    }
-    else
-        return sensor.LightGates.ballCatched(); // (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
+    return sensor.LightGates.ballCatched();
+    // if (sensor.cfg.robotType == 2)
+    // {
+    //     return sensor.BallSensor.ballCatched();
+    // }
+    // else
+    //     return sensor.LightGates.ballCatched(); // (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
 }
 
 
 bool paradox(int color)
 {
+    return false;
     ballAngle = sensor.Locator.getBallAngleLocal();
     lineAngle = sensor.LineSensor.getAngleDelayed();
     int gateAngle = (int)sensor.Cam.gate(color).center_angle;
@@ -790,13 +792,13 @@ void playGoalkeeperCamera(int color)
             ballMoveTime = millis();
         }
 
-        if (millis() - ballMoveTime >= 5000)
-        {
-            drv.driveXY(0, 70, 0);
-            make_pause(100);
-            stateGame = 1;
-            continue;
-        }
+        // if (millis() - ballMoveTime >= 5000)
+        // {
+        //     drv.driveXY(0, 70, 0);
+        //     make_pause(100);
+        //     stateGame = 1;
+        //     continue;
+        // }
 
         if (lineAngle != 360 && (abs(globalGateAngle)) <= 135 &&
             ((robotAngle > 0 && lineAngle > 0) || (robotAngle < 0 && lineAngle < 0)))
@@ -827,14 +829,17 @@ void playGoalkeeperCamera(int color)
             // }
 
             //int err = -constrain((-1. / 84000 * cam_dist * cam_dist * cam_dist * cam_dist + 1. / 672 * cam_dist * cam_dist * cam_dist - 31. / 1680 * cam_dist * cam_dist - 11. / 84 * cam_dist), 0, 100);
-            int err = -constrain((0. + 0.628449 * cam_dist - 0.0637014 * cam_dist * cam_dist + 0.00194066 * cam_dist * cam_dist * cam_dist - 0.0000172587 * cam_dist * cam_dist * cam_dist * cam_dist +
-                                  4.62172e-8 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist - 2.788e-12 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist),
-                                 0, 100);
-            if (cam_dist < 15)
+            // int err = -constrain((0. + 0.628449 * cam_dist - 0.0637014 * cam_dist * cam_dist + 0.00194066 * cam_dist * cam_dist * cam_dist - 0.0000172587 * cam_dist * cam_dist * cam_dist * cam_dist +
+            //                       4.62172e-8 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist - 2.788e-12 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist),
+            //                      0, 100);
+            int err = -(cam_dist - 16) * 10;
+            if (err < -90)
+                err = -90;
+            if (cam_dist < 10)
                 err = 50;
-            else if (cam_dist < 20)
+            else if (cam_dist < 16)
                 err = 25;
-            else if (cam_dist < 25)
+            else if (cam_dist < 18)
                 err = 0;
             speedY = err;
             // int err = speedY = 0;
@@ -987,12 +992,12 @@ void goalRotate(int color)
     {
         //menu.writeLineClean(0, "GoalRotate");
         sensor.update();
-        int rotateSpeed = abs(sensor.Cam.gate(color).center_angle) > 150 ? 30 : 90;        // 42 : 100 // > 150 ? 30 : 90
-        dribbler.smart_dribble(abs(sensor.Cam.gate(color).center_angle) > 130 ? 110 : 60); // 110 // > 120 ? 110 : 60
+        int rotateSpeed = abs(sensor.Cam.gate(color).center_angle) > 150 ? 30 : 80;        // 42 : 100 // > 150 ? 30 : 90
+        dribbler.smart_dribble(abs(sensor.Cam.gate(color).center_angle) > 130 ? 80 : 40); // 110 // > 120 ? 110 : 60
         drv.drive(0, rotateSpeed * sign, 0);
 
         if (abs(sensor.Cam.gate(color).center_angle) < 20){
-            dribbler.smart_dribble(-10);
+            dribbler.smart_dribble(0);
             return;
         }
 
@@ -1136,7 +1141,7 @@ void playForwardDribble2(int color)
                 ESP_LOGW(drible2, "Mach zachvachen, podjzzaju");
             #endif
             //menu.writeLineClean(0, "gate...");
-            dribbler.smart_dribble(70);
+            dribbler.smart_dribble(60);
             drv.driveXY(0, 30, 0); // чтобы лучше задриблить 
             int start = millis();
             while (millis() - start < 300)
@@ -1150,7 +1155,7 @@ void playForwardDribble2(int color)
                 vTaskDelay(10 / portTICK_PERIOD_MS);
             }
             // drv.drive(0, 0, 0, 0);
-            // make_pause(200);
+            make_pause(200);
             sensor.BallSensor.update();
             while (isBall())
             {
@@ -1211,11 +1216,11 @@ void playForwardDribble2(int color)
                             ESP_LOGW(drible2, "edu k vorotam");
                         #endif
                         
-                        drv.drive(cam_angle, delta_angle, 80);
+                        drv.drive(cam_angle, delta_angle, 50);
                     }
                     cam_dist = sensor.Cam.gate(color).distance;
                     // Serial.println(cam_dist);
-                    if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist < 20)
+                    if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist < 32)
                     {
                         #ifdef OTLADKA_Dribble2                      
                             ESP_LOGW(drible2, "---ATAKUJU---");
@@ -1247,7 +1252,7 @@ void playForwardDribble2(int color)
                         }
 
                         // может это в goalDriveBack?
-                        dribbler.smart_dribble(110);
+                        dribbler.smart_dribble(100);
                         make_pause(500);
 
                         // if (abs(sensor.IMU.getYaw()) < 135 || cam_dist < 30)
@@ -1285,12 +1290,12 @@ void MPU_zakrut(int color)
         sensor.BallSensor.update();
         
         if (sign > 0){
-            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 30 : 90;
-            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 110 : -10);
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 30 : 70;
+            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 100 : 50);
         }
         else if (sign < 0){
-            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 30 : 60;
-            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 110 : -10);
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 70 ? 30 : 60;
+            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 100 : 60);
         }
 
         lineAngle = sensor.LineSensor.getAngleDelayed();
@@ -1302,7 +1307,7 @@ void MPU_zakrut(int color)
         }
 
         if (abs(goodAngle(sensor.IMU.Yaw - start_angle)) > 160){
-            dribbler.smart_dribble(-10);
+            dribbler.smart_dribble(0);
             return;
         }
     }
@@ -1349,7 +1354,7 @@ void penaltyDribbler(int color)
         else{
             petrovich_iter(color, 0, false);
             if (isBall()){
-                dribbler.smart_dribble(110);
+                dribbler.smart_dribble(80);
                 make_pause(500);
                 dribbler.smart_dribble(0);
                 return;

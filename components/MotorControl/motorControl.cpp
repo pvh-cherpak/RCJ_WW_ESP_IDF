@@ -194,7 +194,7 @@ uint32_t servo_per_degree_init(uint32_t degree_of_rotation)
 }
 
 const int drb_offset = 90;
-const int max_drb_speed = 180;
+const int max_drb_speed = 170;
 
 void Dribbler::xDriblerTask(void *arg)
 {
