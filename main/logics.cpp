@@ -1113,32 +1113,42 @@ void playForwardDribble2(int color)
         if (!isBall())
         {
             //menu.writeLineClean(0, "ball");
+
             dribbler.smart_dribble((abs(ballAngle) < 60) ? 60 : 0);
-            // dribbler.neutral();
-            int deltaAngle = ballAngle * 0.3; //(ballAngle < 45 ? 0.3 : 0.5);
+
             if (!paradox(color)) {
+                int robotAnglSpeed;
+                int speed;
+                moveAngle = ballAngle;
+
+                if(sensor.Locator.getStrength() < 30)
+                        ballAngle = goodAngle(ballAngle + 90);
+
                 if (lineAngle == 360)
                 {
                     #ifdef OTLADKA_Dribble2
                         ESP_LOGW(drible2, "Mach poteryan, edu k machu");
                     #endif
-                    moveAngle = ballAngle;
-                    float robotAnglSpeed;
-
+                    
                     float ballAnfl_err = ballAngle;
+                    // 
                     robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
+                    // 
                     FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
                     FwBallAnglPrev = ballAnfl_err;
 
-                    drv.drive(moveAngle, (int)(robotAnglSpeed), 70);  
+                    speed = 70;  
                 }
                 else
                 {
                     #ifdef OTLADKA_Dribble2
                         ESP_LOGW(drible2, "Mach poteryan, edu k machu no vizhu liniju");
                     #endif
-                    drv.drive(goodAngle(lineAngle + 180), (int)(deltaAngle), 80);
+                    moveAngle = goodAngle(lineAngle + 180);
+                    robotAnglSpeed = ballAngle * 0.3;
+                    speed = 80;
                 }
+                drv.drive(moveAngle, (int)(robotAnglSpeed), speed);
             }
         }
         else
