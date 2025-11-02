@@ -73,7 +73,7 @@ void OpenMVCommunication_t::init(int GPIO, int provorot)
 
 const int CAM_UART_BUFFER_SIZE = 512; // модуль, по которому берутся индексы
 const int CAM_UART_READ_LIMIT = 256;  // если пришло больше - чистим буфер
-const int CAM_MSG_SIZE = 46;
+const int CAM_MSG_SIZE = 42;
 
 inline int fit(int index)
 {
