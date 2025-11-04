@@ -65,15 +65,18 @@ void OpenMVCommunication_t::init(int GPIO, int provorot)
     // Set UART pins(TX: IO4, RX: IO5, RTS: IO18, CTS: IO19)
     ESP_ERROR_CHECK(uart_set_pin(uart_num, UART_PIN_NO_CHANGE, GPIO_CAM_UART, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     // Setup UART buffered IO with event queue
-    const int uart_buffer_size = (1024);
+    const int uart_buffer_size = (2048);
     // Install UART driver using an event queue here
     ESP_ERROR_CHECK(uart_driver_install(uart_num, uart_buffer_size,
                                         0, 0, NULL, 0));
 }
 
-const int CAM_UART_BUFFER_SIZE = 512; // модуль, по которому берутся индексы
-const int CAM_UART_READ_LIMIT = 256;  // если пришло больше - чистим буфер
-const int CAM_MSG_SIZE = 46;
+const int MAX_OBSTACLE_COUNT = 5; 
+const int GATE_INFO_SIZE = 32;
+const int CAM_MSG_SIZE = 2 + GATE_INFO_SIZE + 2 * 9 * MAX_OBSTACLE_COUNT;
+
+const int CAM_UART_BUFFER_SIZE = 2048; // модуль, по которому берутся индексы
+const int CAM_UART_READ_LIMIT = 1024;  // если пришло больше - чистим буфер
 
 inline int fit(int index)
 {
@@ -145,6 +148,8 @@ void OpenMVCommunication_t::update()
         parseCorners(&msg[0]);
         calculate_global_values();
 
+        parseObstacles(&msg[GATE_INFO_SIZE]);
+
         // ищем, не было ли уже обнаружено новое начало сообщения
         for (int i = pos_start; i != pos_write; i = fit(i + 1))
         {
@@ -174,6 +179,20 @@ int16_t from_direct_code(int16_t num)
     return num;
 }
 
+blob_t OpenMVCommunication_t::parseMainBlob(uint8_t *data)
+{
+    blob_t blob;
+    blob.p[0].x = from_direct_code((data[0] << 8) | data[1]);
+    blob.p[0].y = from_direct_code((data[2] << 8) | data[3]);
+    blob.p[1].x = from_direct_code((data[4] << 8) | data[5]);
+    blob.p[1].y = from_direct_code((data[6] << 8) | data[7]);
+    blob.p[2].x = from_direct_code((data[8] << 8) | data[9]);
+    blob.p[2].y = from_direct_code((data[10] << 8) | data[11]);
+    blob.p[3].x = from_direct_code((data[12] << 8) | data[13]);
+    blob.p[3].y = from_direct_code((data[14] << 8) | data[15]);
+    return blob;
+}
+
 void OpenMVCommunication_t::parseData(uint8_t *data)
 {
     cam_data.Gates[0].left_angle = from_direct_code((data[0] << 8) | data[1]);
@@ -199,23 +218,9 @@ void OpenMVCommunication_t::parseData(uint8_t *data)
 void OpenMVCommunication_t::parseCorners(uint8_t *data)
 {
     blob_t ygate, bgate;
-    ygate.p[0].x = from_direct_code((data[0] << 8) | data[1]);
-    ygate.p[0].y = from_direct_code((data[2] << 8) | data[3]);
-    ygate.p[1].x = from_direct_code((data[4] << 8) | data[5]);
-    ygate.p[1].y = from_direct_code((data[6] << 8) | data[7]);
-    ygate.p[2].x = from_direct_code((data[8] << 8) | data[9]);
-    ygate.p[2].y = from_direct_code((data[10] << 8) | data[11]);
-    ygate.p[3].x = from_direct_code((data[12] << 8) | data[13]);
-    ygate.p[3].y = from_direct_code((data[14] << 8) | data[15]);
+    ygate = parseMainBlob(data);
     
-    bgate.p[0].x = from_direct_code((data[0 + 16] << 8) | data[1 + 16]);
-    bgate.p[0].y = from_direct_code((data[2 + 16] << 8) | data[3 + 16]);
-    bgate.p[1].x = from_direct_code((data[4 + 16] << 8) | data[5 + 16]);
-    bgate.p[1].y = from_direct_code((data[6 + 16] << 8) | data[7 + 16]);
-    bgate.p[2].x = from_direct_code((data[8 + 16] << 8) | data[9 + 16]);
-    bgate.p[2].y = from_direct_code((data[10 + 16] << 8) | data[11 + 16]);
-    bgate.p[3].x = from_direct_code((data[12 + 16] << 8) | data[13 + 16]);
-    bgate.p[3].y = from_direct_code((data[14 + 16] << 8) | data[15 + 16]);
+    bgate = parseMainBlob(&data[16]);
     
     // ESP_LOGI("OpenMV", "%d %d %d %d", ygate.p[0].x, ygate.p[0].y, ygate.p[1].x, ygate.p[1].y);
     ygate.center.x = from_direct_code((data[0 + 32] << 8) | data[1 + 32]);
@@ -223,8 +228,32 @@ void OpenMVCommunication_t::parseCorners(uint8_t *data)
     bgate.center.x = from_direct_code((data[4 + 32] << 8) | data[5 + 32]);
     bgate.center.y = from_direct_code((data[6 + 32] << 8) | data[7 + 32]);
 
-    calcGateInfo(ygate, cam_data.Gates[0]);
-    calcGateInfo(bgate, cam_data.Gates[1]);
+    calcBlobInfo(ygate, cam_data.Gates[0]);
+    calcBlobInfo(bgate, cam_data.Gates[1]);
+}
+
+void OpenMVCommunication_t::parseObstacles(uint8_t *data)
+{
+    int16_t min_distance = 10000;
+    int index_of_min_distance_obst = -1;
+
+    blob_t act_blob;
+    for(int i = 0; i < MAX_OBSTACLE_COUNT; i++){
+        act_blob = parseMainBlob(&data[16 * i]);
+
+        OmniCamBlobInfo_t info;
+        calcBlobInfo(act_blob, info);
+
+        if(min_distance > info.distance){
+            index_of_min_distance_obst = i;
+            min_distance = info.distance;
+        }
+
+        obstacles[i] = info;
+    }
+
+    if(index_of_min_distance_obst != -1)
+        std::swap(obstacles[0], obstacles[index_of_min_distance_obst]);
 }
 
 int local_good_angle(int angle)
@@ -258,7 +287,7 @@ void OpenMVCommunication_t::calculate_global_values()
     g_obst_angle = obst_angle + IMU.Yaw;
 }
 
-void OpenMVCommunication_t::calcGateInfo(blob_t blob, OmniCamBlobInfo_t& gate)
+void OpenMVCommunication_t::calcBlobInfo(blob_t blob, OmniCamBlobInfo_t& gate)
 {
     if (blob.p[0].x < 0){
         gate.left_angle = 360;

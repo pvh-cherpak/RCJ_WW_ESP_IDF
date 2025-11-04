@@ -18,7 +18,7 @@ struct segm_t{
 
 struct blob_t{
     point_t p[4];
-    point_t center;
+    point_t center = {0, 0};
 };
 
 int local_good_angle(int angle);
@@ -65,12 +65,18 @@ public:
     ~OpenMVCommunication_t();
     const OmniCamBlobInfo_t& gate(int color) { return (color ? Blue : Yellow); };
 private:
+    blob_t parseMainBlob(uint8_t *data); // blob without center point
+
     void parseData(uint8_t *data);
     void parseCorners(uint8_t *data);
+    void parseObstacles(uint8_t *data);
+
     void calculate_global_values();
-    void calcGateInfo(blob_t blob, OmniCamBlobInfo_t& gate);
+    void calcBlobInfo(blob_t blob, OmniCamBlobInfo_t& gate);
     
     int dist_to_polygon(int angle, blob_t b);
+
+
 private:
     OmniCamData_t cam_data;
     OmniCamData_t globa_cam_data;
