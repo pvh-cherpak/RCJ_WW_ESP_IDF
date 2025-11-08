@@ -82,9 +82,9 @@ void sensor_init(uint8_t robot_type)
 		conf.LineSensor_config = {{GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true};
 		conf.CAM_GPIO = 19;
 		conf.robotType = robot_type;
-		conf.locator_offset = 0;
+		conf.locator_offset = -180;
 		conf.IMU_active = true;
-		conf.inverse_locator = false;
+		conf.inverse_locator = true;
 		conf.LineSensor_config.offset = 22;
 		
 		sensor.init(conf);

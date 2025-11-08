@@ -420,13 +420,13 @@ int getGlobalPosition_dist(float &x, float &y, int color)
 
 bool isBall()
 {
-    return sensor.LightGates.ballCatched();
-    // if (sensor.cfg.robotType == 2)
-    // {
-    //     return sensor.BallSensor.ballCatched();
-    // }
-    // else
-    //     return sensor.LightGates.ballCatched(); // (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
+    // return sensor.LightGates.ballCatched();
+    if (sensor.cfg.robotType == 2)
+    {
+        return sensor.BallSensor.ballCatched();
+    }
+    else
+        return sensor.LightGates.ballCatched(); // (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
 }
 
 
@@ -1073,7 +1073,7 @@ float Fw_kd = 3.0;
 float Fw_ki = 0;
 float Fw_kp = 0.25;
 
-// #define OTLADKA_Dribble2
+#define OTLADKA_Dribble2
 #ifdef OTLADKA_Dribble2
     const char* drible2 = "f";
 #endif
@@ -1099,9 +1099,11 @@ void playForwardDribble2(int color)
 
         int st = sensor.Locator.getStrength();
         int ballAngle = sensor.Locator.getBallAngleLocal();
+        static bool ball_is_too_futher = false;
         if (sensor.Locator.getStrength() < 5)
         {
             drv.drive(0, 20, 0);
+            ball_is_too_futher = true;
             continue;
         }
         int lineAngle = sensor.LineSensor.getAngleDelayed();
@@ -1115,15 +1117,19 @@ void playForwardDribble2(int color)
         {
             //menu.writeLineClean(0, "ball");
 
-            dribbler.smart_dribble((abs(ballAngle) < 60) ? 60 : 0);
+            dribbler.smart_dribble((abs(ballAngle) < 60) ? 75 : 0);
 
             if (!paradox(color)) {
                 int robotAnglSpeed;
                 int speed;
                 moveAngle = ballAngle;
 
-                if(sensor.Locator.getStrength() < 30)
+                if(ball_is_too_futher){
+                    if(sensor.Locator.getStrength() < 35)
                         ballAngle = goodAngle(ballAngle + 90);
+                    else
+                        ball_is_too_futher = false;
+                }
 
                 if (lineAngle == 360)
                 {
@@ -1138,7 +1144,7 @@ void playForwardDribble2(int color)
                     FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
                     FwBallAnglPrev = ballAnfl_err;
 
-                    speed = 70;  
+                    speed = 80;  
                 }
                 else
                 {
@@ -1158,7 +1164,7 @@ void playForwardDribble2(int color)
                 ESP_LOGW(drible2, "Mach zachvachen, podjzzaju");
             #endif
             //menu.writeLineClean(0, "gate...");
-            dribbler.smart_dribble(60);
+            dribbler.smart_dribble(75);
             drv.driveXY(0, 30, 0); // чтобы лучше задриблить 
             int start = millis();
             while (millis() - start < 300)
@@ -1326,6 +1332,7 @@ void MPU_zakrut(int color)
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.IMU.update();
         sensor.BallSensor.update();
+        sensor.LineSensor.update();
         
         if (sign > 0){
             rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 25 : 80;
@@ -1350,7 +1357,7 @@ void MPU_zakrut(int color)
         // }
     }
 
-    vTaskDelay(200 / portTICK_PERIOD_MS);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
     
     // ESP_LOGI("debug", "exit 2");
     menu.writeLineClean(0, "exit 2");

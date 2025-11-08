@@ -4,7 +4,6 @@
 const char* NVS_IDENTIFIER_GROUP = "IDENTIFIERS";
 
 sensor_t sensor;
-BTDebug_t BTDebug(sensor);
 
 
 #define I2C_MASTER_FREQ_HZ 400000 // I2C clock of SSD1306 can run at 400 kHz max.

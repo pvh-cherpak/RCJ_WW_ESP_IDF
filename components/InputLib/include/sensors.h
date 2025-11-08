@@ -56,7 +56,7 @@ public:
         Cam.init(config.CAM_GPIO, 30);
 
         if (cfg.robotType == 2)
-            LightGates.init(GPIO_NUM_36);
+            BallSensor.init();
         else if (cfg.robotType == 1)
             LightGates.init(GPIO_NUM_36);
     }
@@ -65,7 +65,7 @@ public:
             IMU.update();
         LineSensor.update(); Locator.update(); Cam.update();
         if (cfg.robotType == 2)
-            LightGates.update();
+            BallSensor.update();
         else if (cfg.robotType == 1)
             LightGates.update();
     }
