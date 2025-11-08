@@ -403,7 +403,7 @@ void BTCheck(button_handle_t &encoder_button)
     while (true)
     {
         sensor.update();
-        BTDebug.send();
+        // BTDebug.send();
 
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
