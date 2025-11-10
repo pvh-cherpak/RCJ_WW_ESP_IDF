@@ -2,11 +2,12 @@
 #include "esp_timer.h"
 #include "esp_log.h"
 
-void BallSensor_t::init()
+void BallSensor_t::init(int64_t Duration, gpio_pull_mode_t pull_mode)
 {
+    IsBallDuration = Duration;
     gpio_reset_pin(GPIO); //  ЕСП рекомендует перед использованием сбрасывать пины
     ESP_ERROR_CHECK(gpio_set_direction(GPIO, GPIO_MODE_INPUT));
-    ESP_ERROR_CHECK(gpio_set_pull_mode(GPIO, GPIO_FLOATING));
+    ESP_ERROR_CHECK(gpio_set_pull_mode(GPIO, pull_mode));
 }
 
 void BallSensor_t::update()

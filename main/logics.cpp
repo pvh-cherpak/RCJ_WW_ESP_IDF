@@ -420,13 +420,14 @@ int getGlobalPosition_dist(float &x, float &y, int color)
 
 bool isBall()
 {
+    return sensor.BallSensor.ballCatched();
     // return sensor.LightGates.ballCatched();
-    if (sensor.cfg.robotType == 2)
-    {
-        return sensor.BallSensor.ballCatched();
-    }
-    else
-        return sensor.LightGates.ballCatched(); // (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
+    // if (sensor.cfg.robotType == 2)
+    // {
+    //     return sensor.BallSensor.ballCatched();
+    // }
+    // else
+    //     return sensor.LightGates.ballCatched(); // (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
 }
 
 

@@ -315,7 +315,11 @@ void Dribbler::brake(){
 
 void Kicker::init(gpio_num_t kicker_pin){
     pin = kicker_pin;
+
+    gpio_reset_pin(pin);
     gpio_set_direction(pin, GPIO_MODE_OUTPUT);
+    gpio_set_pull_mode(pin, GPIO_PULLDOWN_ONLY);
+
 
     // ESP_LOGI("Kicker::init()", "sozdanie ocheredi");
     // Queue = xQueueCreate(10, sizeof(int));

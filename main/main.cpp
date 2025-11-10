@@ -57,48 +57,31 @@ void sensor_init(uint8_t robot_type)
 	sensor.Cam.dist_offset_y = y;
 	//ESP_LOGI("GP", "dist offsets:  %d, %d", sensor.Cam.dist_offset_x, sensor.Cam.dist_offset_y);
 
+	drv.~MotorControl();
+	new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_26, GPIO_NUM_25 ,GPIO_NUM_2, GPIO_NUM_4, GPIO_NUM_17, GPIO_NUM_16);
+
+	conf.LineSensor_config = {{GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true};
+	conf.robotType = robot_type;
+	conf.CAM_GPIO = 19;
+	
 	if (robot_type == 1)
 	{ //keeper
-		conf.LineSensor_config = {
-			{(gpio_num_t)13,
-			 (gpio_num_t)12,
-			 (gpio_num_t)26,
-			 (gpio_num_t)27},
-			ADC_UNIT_2,
-			ADC_CHANNEL_6,
-			true,
-			false,
-			true};
-		conf.robotType = robot_type;
-		conf.CAM_GPIO = 36;
+		
 		conf.locator_offset = 0;
-		conf.IMU_active = true;
 		conf.inverse_locator = false;
 
-		sensor.init(conf);
+		conf.IMU_active = true;
 	}
 	else
 	{ //forward
-		conf.LineSensor_config = {{GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true};
-		conf.CAM_GPIO = 19;
-		conf.robotType = robot_type;
 		conf.locator_offset = -180;
-		conf.IMU_active = true;
 		conf.inverse_locator = true;
+
+		conf.IMU_active = true;
+
 		conf.LineSensor_config.offset = 22;
-		
-		sensor.init(conf);
-
-		drv.~MotorControl();
-		new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_26, GPIO_NUM_25 ,GPIO_NUM_2, GPIO_NUM_4, GPIO_NUM_17, GPIO_NUM_16);
-
-		// sensor.IMU_active=false;
-		// sensor.Cam.init(conf.CAM_GPIO);
-		// sensor.LineSensor.init(conf.LineSensor_config);
-		// sensor.Locator.init(conf.locator_offset);
-		// sensor.BallSensor.init();
-		// sensor.cfg = conf;
 	}
+	sensor.init(conf);
 }
 
 extern "C"
@@ -122,7 +105,7 @@ extern "C"
 			esp_restart();
 		};
 
-		// nvs_set_variables(2); 
+		// nvs_set_variables(1); 
 
 		start_i2c_legacy();
 		menu.init();
@@ -157,12 +140,12 @@ extern "C"
 		drv.init();
 
 		int GPIO_A, GPIO_B;
-		if (robot_type == 1)
-		{
-			GPIO_A = 32;
-			GPIO_B = 35;
-		}
-		else
+		// if (robot_type == 1)
+		// {
+		// 	GPIO_A = 32;
+		// 	GPIO_B = 35;
+		// }
+		// else
 		{
 			GPIO_A = 34;
 			GPIO_B = 39;
@@ -222,8 +205,9 @@ extern "C"
 		// 	drv.drive(moveAngle, (int)(robotAnglSpeed), 60);
 		// 	vTaskDelay(10 / portTICK_PERIOD_MS);
 		// }
+		
 
-		start_menu(robot_type, GPIO_A, GPIO_B, robot_type == 2 ? 35 : 34);
+		start_menu(robot_type, GPIO_A, GPIO_B, 35);
 
 		vTaskDelete(NULL);
 		// esp_restart();

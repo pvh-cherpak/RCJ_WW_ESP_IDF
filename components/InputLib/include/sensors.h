@@ -10,6 +10,8 @@
 
 #include "esp_log.h"
 
+#define mS_to_uS(x) x * 100
+
 struct sensor_config_t
 {
     LineSensor_config_t LineSensor_config;
@@ -55,19 +57,20 @@ public:
         ESP_LOGI("sensor init", "start Camera init");
         Cam.init(config.CAM_GPIO, 30);
 
-        if (cfg.robotType == 2)
-            BallSensor.init();
+        if (cfg.robotType == 2) // forward
+            BallSensor.init(mS_to_uS(100), GPIO_PULLDOWN_ONLY);
         else if (cfg.robotType == 1)
-            LightGates.init(GPIO_NUM_36);
+            BallSensor.init();
     }
     void update(){
         if(IMU_active)
             IMU.update();
         LineSensor.update(); Locator.update(); Cam.update();
-        if (cfg.robotType == 2)
-            BallSensor.update();
-        else if (cfg.robotType == 1)
-            LightGates.update();
+        BallSensor.update();
+        // if (cfg.robotType == 2)
+        //     BallSensor.update();
+        // else if (cfg.robotType == 1)
+        //     LightGates.update();
     }
     void testUpdate() {IMU.testUpdate(); LineSensor.testUpdate(); Locator.testUpdate();}
 };
