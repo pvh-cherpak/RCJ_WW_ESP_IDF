@@ -105,6 +105,14 @@ extern "C"
 			esp_restart();
 		};
 
+		// sensor.LineSensor.init({{GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true});
+		// while (true)
+		// {
+		// 	sensor.LineSensor.update();
+		// 	sensor.LineSensor.writeValues();
+		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
+		// }
+
 		// nvs_set_variables(1); 
 
 		start_i2c_legacy();
@@ -176,13 +184,7 @@ extern "C"
 		// vTaskDelay(pdMS_TO_TICKS(5000));
 		// dribble(170);
 
-		// sensor.LineSensor.init({{GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true});
-		// while (true)
-		// {
-		// 	sensor.LineSensor.update();
-		// 	sensor.LineSensor.writeValues();
-		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
-		// }
+		
 
 		float FwBallAnglIntegral = 0;
 		float FwBallAnglPrev = 0;

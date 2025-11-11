@@ -193,8 +193,8 @@ uint32_t servo_per_degree_init(uint32_t degree_of_rotation)
     return cal_pulsewidth;
 }
 
-const int drb_offset = 90;
-const int max_drb_speed = 170;
+const int drb_offset = 5;
+const int max_drb_speed = 180;
 
 void Dribbler::xDriblerTask(void *arg)
 {
@@ -218,7 +218,8 @@ void Dribbler::xDriblerTask(void *arg)
         if (speed > max_drb_speed)
             speed = max_drb_speed;
         if(speed < drb_offset){
-            cur_speed = speed;
+            cur_speed = drb_offset;
+            speed = drb_offset;
             dribble(speed);
             continue;
         }
@@ -235,7 +236,7 @@ void Dribbler::xDriblerTask(void *arg)
         else
             while (speed > cur_speed)
             {
-                cur_speed += 2;
+                cur_speed += 5;
                 dribble(cur_speed);
                 // ESP_LOGI("Drb_task", "cur_speed = %d", cur_speed);
                 vTaskDelay(5);
@@ -260,10 +261,12 @@ void Dribbler::init()
 
     mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_2, &pwm_config);
 
+    dribble(0);
+    vTaskDelay(pdMS_TO_TICKS(3000));
     dribble(180);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    dribble(90);
-
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    dribble(0);
+    
     ESP_LOGI("Dribbler::init()", "sozdanie ocheredi");
     Queue = xQueueCreate(10, sizeof(int));
     if (Queue == NULL) {
