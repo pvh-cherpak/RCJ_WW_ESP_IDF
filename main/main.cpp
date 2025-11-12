@@ -162,8 +162,8 @@ extern "C"
 		// drv.drive(50, 50, 50, 50);
 
 		// while (true) {
-		// 	sensor.BallSensor.update();
-		// 	ESP_LOGI("test", "is ball: %d", sensor.BallSensor.IsBall);
+		// 	sensor.LineSensor.update();
+		// 	sensor.LineSensor.writeValues();
 		// 	vTaskDelay(10 / portTICK_PERIOD_MS);
 		// }
 
