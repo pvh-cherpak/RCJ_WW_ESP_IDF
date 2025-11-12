@@ -7,6 +7,7 @@
 #include "../BallSensor.h"
 #include "../locator.h"
 #include "../LightGates.h"
+#include "../DribblerMicroswitch.h"
 
 #include "esp_log.h"
 
@@ -32,6 +33,7 @@ public:
     OpenMVCommunication_t Cam;
     BallSensor_t BallSensor;
     LightGates_t LightGates;
+    DribblerMicroswitch_t DribblerMicroswitch;
 
     bool IMU_active = true;
 public:
@@ -58,15 +60,18 @@ public:
         Cam.init(config.CAM_GPIO, 30);
 
         if (cfg.robotType == 2) // forward
-            BallSensor.init(mS_to_uS(0), GPIO_PULLDOWN_ONLY);
+            // BallSensor.init(mS_to_uS(0), GPIO_PULLDOWN_ONLY);
+            DribblerMicroswitch.init(36, 10, 1);
         else if (cfg.robotType == 1)
-            BallSensor.init();
+            BallSensor.init(mS_to_uS(1000));
     }
     void update(){
         if(IMU_active)
             IMU.update();
         LineSensor.update(); Locator.update(); Cam.update();
-        BallSensor.update();
+        
+        if (cfg.robotType == 1) 
+            BallSensor.update();
         // if (cfg.robotType == 2)
         //     BallSensor.update();
         // else if (cfg.robotType == 1)
