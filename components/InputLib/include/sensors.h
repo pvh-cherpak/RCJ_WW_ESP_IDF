@@ -58,7 +58,7 @@ public:
         Cam.init(config.CAM_GPIO, 30);
 
         if (cfg.robotType == 2) // forward
-            BallSensor.init(mS_to_uS(100), GPIO_PULLDOWN_ONLY);
+            BallSensor.init(mS_to_uS(0), GPIO_PULLDOWN_ONLY);
         else if (cfg.robotType == 1)
             BallSensor.init();
     }
