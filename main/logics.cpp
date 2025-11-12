@@ -433,7 +433,7 @@ bool isBall()
 
 bool paradox(int color)
 {
-    return false;
+    //return false;
     ballAngle = sensor.Locator.getBallAngleLocal();
     lineAngle = sensor.LineSensor.getAngleDelayed();
     int gateAngle = (int)sensor.Cam.gate(color).center_angle;
@@ -834,14 +834,14 @@ void playGoalkeeperCamera(int color)
             //                       4.62172e-8 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist - 2.788e-12 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist),
             //                      0, 100);
 
-            int err = -(cam_dist - 16) * 10;
+            int err = -(cam_dist - 20) * 10;
             if (err < -90)
                 err = -90;
             if (cam_dist < 10)
                 err = 50;
-            else if (cam_dist < 16)
+            else if (cam_dist < 20) //16
                 err = 25;
-            else if (cam_dist < 18)
+            else if (cam_dist < 22) //18
                 err = 0;
             
             speedY = err;
@@ -1071,7 +1071,7 @@ float FwBallAnglIntegral = 0;
 float FwBallAnglPrev = 0;
 float Fw_kd = 3.0;
 float Fw_ki = 0;
-float Fw_kp = 0.25;
+float Fw_kp = 0.35;
 
 #define OTLADKA_Dribble2
 #ifdef OTLADKA_Dribble2
@@ -1145,7 +1145,7 @@ void playForwardDribble2(int color)
                     FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
                     FwBallAnglPrev = ballAnfl_err;
 
-                    speed = 80;  
+                    speed = sensor.Locator.getStrength() < 50 ? 80 : 50;  
                 }
                 else
                 {
@@ -1165,8 +1165,8 @@ void playForwardDribble2(int color)
                 ESP_LOGW(drible2, "Mach zachvachen, podjzzaju");
             #endif
             //menu.writeLineClean(0, "gate...");
-            dribbler.smart_dribble(75);
-            drv.driveXY(0, 30, 0); // чтобы лучше задриблить 
+            dribbler.smart_dribble(85);
+            drv.driveXY(0, 20, 0); // чтобы лучше задриблить 
             int start = millis();
             while (millis() - start < 300)
             {
@@ -1244,7 +1244,7 @@ void playForwardDribble2(int color)
                     }
                     cam_dist = sensor.Cam.gate(color).distance;
                     // Serial.println(cam_dist);
-                    if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist <= 30)
+                    if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist <= 29)
                     {
                         #ifdef OTLADKA_Dribble2                      
                             ESP_LOGW(drible2, "---ATAKUJU---");
@@ -1301,7 +1301,7 @@ int getZakrutSign(int gateAngle)
     // return 0; //// заглушка, пока не будет детекции препятствий
 
     // print($"global gate: {goodAngle(gateAngle + getYaw())}");
-    if (abs(goodAngle(gateAngle + sensor.IMU.getYaw())) < 45)
+    if (abs(goodAngle(gateAngle + sensor.IMU.getYaw())) < 30)
     {
         return (rand() % 2 ? -1 : 1);
         // // print($"ok 1");
