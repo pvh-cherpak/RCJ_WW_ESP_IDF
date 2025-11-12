@@ -433,7 +433,7 @@ bool isBall()
 
 bool paradox(int color)
 {
-    return false;
+    // return false;
     ballAngle = sensor.Locator.getBallAngleLocal();
     lineAngle = sensor.LineSensor.getAngleDelayed();
     int gateAngle = (int)sensor.Cam.gate(color).center_angle;
@@ -839,9 +839,11 @@ void playGoalkeeperCamera(int color)
                 err = -90;
             if (cam_dist < 10)
                 err = 50;
-            else if (cam_dist < 16)
-                err = 25;
             else if (cam_dist < 18)
+                err = 50;
+            else if (cam_dist < 20)
+                err = 25;
+            else if (cam_dist < 22)
                 err = 0;
             
             speedY = err;

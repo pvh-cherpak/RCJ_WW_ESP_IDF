@@ -1,5 +1,7 @@
 build/
 
+thresholds.txt
+
 ### VisualStudioCode ###
 .vscode/
 
