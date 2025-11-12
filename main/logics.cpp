@@ -944,9 +944,9 @@ void playGoalkeeperCamera(int color)
         angle = goodAngle(angle + goodAngle(gateAngle - 180));
         drv.drive(angle, (int)deltaAngle, constrain(sp, 0, 100));
 
-        // if (isBall()){
-        //     kicker.kick();
-        // }
+        if (isBall()){
+            kicker.kick();
+        }
 
         // if (sp > 100)
         // {
@@ -1038,7 +1038,6 @@ void goalDriveBack(int color)
     }
 }
 
-
 void goalPush(int color)
 {
     while (true)
@@ -1103,6 +1102,7 @@ void playForwardDribble2(int color)
         static bool ball_is_too_futher = false;
         if (sensor.Locator.getStrength() < 5)
         {
+            ESP_LOGW(drible2, "Ne vizhu miach");
             drv.drive(0, 20, 0);
             ball_is_too_futher = true;
             continue;
