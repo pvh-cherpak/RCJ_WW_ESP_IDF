@@ -80,6 +80,7 @@ void sensor_init(uint8_t robot_type)
 		conf.IMU_active = true;
 
 		conf.LineSensor_config.offset = 22;
+		conf.LineSensor_config.al_seners = false;
 	}
 	sensor.init(conf);
 }
@@ -164,6 +165,11 @@ extern "C"
 		// while (true) {
 		// 	sensor.LineSensor.update();
 		// 	sensor.LineSensor.writeValues();
+		// 	vTaskDelay(500 / portTICK_PERIOD_MS);
+		// }
+
+		// while (true) {
+		// 	ESP_LOGI("ball", "%d", sensor.DribblerMicroswitch.ballCatched());
 		// 	vTaskDelay(10 / portTICK_PERIOD_MS);
 		// }
 

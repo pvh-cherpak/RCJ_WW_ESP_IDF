@@ -90,7 +90,7 @@ private:
     uint16_t white_value[16];
     int actual_value[16];
 
-    bool rabotaet[16] = {1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1};
+    bool rabotaet[16] = {1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1};
     
     TickType_t line_time [16];
 

@@ -61,7 +61,7 @@ public:
 
         if (cfg.robotType == 2) // forward
             // BallSensor.init(mS_to_uS(0), GPIO_PULLDOWN_ONLY);
-            DribblerMicroswitch.init(36, 10, 1);
+            DribblerMicroswitch.init(36, 5, 1);
         else if (cfg.robotType == 1)
             BallSensor.init(mS_to_uS(1000));
     }
