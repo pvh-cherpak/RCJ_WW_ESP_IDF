@@ -672,10 +672,6 @@ void killerFeature(int color)
     }
 }
 
-int LookAtBallRotationSpeed(int ball_angle){
-    return (ball_angle) * 0.4f;
-}
-
 void playGoalkeeperCamera(int color)
 {
     menu.clearDisplay();
@@ -839,7 +835,7 @@ void playGoalkeeperCamera(int color)
             // speedY = (int)(-lineY * 80);
             //deltaAngle = -robotAngle * 0.25;
             deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
-            drv.drive(goodAngle(lineAngle + 180), LookAtBallRotationSpeed(ballAngle), 100);
+            drv.drive(goodAngle(lineAngle + 180), 0, 100);
             continue;
         }
         else
@@ -968,7 +964,7 @@ void playGoalkeeperCamera(int color)
 
         // menu.writeLineClean(2, "sp " + std::to_string(speedX) + ";" + std::to_string(speedY));
 
-        deltaAngle = (int)(goodAngle(ballAngle) * 0.5);
+        deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
 
         // prevBallStrength = ball_strength;
 
@@ -977,8 +973,7 @@ void playGoalkeeperCamera(int color)
         int sp = sqrt(speedX * speedX + speedY * speedY);
         float angle = atan2(speedX, speedY) * RAD_TO_DEG;
         angle = goodAngle(angle + goodAngle(gateAngle - 180));
-        //drv.drive(angle, (int)deltaAngle, constrain(sp, 0, 100));
-        drv.drive(angle, LookAtBallRotationSpeed(ballAngle), constrain(sp, 0, 100));
+        drv.drive(angle, (int)deltaAngle, constrain(sp, 0, 100));
 
         if (isBall()){
             kicker.kick();
@@ -1132,7 +1127,6 @@ void playForwardDribble2(int color)
 
         int cam_angle = sensor.Cam.gate(color).center_angle;
         int cam_dist = sensor.Cam.gate(color).distance;
-        
 
         int st = sensor.Locator.getStrength();
         int ballAngle = sensor.Locator.getBallAngleLocal();
@@ -1182,7 +1176,7 @@ void playForwardDribble2(int color)
                     FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
                     FwBallAnglPrev = ballAnfl_err;
 
-                    speed = sensor.Locator.getStrength() < 70 ? 100 : 50;  
+                    speed = sensor.Locator.getStrength() < 50 ? 80 : 50;  
                 }
                 else
                 {
@@ -1269,7 +1263,7 @@ void playForwardDribble2(int color)
                         #ifdef OTLADKA_Dribble2  
                             ESP_LOGW(drible2, "edu k vorotam NO LINIJA");
                         #endif
-                        drv.drive(goodAngle(lineAngle + 180), delta_angle, 100);
+                        drv.drive(goodAngle(lineAngle + 180), delta_angle, 80);
                         continue;
                     }
                     else{
@@ -1277,11 +1271,11 @@ void playForwardDribble2(int color)
                             ESP_LOGW(drible2, "edu k vorotam");
                         #endif
                         
-                        drv.drive(cam_angle, delta_angle, 75);
+                        drv.drive(cam_angle, delta_angle, 50);
                     }
                     cam_dist = sensor.Cam.gate(color).distance;
                     // Serial.println(cam_dist);
-                    if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist <= 30)
+                    if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist <= 29)
                     {
                         #ifdef OTLADKA_Dribble2                      
                             ESP_LOGW(drible2, "---ATAKUJU---");
@@ -1314,10 +1308,9 @@ void playForwardDribble2(int color)
 
                         // может это в goalDriveBack?
                         dribbler.smart_dribble(100);
-                        //make_pause(500);
+                        make_pause(500);
 
                         // if (abs(sensor.IMU.getYaw()) < 135 || cam_dist < 30)
-
                         MPU_zakrut(color);
                         // else
                         //goalDriveBack(color);
@@ -1357,7 +1350,6 @@ void MPU_zakrut(int color)
     sensor.BallSensor.update();
     sensor.Cam.update();
     int sign = getZakrutSign(sensor.Cam.gate(color).center_angle); //goodAngle(sensor.IMU.Yaw + 180));
-    int start_cam_angle = sensor.Cam.gate(color).center_angle;
     if (sign == 0) {
         sign = ((sensor.IMU.Yaw) < 0) ? -1 : 1;
     }
@@ -1367,69 +1359,35 @@ void MPU_zakrut(int color)
 
     while (isBall())
     {
+        menu.writeLineClean(0, "2");
+        // ESP_LOGI("debug", "2");
         vTaskDelay(10 / portTICK_PERIOD_MS);
         sensor.IMU.update();
         sensor.BallSensor.update();
         sensor.LineSensor.update();
-
+        
         if (sign > 0){
-            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 80 ? 25 : 80;
-            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 80 ? 100 : 0);
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 25 : 80;
+            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 100 : 0);
         }
         else if (sign < 0){
-            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 70 ? 25 : 80;
-            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 70 ? 100 : 0);
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 25 : 80;
+            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 100 : 0);
         }
 
         lineAngle = sensor.LineSensor.getAngleDelayed();
         if (lineAngle == 360){
-            if (goodAngle(start_cam_angle + start_angle) < 20)
-                drv.drive(0, rotateSpeed * sign, 0);
-            else
-                drv.drive(-sign * 90 - sensor.IMU.Yaw, rotateSpeed * sign, 70); //50
+            drv.drive(0, rotateSpeed * sign, 0);
         }
-        else
-            drv.drive(lineAngle, rotateSpeed * sign, -80);
-        // if (omnicam().gates[color].center_angle > 0){
-        //     drive(0, -40, 0);
+        else{
+            drv.drive(lineAngle, 0, -80);
+        }
+
+        // if (abs(goodAngle(sensor.IMU.Yaw - start_angle)) > 160){
+        //     dribbler.smart_dribble(0);
+        //     // return;
         // }
-        // else {
-        //     drive(0, 40, 0);
-        // }
-        // Debug.SendInfo();
     }
-
-    // while (isBall())
-    // {
-    //     menu.writeLineClean(0, "2");
-    //     // ESP_LOGI("debug", "2");
-    //     vTaskDelay(10 / portTICK_PERIOD_MS);
-    //     sensor.IMU.update();
-    //     sensor.BallSensor.update();
-    //     sensor.LineSensor.update();
-        
-    //     if (sign > 0){
-    //         rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 25 : 80;
-    //         dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 100 : 0);
-    //     }
-    //     else if (sign < 0){
-    //         rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 25 : 80;
-    //         dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60 ? 100 : 0);
-    //     }
-
-    //     lineAngle = sensor.LineSensor.getAngleDelayed();
-    //     if (lineAngle == 360){
-    //         drv.drive(0, rotateSpeed * sign, 0);
-    //     }
-    //     else{
-    //         drv.drive(lineAngle, 0, -80);
-    //     }
-
-    //     // if (abs(goodAngle(sensor.IMU.Yaw - start_angle)) > 160){
-    //     //     dribbler.smart_dribble(0);
-    //     //     // return;
-    //     // }
-    // }
 
     vTaskDelay(100 / portTICK_PERIOD_MS);
     

@@ -323,6 +323,8 @@ void Kicker::init(gpio_num_t kicker_pin){
     gpio_set_direction(pin, GPIO_MODE_OUTPUT);
     gpio_set_pull_mode(pin, GPIO_PULLDOWN_ONLY);
 
+    gpio_set_level(pin, 0);
+
 
     // ESP_LOGI("Kicker::init()", "sozdanie ocheredi");
     // Queue = xQueueCreate(10, sizeof(int));
