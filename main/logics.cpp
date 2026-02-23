@@ -865,20 +865,19 @@ void playGoalkeeperCamera(int color)
             //                      0, 100);
 
             int err = -(cam_dist - 20) * 10;
-            if (err < -90)
+            if (err < -90) {
                 err = -90;
-            if (cam_dist < 10)
+            }
+                
+            if (cam_dist < 18) {
                 err = 50;
-            else if (cam_dist < 18)
-                err = 50;
-            else if (cam_dist < 20)
+            } else if (cam_dist < 20) {
                 err = 25;
-            else if (cam_dist < 22)
+            } else if (cam_dist < 22) {
                 err = 0;
-            
-            speedY = err;
-            if (speedY < -90)
-                speedY = -90;
+            }
+
+            speedY = err; 
             // int err = speedY = 0;
 
             // speedY = (int)(err * gate_kp + (err - gatePrev) * gate_kd + gateIntegral);
