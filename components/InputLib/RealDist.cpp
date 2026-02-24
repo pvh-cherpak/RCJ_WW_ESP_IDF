@@ -51,7 +51,7 @@ int linear_interpolate(int x, int *xs, int *ys, int n)
     //     }
     // }
 
-    int y;
+    int y{};
     if (xs[r + 1] == xs[r])
         y = (ys[r + 1] + ys[r]) / 2;
     else
@@ -90,6 +90,16 @@ void RealDist::restoreNVS()
     save2NVS();
 }
 
+void RealDist::logPoints() {
+    ESP_LOGI("RD", "points:");
+    for (int i = 0; i < DIST_CALIB_SECTORS; ++i){
+        ESP_LOGI("RD", "SECTOR %d (%d points)", i, pcount[i]);
+        for (int j = 0; j < pcount[i]; ++j){
+            ESP_LOGI("RD", "%d;%d", xs[i][j], ys[i][j]);
+        }
+    }
+}
+
 void RealDist::init()
 {
 
@@ -123,13 +133,7 @@ void RealDist::init()
         else
             ESP_ERROR_CHECK(err);
 
-    ESP_LOGI("RD", "points:");
-    for (int i = 0; i < DIST_CALIB_SECTORS; ++i){
-        ESP_LOGI("RD", "SECTOR %d (%d points)", i, pcount[i]);
-        for (int j = 0; j < pcount[i]; ++j){
-            ESP_LOGI("RD", "%d;%d", xs[i][j], ys[i][j]);
-        }
-    }
+    logPoints();
 }
 
 // int dist_cm[DIST_CALIB_PLACES] - реальное расстояние для каждого места на поле
@@ -137,12 +141,7 @@ void RealDist::init()
 // int pixel_dist[DIST_CALIB_PLACES][DIST_CALIB_ROTATE_STEPS] - расстояние каждого замера
 void RealDist::updatePoints(int *dist_cm, int *angles, int *pixel_dist)
 {
-    for (int i = 0; i < DIST_CALIB_SECTORS; ++i)
-        pcount[i] = 0;
-
-    for (int i = 0; i < DIST_CALIB_SECTORS; ++i)
-        for (int j = 0; j < DIST_CALIB_MAX_POINTS; ++j)
-            xs[i][j] = ys[i][j] = 0;
+    restoreNVS(); // тут был вставлен буквально такой же код как у тела этой функции
 
     ESP_LOGI("RD", "clear storage");
 
@@ -165,13 +164,7 @@ void RealDist::updatePoints(int *dist_cm, int *angles, int *pixel_dist)
     for (int i = 0; i < DIST_CALIB_SECTORS; ++i)
         sort_points(xs[i], ys[i], pcount[i]);
 
-    ESP_LOGI("RD", "points:");
-    for (int i = 0; i < DIST_CALIB_SECTORS; ++i){
-        ESP_LOGI("RD", "SECTOR %d (%d points)", i, pcount[i]);
-        for (int j = 0; j < pcount[i]; ++j){
-            ESP_LOGI("RD", "%d;%d", xs[i][j], ys[i][j]);
-        }
-    }
+    logPoints();
 
     // сохраняем массивы xs, ys и pcount в NVS
     save2NVS();
