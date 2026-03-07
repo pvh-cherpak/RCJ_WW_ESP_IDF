@@ -6,7 +6,6 @@
 
 import logging
 import argparse
-import csv
 import os
 import subprocess
 import sys

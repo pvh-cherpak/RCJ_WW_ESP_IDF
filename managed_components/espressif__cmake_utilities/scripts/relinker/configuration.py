@@ -8,7 +8,6 @@ import argparse
 import csv
 import os
 import subprocess
-import sys
 import re
 from io import StringIO
 

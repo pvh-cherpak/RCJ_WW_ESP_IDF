@@ -2,6 +2,8 @@
 #include "esp_timer.h"
 #include "vector2.h"
 #include "RealDist.h"
+#include <vector>
+#include <algorithm>
 
 //[Header("Управляющие переменные")]
 float timer = 0;
@@ -190,9 +192,9 @@ void projectSpeedOnLineXY(int speedX, int speedY, float lineX, float lineY, floa
 bool gates_on_side(int color)
 {
     int yaw = sensor.IMU.getYaw();
-    int global_left_angle = (int)goodAngle(
+    int global_left_angle = goodAngle(
         sensor.Cam.gate(color).left_angle + yaw);
-    int global_right_angle = (int)goodAngle(
+    int global_right_angle = goodAngle(
         sensor.Cam.gate(color).right_angle + yaw);
     return global_left_angle * global_right_angle > 0;
 }
@@ -298,6 +300,20 @@ bool getRayIntersection(float x1, float y1, float ang1, float x2, float y2, floa
     return true;
 }
 
+template <typename T>
+T getMedian(std::vector<T> vec) { // Функция для поиска медианного элемента. Старый поиск был реализован за О(n^2), а тут O(nlogn)
+    if (vec.empty()) return 0;
+
+    std::sort(vec.begin(), vec.end());
+    
+    size_t size = vec.size();
+    if (size % 2 == 0) {
+        return (vec[size / 2 - 1] + vec[size / 2]) / 2;
+    } else {
+        return vec[size / 2];
+    }
+}
+
 int getGlobalPosition_2gates(float &x, float &y, int color)
 {
     int our_gate = sensor.Cam.GlobalYellow.center_angle;
@@ -351,31 +367,8 @@ int getGlobalPosition_2gates(float &x, float &y, int color)
     if (ans_x.empty())
         return 2;
 
-    for (int i = 0; i <= ans_x.size() / 2; ++i)
-    {
-        int min_index = 0;
-        for (int j = 0; j < ans_x.size(); ++j)
-            if (ans_x[j] < ans_x[min_index])
-                min_index = j;
-        if (ans_x.size() % 2 == 0 && i == ans_x.size() / 2)
-            x = (x + ans_x[min_index]) / 2;
-        else
-            x = ans_x[min_index];
-        ans_x[min_index] = 1e9;
-    }
-
-    for (int i = 0; i <= ans_y.size() / 2; ++i)
-    {
-        int min_index = 0;
-        for (int j = 0; j < ans_y.size(); ++j)
-            if (ans_y[j] < ans_y[min_index])
-                min_index = j;
-        if (ans_y.size() % 2 == 0 && i == ans_y.size() / 2)
-            y = (y + ans_y[min_index]) / 2;
-        else
-            y = ans_y[min_index];
-        ans_y[min_index] = 1e9;
-    }
+    x = getMedian(ans_x);
+    y = getMedian(ans_y);
 
     ESP_LOGI("GP", "median:  %d;%d", (int)x, (int)y);
 
@@ -555,8 +548,6 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
                 int speed = 90;
                 if (abs(ballAngle) < 30){
                     speed = 50;
-                    if(abs(ballAngle) < 20)
-                        speed = 50;
                 }
                 drv.drive(moveAngle, (int)deltaAngle, speed);
             }
@@ -865,20 +856,18 @@ void playGoalkeeperCamera(int color)
             //                      0, 100);
 
             int err = -(cam_dist - 20) * 10;
-            if (err < -90)
+            if (err < -90) {
                 err = -90;
-            if (cam_dist < 10)
+            }
+                
+            if (cam_dist < 18) {
                 err = 50;
-            else if (cam_dist < 18)
-                err = 50;
-            else if (cam_dist < 20)
+            } else if (cam_dist < 20) {
                 err = 25;
-            else if (cam_dist < 22)
+            } else if (cam_dist < 22) {
                 err = 0;
-            
-            speedY = err;
-            if (speedY < -90)
-                speedY = -90;
+            }
+
             // int err = speedY = 0;
 
             // speedY = (int)(err * gate_kp + (err - gatePrev) * gate_kd + gateIntegral);
@@ -890,7 +879,7 @@ void playGoalkeeperCamera(int color)
             //     speedY = 0;
             // else
             //     speedY = 40 + err * 7;
-            speedY = (int)constrain(speedY, -limitGateSpeed, 100);
+            speedY = constrain(err, -limitGateSpeed, 100);
             gatePrev = err;
             gateIntegral += (err * gate_ki);
             gateIntegral = constrain(gateIntegral, -limitGateIntegral, limitGateIntegral);

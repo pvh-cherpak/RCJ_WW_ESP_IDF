@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include "esp_log.h"
 #include <string>
-#include <vector>
 
 #include "nvs.h"
 #include "nvs_flash.h"
@@ -66,22 +65,20 @@ void sensor_init(uint8_t robot_type)
 	
 	if (robot_type == 1)
 	{ //keeper
-		
 		conf.locator_offset = 0;
 		conf.inverse_locator = false;
 
-		conf.IMU_active = true;
 	}
 	else
 	{ //forward
 		conf.locator_offset = -180;
 		conf.inverse_locator = true;
 
-		conf.IMU_active = true;
-
 		conf.LineSensor_config.offset = 22;
 		conf.LineSensor_config.al_seners = false;
 	}
+	
+	conf.IMU_active = true;
 	sensor.init(conf);
 }
 
