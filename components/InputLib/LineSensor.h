@@ -13,6 +13,7 @@ extern const char *NVS_GREEN_VALUE_GROUP;
 
 struct LineSensor_config_t
 {
+    bool use_new_driver;       // false = old driver (mult_in), true = new driver (CLK/RES)
     gpio_num_t mult_in[4];
     gpio_num_t CLK_PIN;
     gpio_num_t RES_PIN;
@@ -20,7 +21,7 @@ struct LineSensor_config_t
     adc_channel_t ADC_chanel;
     bool stupid_pin;
     bool inversed_without_offset;
-    bool al_seners = true;
+    bool rabotaet[16];
     int offset = 0;
 };
 
@@ -60,10 +61,10 @@ private: // константы
 public:
     LineSensor_t(LineSensor_config_t config)
         :CONFIG(config){}
-    LineSensor_t():CONFIG{{(gpio_num_t)13,
+    LineSensor_t():CONFIG{true, {(gpio_num_t)13,
         (gpio_num_t)12,
         (gpio_num_t)26,
-        (gpio_num_t)27}, (gpio_num_t)23, (gpio_num_t)22, ADC_UNIT_1, ADC_CHANNEL_3, false, false}{}
+        (gpio_num_t)27}, (gpio_num_t)23, (gpio_num_t)22, ADC_UNIT_1, ADC_CHANNEL_3, false, false, {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}, 0}{}
     
     void init(LineSensor_config_t config);
     void update(){read_line_sensors(); saveLineDirection(); calculateLineAngle();}
@@ -97,8 +98,6 @@ private:
     uint16_t green_value[16];
     uint16_t white_value[16];
     int actual_value[16];
-
-    bool rabotaet[16] = {1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1};
     
     TickType_t line_time [16];
 

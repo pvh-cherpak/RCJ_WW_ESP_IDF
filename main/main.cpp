@@ -60,13 +60,13 @@ void sensor_init(uint8_t robot_type)
 	drv.~MotorControl();
 	new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_26, GPIO_NUM_25 ,GPIO_NUM_2, GPIO_NUM_4, GPIO_NUM_17, GPIO_NUM_16);
 
-	conf.LineSensor_config = {{GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true};
 	conf.robotType = robot_type;
 	conf.CAM_GPIO = 19;
 	
 	if (robot_type == 1)
 	{ //keeper
-		
+		conf.LineSensor_config = {false, {GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, (gpio_num_t)-1, (gpio_num_t)-1, ADC_UNIT_2, ADC_CHANNEL_6, false, true, {1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1}, 0};
+
 		conf.locator_offset = 0;
 		conf.inverse_locator = false;
 
@@ -74,13 +74,10 @@ void sensor_init(uint8_t robot_type)
 	}
 	else
 	{ //forward
-		conf.locator_offset = -180;
+		conf.LineSensor_config = {true, {(gpio_num_t)-1, (gpio_num_t)-1, (gpio_num_t)-1, (gpio_num_t)-1}, GPIO_NUM_23, GPIO_NUM_22, ADC_UNIT_1, ADC_CHANNEL_3, false, true, {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}, 22};
 		conf.inverse_locator = true;
 
 		conf.IMU_active = true;
-
-		conf.LineSensor_config.offset = 22;
-		conf.LineSensor_config.al_seners = false;
 	}
 	sensor.init(conf);
 }
@@ -106,7 +103,12 @@ extern "C"
 			esp_restart();
 		};
 
-		// sensor.LineSensor.init({{GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, ADC_UNIT_2, ADC_CHANNEL_6, false, true, true});
+		// keeper test
+		// sensor.LineSensor.init({false, {GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, 
+			// (gpio_num_t)-1, (gpio_num_t)-1, ADC_UNIT_2, ADC_CHANNEL_6, false, true, {1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1}, 0});
+		// forward test
+		// sensor.LineSensor.init({true, {(gpio_num_t)-1, (gpio_num_t)-1, (gpio_num_t)-1, (gpio_num_t)-1}, 
+		// GPIO_NUM_23, GPIO_NUM_22, ADC_UNIT_1, ADC_CHANNEL_3, false, true, {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}}, 0);
 		// while (true)
 		// {
 		// 	sensor.LineSensor.update();
@@ -160,7 +162,8 @@ extern "C"
 			GPIO_B = 39;
 		}
 
-		// drv.drive(50, 50, 50, 50);
+		drv.drive(50, 50, 50, 50);
+		while (true) {}
 
 		// while (true) {
 		// 	sensor.LineSensor.update();

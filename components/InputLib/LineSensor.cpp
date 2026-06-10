@@ -8,25 +8,34 @@ const char *NVS_WHITE_VALUE_GROUP = "WHITE_VALUES";
 const char *NVS_GREEN_VALUE_GROUP = "GREEN_VALUES";
 
 const float angles_for_gk[16] = {
-  19.1, 30.8, 63.3, 81.0, 99.0, 117.0, 153.0, 171.0, 189.0, 207.3, 243.0, 261.0, 279.0, 296.7, 329.2, 340.9
-};
+    19.1, 30.8, 63.3, 81.0, 99.0, 117.0, 153.0, 171.0, 189.0, 207.3, 243.0, 261.0, 279.0, 296.7, 329.2, 340.9};
 
 void LineSensor_t::init(LineSensor_config_t config)
 {
   CONFIG = config;
 
-  for(int i = 0; i < 16; i++)
-     actual_value[i] = 0;
-  
-  for (int i = 0; i < 4; i++)
+  for (int i = 0; i < 16; i++)
+    actual_value[i] = 0;
+
+  if (CONFIG.use_new_driver)
   {
-    gpio_reset_pin(CONFIG.mult_in[i]); //  ЕСП рекомендует перед использованием сбрасывать пины
-    ESP_ERROR_CHECK(gpio_set_direction(CONFIG.mult_in[i], GPIO_MODE_OUTPUT));
-    ESP_ERROR_CHECK(gpio_set_pull_mode(CONFIG.mult_in[i], GPIO_FLOATING)); // я не особо понял, надо ли настраивать подтяжку на output порты но няхай будет
-    ESP_ERROR_CHECK(gpio_set_level(CONFIG.mult_in[i], 0));
+    gpio_set_direction(CONFIG.CLK_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_direction(CONFIG.RES_PIN, GPIO_MODE_OUTPUT);
   }
+  else
+  {
+    for (int i = 0; i < 4; i++)
+    {
+      gpio_reset_pin(CONFIG.mult_in[i]); //  ЕСП рекомендует перед использованием сбрасывать пины
+      ESP_ERROR_CHECK(gpio_set_direction(CONFIG.mult_in[i], GPIO_MODE_OUTPUT));
+      ESP_ERROR_CHECK(gpio_set_pull_mode(CONFIG.mult_in[i], GPIO_FLOATING)); // я не особо понял, надо ли настраивать подтяжку на output порты но няхай будет
+      ESP_ERROR_CHECK(gpio_set_level(CONFIG.mult_in[i], 0));
+    }
+  }
+
   // какойто непонятный разрещаюший сигнал, гениальная трата бесценных ножек GPIO
-  if(CONFIG.stupid_pin){
+  if (CONFIG.stupid_pin)
+  {
     gpio_reset_pin(GPIO_NUM_25);
     ESP_ERROR_CHECK(gpio_set_direction(GPIO_NUM_25, GPIO_MODE_OUTPUT));
     ESP_ERROR_CHECK(gpio_set_pull_mode(GPIO_NUM_25, GPIO_PULLDOWN_ONLY));
@@ -47,8 +56,6 @@ void LineSensor_t::init(LineSensor_config_t config)
       .atten = ADC_ATTEN_DB_12,
       .bitwidth = ADC_BITWIDTH_DEFAULT,
   };
-  gpio_set_direction(CONFIG.CLK_PIN, GPIO_MODE_OUTPUT);
-  gpio_set_direction(CONFIG.RES_PIN, GPIO_MODE_OUTPUT);
 
   // у АЦП не ножки а каналы у нас по таблице ADC_CHANNEL_6
   ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_mult, CONFIG.ADC_chanel, &ADC_config));
@@ -76,7 +83,7 @@ void LineSensor_t::init(LineSensor_config_t config)
         ESP_ERROR_CHECK(err);
     }
   }
-  if(need_to_comit)
+  if (need_to_comit)
     nvs_commit(nvs_handle);
   nvs_close(nvs_handle);
 
@@ -98,7 +105,7 @@ void LineSensor_t::init(LineSensor_config_t config)
         ESP_ERROR_CHECK(err);
     }
   }
-  if(need_to_comit)
+  if (need_to_comit)
     nvs_commit(nvs_handle);
   nvs_close(nvs_handle);
 
@@ -147,7 +154,8 @@ void LineSensor_t::saveGreenWhite()
 void LineSensor_t::calculateLineAngle()
 {
   getLineDirection_Delayed(line_dir_x, line_dir_y);
-  if (line_dir_x == 0 && line_dir_y == 0){
+  if (line_dir_x == 0 && line_dir_y == 0)
+  {
     line_angle_delayed = 360;
     return;
   }
@@ -164,7 +172,8 @@ void LineSensor_t::saveLineDirection()
 {
   bool mass[16];
   is_line_detected = false;
-  for (int i = 0; i < 16; i++){
+  for (int i = 0; i < 16; i++)
+  {
     mass[i] = 0;
     if (isLineOnSensor(i) && (white_value[i] - green_value[i] > 700))
     {
@@ -178,7 +187,8 @@ void LineSensor_t::saveLineDirection()
 
 void LineSensor_t::getLineDirection_Delayed(float &x, float &y)
 {
-  if (!is_line_detected){
+  if (!is_line_detected)
+  {
     x = 0;
     y = 0;
     return;
@@ -192,7 +202,7 @@ void LineSensor_t::getLineDirection_Delayed(float &x, float &y)
     {
       int delay = LINE_RETENTION_TIME_TICS - (xTaskGetTickCount() - line_time[i]) + 1;
       float ang;
-      if(CONFIG.inversed_without_offset)
+      if (CONFIG.inversed_without_offset)
         ang = i * 22.5f;
       else
         ang = angles_for_gk[15 - i];
@@ -223,34 +233,40 @@ void LineSensor_t::getLineDirection_Delayed(float &x, float &y)
 
 void LineSensor_t::read_line_sensors()
 {
-  // for (int channel = 0; channel < 16; channel ++)
-  // {
-  //   if(!rabotaet[channel] && !CONFIG.al_seners)
-  //     continue;
-  //   for (int bit = 0; bit < 4; bit++)
-  //     ESP_ERROR_CHECK(gpio_set_level(CONFIG.mult_in[bit], MULT_CHANEL[channel][bit]));
-  //   ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, CONFIG.ADC_chanel, &actual_value[channel]));
-  //   // ESP_LOGI("line sensor", "chanel: %d", channel);
-  //   // vTaskDelay(pdMS_TO_TICKS(1000));
-  // }
-
+  if (!CONFIG.use_new_driver)
+  {
+    for (int channel = 0; channel < 16; channel++)
+    {
+      if (!CONFIG.rabotaet[channel])
+        continue;
+      for (int bit = 0; bit < 4; bit++)
+        ESP_ERROR_CHECK(gpio_set_level(CONFIG.mult_in[bit], MULT_CHANEL[channel][bit]));
+      ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, CONFIG.ADC_chanel, &actual_value[channel]));
+      // ESP_LOGI("line sensor", "chanel: %d", channel);
+      // vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+  }
+  else
+  {
     gpio_set_level(CONFIG.RES_PIN, 1);
-    esp_rom_delay_us(1); 
+    esp_rom_delay_us(1);
     gpio_set_level(CONFIG.RES_PIN, 0);
 
     int raw[16];
     for (int channel = 0; channel < 16; channel++)
     {
-        ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, CONFIG.ADC_chanel, &raw[channel]));
-        if (channel < 15){
-          gpio_set_level(CONFIG.CLK_PIN, 0);
-          esp_rom_delay_us(1);
-          gpio_set_level(CONFIG.CLK_PIN, 1);
-          esp_rom_delay_us(1);  
-        }
+      ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, CONFIG.ADC_chanel, &raw[channel]));
+      if (channel < 15)
+      {
+        gpio_set_level(CONFIG.CLK_PIN, 0);
+        esp_rom_delay_us(1);
+        gpio_set_level(CONFIG.CLK_PIN, 1);
+        esp_rom_delay_us(1);
+      }
     }
 
     for (int i = 0; i < 16; i++)
-        actual_value[15 - CHANNEL_REMAP[i]] = raw[i];
+      actual_value[15 - CHANNEL_REMAP[i]] = raw[i];
     // gpio_set_level(CONFIG.CLK_PIN, 0);
+  }
 }
