@@ -14,6 +14,8 @@ extern const char *NVS_GREEN_VALUE_GROUP;
 struct LineSensor_config_t
 {
     gpio_num_t mult_in[4];
+    gpio_num_t CLK_PIN;
+    gpio_num_t RES_PIN;
     adc_unit_t ADC_unit;
     adc_channel_t ADC_chanel;
     bool stupid_pin;
@@ -47,6 +49,12 @@ private: // константы
         {0, 1, 1, 1}, //channel 14
         {1, 1, 1, 1}  //channel 15
     };
+    const int CHANNEL_REMAP[16] = {
+        0, 1, 2, 3,    // 0b0000..0b0011 -> биты 2,3 = 00, не меняется
+        8, 9, 10,11,   // 0b0100..0b0111 -> бит 2 стал битом 3
+        4, 5, 6, 7,    // 0b1000..0b1011 -> бит 3 стал битом 2
+        12,13,14,15    // 0b1100..0b1111 -> биты 2,3 = 11, не меняется
+    };
 
     LineSensor_config_t CONFIG;
 public:
@@ -55,7 +63,7 @@ public:
     LineSensor_t():CONFIG{{(gpio_num_t)13,
         (gpio_num_t)12,
         (gpio_num_t)26,
-        (gpio_num_t)27}, ADC_UNIT_2, ADC_CHANNEL_6, false, false}{}
+        (gpio_num_t)27}, (gpio_num_t)23, (gpio_num_t)22, ADC_UNIT_1, ADC_CHANNEL_3, false, false}{}
     
     void init(LineSensor_config_t config);
     void update(){read_line_sensors(); saveLineDirection(); calculateLineAngle();}

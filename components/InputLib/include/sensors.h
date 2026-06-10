@@ -54,7 +54,7 @@ public:
         LineSensor.init(config.LineSensor_config);
 
         ESP_LOGI("sensor init", "start Locator init");
-        Locator.init(config.locator_offset, config.inverse_locator); 
+        //Locator.init(config.locator_offset, config.inverse_locator); 
 
         ESP_LOGI("sensor init", "start Camera init");
         Cam.init(config.CAM_GPIO, 30);
