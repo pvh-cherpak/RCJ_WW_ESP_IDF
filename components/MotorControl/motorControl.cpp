@@ -257,15 +257,16 @@ void Dribbler::init()
     pwm_config.cmpr_a = 0;     // duty cycle of PWMxA = 0
     pwm_config.cmpr_b = 0;     // duty cycle of PWMxb = 0
     pwm_config.counter_mode = MCPWM_UP_COUNTER;
-    pwm_config.duty_mode = MCPWM_DUTY_MODE_0;
+    pwm_config.duty_mode = MCPWM_DUTY_MODE_1;
 
     mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_2, &pwm_config);
 
-    dribble(0);
+    dribble(90);
     vTaskDelay(pdMS_TO_TICKS(1000));
     dribble(180);
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(1000));
     dribble(0);
+    vTaskDelay(pdMS_TO_TICKS(1000));
     
     ESP_LOGI("Dribbler::init()", "sozdanie ocheredi");
     Queue = xQueueCreate(10, sizeof(int));

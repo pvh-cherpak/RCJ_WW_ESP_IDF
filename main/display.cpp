@@ -221,7 +221,7 @@ void info_menu(button_handle_t &encoder_button)
     while (true)
     {
         sensor.update();
-        sensor.BallSensor.update();
+        //sensor.BallSensor.update();
 
         // menu.writeLineClean(2, "L " + std::to_string(sensor.Cam.Yellow.left_angle));
         // menu.writeLineClean(3, "C " + std::to_string(sensor.Cam.Yellow.center_angle));

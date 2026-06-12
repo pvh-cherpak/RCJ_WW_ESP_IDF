@@ -31,7 +31,7 @@ float isBallStrength = 120;
 int drive2ballSpeed = 50;
 int move2gateSpeed = 60;
 float goRoundBallDiap = 20;
-float goRoundBallCoefFw = 1.5f;
+float goRoundBallCoefFw = 2.0f; //0.5f
 int timeBallHeld = 0;
 int gateMovePause = 1000;
 float goRoundObstacleCoef = 7.f;
@@ -426,13 +426,15 @@ bool isBall()
         return sensor.DribblerMicroswitch.ballCatched();
     }
     else
-        return sensor.BallSensor.ballCatched();// (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
+        return sensor.LightGates.ballCatched();// (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
 }
 
 
 bool paradox(int color)
 {
-    // return false;
+    //return false;
+
+
     ballAngle = sensor.Locator.getBallAngleLocal();
     lineAngle = sensor.LineSensor.getAngleDelayed();
     int gateAngle = (int)sensor.Cam.gate(color).center_angle;
@@ -526,6 +528,7 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
             gate_in_front = gate_in_front || (abs(angle_err) <= 10); // включение атаки
             gate_in_front = gate_in_front && (abs(angle_err) <= 15); // условие продолжения атаки
 
+            ESP_LOGI("gates", "%f", moveAngle);
             if ((gate_in_front || isBall()/* && abs(goodAngle(ballAngle - offset)) <= 10*/)
                 )
             {

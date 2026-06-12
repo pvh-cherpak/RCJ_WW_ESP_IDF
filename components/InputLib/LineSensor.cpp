@@ -223,34 +223,33 @@ void LineSensor_t::getLineDirection_Delayed(float &x, float &y)
 
 void LineSensor_t::read_line_sensors()
 {
-  // for (int channel = 0; channel < 16; channel ++)
-  // {
-  //   if(!rabotaet[channel] && !CONFIG.al_seners)
-  //     continue;
-  //   for (int bit = 0; bit < 4; bit++)
-  //     ESP_ERROR_CHECK(gpio_set_level(CONFIG.mult_in[bit], MULT_CHANEL[channel][bit]));
-  //   ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, CONFIG.ADC_chanel, &actual_value[channel]));
-  //   // ESP_LOGI("line sensor", "chanel: %d", channel);
-  //   // vTaskDelay(pdMS_TO_TICKS(1000));
-  // }
+  for (int channel = 0; channel < 16; channel ++)
+  {
+    if(!rabotaet[channel])
+      continue;
+    for (int bit = 0; bit < 4; bit++)
+      ESP_ERROR_CHECK(gpio_set_level(CONFIG.mult_in[bit], MULT_CHANEL[channel][bit]));
+    ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, CONFIG.ADC_chanel, &actual_value[channel]));
+    // ESP_LOGI("line sensor", "chanel: %d", channel);
+    // vTaskDelay(pdMS_TO_TICKS(1000));
+  }
 
-    gpio_set_level(CONFIG.RES_PIN, 1);
-    esp_rom_delay_us(1); 
-    gpio_set_level(CONFIG.RES_PIN, 0);
+    // gpio_set_level(CONFIG.RES_PIN, 1);
+    // esp_rom_delay_us(1); 
+    // gpio_set_level(CONFIG.RES_PIN, 0);
 
-    int raw[16];
-    for (int channel = 0; channel < 16; channel++)
-    {
-        ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, CONFIG.ADC_chanel, &raw[channel]));
-        if (channel < 15){
-          gpio_set_level(CONFIG.CLK_PIN, 0);
-          esp_rom_delay_us(1);
-          gpio_set_level(CONFIG.CLK_PIN, 1);
-          esp_rom_delay_us(1);  
-        }
-    }
+    // int raw[16];
+    // for (int channel = 0; channel < 16; channel++)
+    // {
+    //     ESP_ERROR_CHECK(adc_oneshot_read(adc_mult, CONFIG.ADC_chanel, &raw[channel]));
+    //     if (channel < 15){
+    //       gpio_set_level(CONFIG.CLK_PIN, 0);
+    //       esp_rom_delay_us(1);
+    //       gpio_set_level(CONFIG.CLK_PIN, 1);
+    //       esp_rom_delay_us(1);  
+    //     }
+    // }
 
-    for (int i = 0; i < 16; i++)
-        actual_value[15 - CHANNEL_REMAP[i]] = raw[i];
-    // gpio_set_level(CONFIG.CLK_PIN, 0);
+    // for (int i = 0; i < 16; i++)
+    //     actual_value[15 - CHANNEL_REMAP[i]] = raw[i];
 }
