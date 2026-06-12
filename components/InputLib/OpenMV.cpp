@@ -71,9 +71,9 @@ void OpenMVCommunication_t::init(int GPIO, int provorot)
                                         0, 0, NULL, 0));
 }
 
-const int CAM_UART_BUFFER_SIZE = 512; // модуль, по которому берутся индексы
-const int CAM_UART_READ_LIMIT = 256;  // если пришло больше - чистим буфер
-const int CAM_MSG_SIZE = 42;
+const int CAM_UART_BUFFER_SIZE = 2048; // модуль, по которому берутся индексы
+const int CAM_UART_READ_LIMIT = 1024 + 512;  // если пришло больше - чистим буфер
+const int CAM_MSG_SIZE = 30;
 
 inline int fit(int index)
 {
@@ -98,7 +98,7 @@ void OpenMVCommunication_t::update()
 {
     size_t length = 0;
     (uart_get_buffered_data_len(uart_num, &length));
-    //ESP_LOGI("OpenMV", "available data length=%d", length);
+    ESP_LOGI("OpenMV", "available data length=%d", length);
     if (length > CAM_UART_READ_LIMIT)
     {
         ESP_LOGW("OpenMV", "Flush UART (%d bytes)", length);
@@ -109,6 +109,12 @@ void OpenMVCommunication_t::update()
     // pos_start = -1; // не страшно, если данных много
 
     int read = uart_read_bytes(uart_num, &data[pos_write], length, UART_READ_TIMEOUT_TIME_TICS);
+
+//     ESP_LOGI("OpenMV", "Received %d bytes:", read);
+// for (int i = 0; i < read; ++i) {
+//     int idx = fit(pos_write + i);          // безопасный кольцевой индекс
+//     ESP_LOGI("OpenMV", "byte[%d] = 0x%02X", i, data[idx]);
+// }
 
     for (int i = 0; i < read; ++i)
     {
@@ -130,11 +136,11 @@ void OpenMVCommunication_t::update()
 
     pos_write = fit(pos_write);
 
-    //ESP_LOGI("OpenMV", "pos_write = %d, pos_start = %d", pos_write, pos_start);
+    ESP_LOGI("OpenMV", "pos_write = %d, pos_start = %d", pos_write, pos_start);
 
     if (pos_start != -1 && fit(pos_write - pos_start) >= CAM_MSG_SIZE)
     {
-        // ESP_LOGI("OpenMV", "READ DATA, pos_start = %d", pos_start);
+        ESP_LOGI("OpenMV", "READ DATA, pos_start = %d", pos_start);
 
         // сохраняем нужные данные в массив для сообщения и парсим
         pos_start = fit(pos_start + 2);
@@ -142,8 +148,9 @@ void OpenMVCommunication_t::update()
         {
             msg[i] = data[fit(pos_start + i)];
         }
-        parseCorners(&msg[0]);
-        calculate_global_values();
+        //parseCorners(&msg[0]);
+        parseData(&msg[0]);
+        // calculate_global_values();
 
         // ищем, не было ли уже обнаружено новое начало сообщения
         for (int i = pos_start; i != pos_write; i = fit(i + 1))
@@ -176,6 +183,11 @@ int16_t from_direct_code(int16_t num)
 
 void OpenMVCommunication_t::parseData(uint8_t *data)
 {
+    
+    ESP_LOGI("OpenMV", "Parsed %d bytes:", 24);
+    for (int i = 0; i < 24; ++i) {      
+        ESP_LOGI("OpenMV", "byte[%d] = 0x%02X", i, data[i]);
+    }
     cam_data.Gates[0].left_angle = from_direct_code((data[0] << 8) | data[1]);
     cam_data.Gates[0].center_angle = from_direct_code((data[2] << 8) | data[3]);
     cam_data.Gates[0].right_angle = from_direct_code((data[4] << 8) | data[5]);
@@ -192,8 +204,8 @@ void OpenMVCommunication_t::parseData(uint8_t *data)
     cam_data.Gates[1].width = from_direct_code((data[10 + 14] << 8) | data[11 + 14]);
     cam_data.Gates[1].height = from_direct_code((data[12 + 14] << 8) | data[13 + 14]);
 
-    obst_angle = from_direct_code((data[28] << 8) | data[29]);
-    obst_dist = from_direct_code((data[30] << 8) | data[31]);
+    // obst_angle = from_direct_code((data[28] << 8) | data[29]);
+    // obst_dist = from_direct_code((data[30] << 8) | data[31]);
 }
 
 void OpenMVCommunication_t::parseCorners(uint8_t *data)

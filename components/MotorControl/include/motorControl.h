@@ -23,11 +23,17 @@ void mcpwm_example_gpio_initialize();
 void set_channel(bool bBrake, int32_t iSpeed, mcpwm_timer_t timer);
 void motor_drv8833_task();
 
-static const gpio_num_t DRB = GPIO_NUM_23;
+static const gpio_num_t DRB = GPIO_NUM_5;
+
+enum class DecayMode {
+    FAST_DECAY,
+    SLOW_DECAY
+};
 
 class MotorControl
 {
 private:
+    DecayMode decayMode = DecayMode::FAST_DECAY;
     void setDutyCycle(float duty, mcpwm_unit_t unit, mcpwm_timer_t timer);
 
     const gpio_num_t M1_FW;
@@ -43,6 +49,7 @@ private:
 
 public:
     void init();
+    void setDecayMode(DecayMode mode) { decayMode = mode; }
 
     MotorControl(const gpio_num_t M1_FW, const gpio_num_t M1_BW, const gpio_num_t M2_FW,
                  const gpio_num_t M2_BW, const gpio_num_t M3_FW, const gpio_num_t M3_BW, const gpio_num_t M4_FW, const gpio_num_t M4_BW) : M1_FW(M1_FW), M1_BW(M1_BW), M2_FW(M2_FW), M2_BW(M2_BW), M3_FW(M3_FW), M3_BW(M3_BW), M4_FW(M4_FW), M4_BW(M4_BW){};

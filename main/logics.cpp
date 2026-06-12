@@ -423,7 +423,8 @@ bool isBall()
 
     if (sensor.cfg.robotType == 2)
     {
-        return sensor.DribblerMicroswitch.ballCatched();
+        // return sensor.DribblerMicroswitch.ballCatched();
+        sensor.LightGates.ballCatched();
     }
     else
         return sensor.BallSensor.ballCatched();// (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //
@@ -502,7 +503,8 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
 
     ballAngle = sensor.Locator.getBallAngleLocal();
     
-    int gateAngle = (int)sensor.Cam.gate(color).center_angle;
+    // int gateAngle = (int)sensor.Cam.gate(color).center_angle;
+    int gateAngle = sensor.IMU.getYaw();
     lineAngle = (useLine ? sensor.LineSensor.getAngleDelayed() : 360);
 
     int offset_angle = (int)goodAngle(gateAngle - offset);
@@ -512,7 +514,7 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
     // menu.writeLineClean(3, "");
 
     if (!paradox(color)) {
-        deltaAngle = goodAngle(offset_angle) * 0.25f;
+        deltaAngle = -goodAngle(offset_angle) * 0.25f;
         if (lineAngle != 360) {
             // menu.writeLineClean(2, "LINE!!! " + std::to_string(lineAngle));
             drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
@@ -536,9 +538,9 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
                 moveAngle = gateAngle;
                 drv.drive(moveAngle, (int)deltaAngle, 80);
 
-                if (sensor.Cam.gate(color).distance < 30 && isBall()) {
-                    kicker.kick();
-                }
+                // if (sensor.Cam.gate(color).distance < 30 && isBall()) {
+                //     kicker.kick();
+                // }
             }
             else {
                 #ifdef OTLADKA_petrovich

@@ -54,16 +54,17 @@ public:
         LineSensor.init(config.LineSensor_config);
 
         ESP_LOGI("sensor init", "start Locator init");
-        //Locator.init(config.locator_offset, config.inverse_locator); 
+        Locator.init(config.locator_offset, config.inverse_locator); 
 
         ESP_LOGI("sensor init", "start Camera init");
         Cam.init(config.CAM_GPIO, 30);
 
         if (cfg.robotType == 2) // forward
+            LightGates.init(GPIO_NUM_36);
             // BallSensor.init(mS_to_uS(0), GPIO_PULLDOWN_ONLY);
-            DribblerMicroswitch.init(36, 5, 1);
-        else if (cfg.robotType == 1)
-            BallSensor.init(mS_to_uS(1000));
+            // DribblerMicroswitch.init(36, 5, 1);
+        // else if (cfg.robotType == 1)
+            // BallSensor.init(mS_to_uS(1000));
     }
     void update(){
         if(IMU_active)
@@ -72,6 +73,8 @@ public:
         
         if (cfg.robotType == 1) 
             BallSensor.update();
+        if (cfg.robotType == 2) // forward
+            LightGates.update();
         // if (cfg.robotType == 2)
         //     BallSensor.update();
         // else if (cfg.robotType == 1)

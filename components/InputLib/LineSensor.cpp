@@ -159,7 +159,7 @@ void LineSensor_t::calculateLineAngle()
     line_angle_delayed = 360;
     return;
   }
-  line_angle_delayed = atan2(line_dir_x, line_dir_y) * RAD_TO_DEG;
+  line_angle_delayed = -atan2(line_dir_x, line_dir_y) * RAD_TO_DEG;
 }
 
 bool LineSensor_t::isLineOnSensor(int sensor)

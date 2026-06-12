@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include "esp_log.h"
+#include <new>
 #include <string>
 #include <vector>
 
@@ -34,6 +35,9 @@
 extern const char *NVS_WHITE_VALUE_GROUP;
 extern const char *NVS_GREEN_VALUE_GROUP;
 extern const char *NVS_IDENTIFIER_GROUP;
+
+static constexpr gpio_num_t CAM_UART_RX_KEEPER = GPIO_NUM_19;
+static constexpr gpio_num_t CAM_UART_RX_FORWARD = GPIO_NUM_34;
 
 void nvs_set_variables(uint8_t robot_type);
 // 1 - goalkepper 2 - forward
@@ -57,11 +61,17 @@ void sensor_init(uint8_t robot_type)
 	sensor.Cam.dist_offset_y = y;
 	//ESP_LOGI("GP", "dist offsets:  %d, %d", sensor.Cam.dist_offset_x, sensor.Cam.dist_offset_y);
 
-	drv.~MotorControl();
-	new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_26, GPIO_NUM_25 ,GPIO_NUM_2, GPIO_NUM_4, GPIO_NUM_17, GPIO_NUM_16);
-
 	conf.robotType = robot_type;
-	conf.CAM_GPIO = 19;
+	if (robot_type == 1)
+		conf.CAM_GPIO = CAM_UART_RX_KEEPER;
+	else
+		conf.CAM_GPIO = CAM_UART_RX_FORWARD;
+
+	drv.~MotorControl();
+	if (robot_type == 1)
+		new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_26, GPIO_NUM_25 ,GPIO_NUM_2, GPIO_NUM_4, GPIO_NUM_17, GPIO_NUM_16);
+	else if (robot_type == 2)
+		new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_26, GPIO_NUM_25, GPIO_NUM_18, GPIO_NUM_17, GPIO_NUM_21, GPIO_NUM_19);
 	
 	if (robot_type == 1)
 	{ //keeper
@@ -75,7 +85,7 @@ void sensor_init(uint8_t robot_type)
 	else
 	{ //forward
 		conf.LineSensor_config = {true, {(gpio_num_t)-1, (gpio_num_t)-1, (gpio_num_t)-1, (gpio_num_t)-1}, GPIO_NUM_23, GPIO_NUM_22, ADC_UNIT_1, ADC_CHANNEL_3, false, true, {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}, 22};
-		conf.inverse_locator = true;
+		conf.inverse_locator = false;
 
 		conf.IMU_active = true;
 	}
@@ -86,7 +96,29 @@ extern "C"
 {
 	void app_main(void)
 	{
+		// sensor.Cam.init(34, 0);
+		// while(1){
+		// 	sensor.Cam.update();
 
+		// 	ESP_LOGI("Cam", "HeightY: %d, WidthY: %d, CenterAngle: %d, CenterDistance: %d, ClosAngle: %d, RightAngle: %d, CenterAngle: %d, LeftAngle: %d",
+		// 		 sensor.Cam.Yellow.height, sensor.Cam.Yellow.width, sensor.Cam.Yellow.center_angle, sensor.Cam.Yellow.distance, sensor.Cam.Yellow.clos_angle,
+		// 		sensor.Cam.Yellow.right_angle, sensor.Cam.Yellow.center_angle, sensor.Cam.Yellow.left_angle);
+		// 	ESP_LOGI("Cam", "HeightB: %d, WidthB: %d, CenterAngle: %d, CenterDistance: %d, ClosAngle: %d, RightAngle: %d, CenterAngle: %d, LeftAngle: %d",
+		// 		 sensor.Cam.Blue.height, sensor.Cam.Blue.width, sensor.Cam.Blue.center_angle, sensor.Cam.Blue.distance, sensor.Cam.Blue.clos_angle,
+		// 		sensor.Cam.Blue.right_angle, sensor.Cam.Blue.center_angle, sensor.Cam.Blue.left_angle);
+		// 	vTaskDelay(100 / portTICK_PERIOD_MS);
+		// }
+
+		// dribbler.init();
+		// dribbler.smart_dribble(50);
+		// while(1){
+		// 	dribbler.na_vse_babki();
+		// 	vTaskDelay(1000 / portTICK_PERIOD_MS);
+		// 	dribbler.smart_dribble(0);
+		// 	vTaskDelay(1000 / portTICK_PERIOD_MS);
+		// 	dribbler.smart_dribble(100);
+		// 	vTaskDelay(1000 / portTICK_PERIOD_MS);
+		// }
 		esp_err_t err = nvs_flash_init();
 		if ((err == ESP_ERR_NVS_NO_FREE_PAGES) || (err == ESP_ERR_NVS_NEW_VERSION_FOUND))
 		{
@@ -117,16 +149,42 @@ extern "C"
 		// }
 
 		// nvs_set_variables(1); 
-
-		start_i2c_legacy();
-		menu.init();
-		menu.clearDisplay();
 		// nvs_set_variables(2);
 
 		uint8_t robot_type = get_identifier();
 		if (!robot_type)
 			esp_restart();
+
+		if(robot_type == 1){
+			ESP_LOGI("Robot type", "Keeper");
+			start_i2c_legacy(GPIO_NUM_22, GPIO_NUM_21);
+		}
+		else if(robot_type == 2){
+			ESP_LOGI("Robot type", "Forward");
+			start_i2c_legacy(GPIO_NUM_27, GPIO_NUM_14);
+		}
+		else{
+			ESP_LOGI("Robot type", "Unknown");
+			vTaskDelay(1000);
+			esp_restart();
+		}
+
+		// if (robot_type == 2)
+		dribbler.init();
+
+
+		// else if (robot_type == 1)
+		// 	kicker.init(GPIO_NUM_23);
+
 		sensor_init(robot_type);
+
+		//drv.init();
+
+		drv.drive(0, 0, 0, 0);
+		// while(1){vTaskDelay(1000 / portTICK_PERIOD_MS);}
+		
+		menu.init();
+		menu.clearDisplay();
 
 		if (robot_type == 1)
 			menu.showPicture(0, 0, shet, 128, 64, true);
@@ -141,29 +199,31 @@ extern "C"
 
 		// BTDebug.init();
 
-		if (robot_type == 2)
-			dribbler.init();
-		else if (robot_type == 1)
-			kicker.init(GPIO_NUM_23);
+		
+
+	
 
 		//err_log.init();
 		// real_dist.init();
-		drv.init();
+		
+		
 
-		int GPIO_A, GPIO_B;
-		// if (robot_type == 1)
-		// {
-		// 	GPIO_A = 32;
-		// 	GPIO_B = 35;
-		// }
-		// else
+		int GPIO_A, GPIO_B, GPIO_KEY;
+		if (robot_type == 1)
 		{
 			GPIO_A = 34;
 			GPIO_B = 39;
+			GPIO_KEY = 35;
+		}
+		else
+		{
+			GPIO_A = 12;
+			GPIO_B = 13;
+			GPIO_KEY = 15;
 		}
 
-		drv.drive(50, 50, 50, 50);
-		while (true) {}
+		// drv.drive(50, 50, 50, 50);
+		// while (true) {}
 
 		// while (true) {
 		// 	sensor.LineSensor.update();
@@ -218,7 +278,7 @@ extern "C"
 		// }
 		
 
-		start_menu(robot_type, GPIO_A, GPIO_B, 35);
+		start_menu(robot_type, GPIO_A, GPIO_B, GPIO_KEY);
 
 		vTaskDelete(NULL);
 		// esp_restart();
