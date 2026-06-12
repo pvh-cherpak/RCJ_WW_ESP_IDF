@@ -77,9 +77,6 @@ void sensor_init(uint8_t robot_type)
 		conf.inverse_locator = true;
 
 		conf.IMU_active = true;
-
-		conf.LineSensor_config.offset = 22;
-		conf.LineSensor_config.al_seners = false;
 	}
 	sensor.init(conf);
 }
@@ -162,7 +159,8 @@ extern "C"
 			GPIO_B = 39;
 		}
 
-		// drv.drive(50, 50, 50, 50);
+		drv.drive(50, 50, 50, 50);
+		while (true) {}
 
 		// while (true) {
 		// 	sensor.LineSensor.update();
