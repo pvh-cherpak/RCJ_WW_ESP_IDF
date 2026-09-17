@@ -423,7 +423,8 @@ bool isBall()
 
     if (sensor.cfg.robotType == 2)
     {
-        return sensor.DribblerMicroswitch.ballCatched();
+        // return sensor.DribblerMicroswitch.ballCatched();
+        return sensor.LightGates.ballCatched();
     }
     else
         return sensor.LightGates.ballCatched();// (sensor.Locator.getStrength() >= 100 && abs(sensor.Locator.getBallAngleLocal()) <= 10); //

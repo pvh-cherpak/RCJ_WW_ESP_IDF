@@ -122,6 +122,14 @@ extern "C"
 			esp_restart();
 		sensor_init(robot_type);
 
+		drv.init();
+
+		drv.drive(0, 0, 0, 0);
+		// while(1){vTaskDelay(1000 / portTICK_PERIOD_MS);}
+		
+		menu.init();
+		menu.clearDisplay();
+
 		if (robot_type == 1)
 			menu.showPicture(0, 0, shet, 128, 64, true);
 		else if (robot_type == 2)

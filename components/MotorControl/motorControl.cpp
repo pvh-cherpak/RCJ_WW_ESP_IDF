@@ -317,14 +317,15 @@ void Dribbler::brake(){
     smart_dribble(-10);
 }
 
-void Kicker::init(gpio_num_t kicker_pin){
+void Kicker::init(gpio_num_t kicker_pin, bool isInverted){
     pin = kicker_pin;
+    invert = isInverted;
 
     gpio_reset_pin(pin);
     gpio_set_direction(pin, GPIO_MODE_OUTPUT);
     gpio_set_pull_mode(pin, GPIO_PULLDOWN_ONLY);
 
-    gpio_set_level(pin, 0);
+    gpio_set_level(pin, invert);
 
 
     // ESP_LOGI("Kicker::init()", "sozdanie ocheredi");
@@ -367,7 +368,7 @@ static void kicker_returned_timer_cb(void*){
 
 void Kicker::kick(){
     if (state == 0 && KickTimer != NULL){
-        gpio_set_level(pin, 1);
+        gpio_set_level(pin, !invert);
         state = 1;
 
         esp_timer_stop(KickTimer);
@@ -377,7 +378,7 @@ void Kicker::kick(){
 
 void Kicker::return_kicker(){
     if (state == 1){
-        gpio_set_level(pin, 0);
+        gpio_set_level(pin, invert);
         state = 2;
 
         esp_timer_stop(ReturnTimer);

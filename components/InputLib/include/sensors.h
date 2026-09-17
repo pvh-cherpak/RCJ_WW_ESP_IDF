@@ -59,9 +59,11 @@ public:
         ESP_LOGI("sensor init", "start Camera init");
         Cam.init(config.CAM_GPIO, -30);
 
-        if (cfg.robotType == 2) // forward
+        if (cfg.robotType == 2) { // forward
+            LightGates.init(GPIO_NUM_36);
             // BallSensor.init(mS_to_uS(0), GPIO_PULLDOWN_ONLY);
-            DribblerMicroswitch.init(36, 5, 1);
+            // DribblerMicroswitch.init(36, 5, 1);
+        }
         // else if (cfg.robotType == 1)
         //     BallSensor.init(mS_to_uS(1000));
         else if (cfg.robotType == 1)

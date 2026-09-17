@@ -4,22 +4,36 @@
 #include "esp_adc/adc_oneshot.h"
 #include "driver/gpio.h"
 #include "esp_timer.h"
+#include "esp_err.h"
 
-class LightGates_t{
+class LightGates_t {
+private:
     gpio_num_t lightPin = GPIO_NUM_36;
-	adc_oneshot_unit_handle_t adc_light;
+    adc_oneshot_unit_handle_t adc_light = nullptr;
     adc_unit_t adc_unit_light = ADC_UNIT_1;
     adc_channel_t adc_channel_light = ADC_CHANNEL_0;
-    int isBallThreshold = 3000;
+    
+    int isBallThreshold = 300;
+    int64_t holdTimeUs = 500000; // 500 ms удержания состояния захвата
+    int currentLuminosity = 0;
     
     bool isBallValue = false;
     int64_t lastIsBallTime = 0;
 
-    public:
-        void init(gpio_num_t pin_num);
-        void update();
-        bool isBall();
-        bool ballCatched();
+public:
+    LightGates_t() = default;
+
+    /**
+     * @brief Инициализирует фотоворота на указанном пине.
+     * @param pin_num Пин фототранзистора/фотодиода (по умолчанию GPIO_NUM_36)
+     * @param threshold Порог освещенности (меньше порога - мяч в воротах)
+     * @param hold_time_us Время в микросекундах, в течение которого мяч считается пойманным
+     */
+    esp_err_t init(gpio_num_t pin_num = GPIO_NUM_36);
+
+    void update();
+    bool isBall() const;
+    bool ballCatched() const;
 };
 
 #endif

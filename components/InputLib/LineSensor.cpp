@@ -1,4 +1,5 @@
 #include "LineSensor.h"
+#include "AdcManager.h"
 #include <string>
 
 #include "freertos/FreeRTOS.h"
@@ -45,11 +46,8 @@ void LineSensor_t::init(LineSensor_config_t config)
   // У есп есть 2 АЦП каждый можно комутировать на определённый диапазон прописанный в доках
   // для нашего пина нужен 2
   // ulp_mode это режим колибровки показаний АЦП, я думаю оно нам не надо
-  adc_oneshot_unit_init_cfg_t init_config1 = {
-      .unit_id = CONFIG.ADC_unit,
-      .ulp_mode = ADC_ULP_MODE_DISABLE,
-  };
-  ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc_mult));
+  adc_mult = AdcManager::get_unit(CONFIG.ADC_unit);
+  assert(adc_mult != nullptr);
   // atten - Атеньюатор, рабочекрестьянским языком уменьшитель сигнала (это не я вас принижаю, в душе не ебу как это работает, думается мне что это не просто делитель напряжения)
   // bitwidth - разрядность в битах, чем больше битов тем выше точность ADC_BITWIDTH_DEFAULT должен обеспечивать максимальную точность на какую способен АЦП
   adc_oneshot_chan_cfg_t ADC_config = {
@@ -112,6 +110,7 @@ void LineSensor_t::init(LineSensor_config_t config)
   // согласитесь это ШЕДЕВР
   ESP_LOGI("White values", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", white_value[0], white_value[1], white_value[2], white_value[3], white_value[4], white_value[5], white_value[6], white_value[7], white_value[8], white_value[9], white_value[10], white_value[11], white_value[12], white_value[13], white_value[14], white_value[15]);
   ESP_LOGI("Green values", ": %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", green_value[0], green_value[1], green_value[2], green_value[3], green_value[4], green_value[5], green_value[6], green_value[7], green_value[8], green_value[9], green_value[10], green_value[11], green_value[12], green_value[13], green_value[14], green_value[15]);
+
   // return corection_counter;
 }
 
