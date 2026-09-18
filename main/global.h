@@ -28,7 +28,7 @@ extern const char *NVS_IDENTIFIER_GROUP;
 // extern BTDebug_t BTDebug;
 
 // void init_i2c();
-void start_i2c_legacy(void);
+void start_i2c_legacy(int sda_gpio, int scl_gpio);
 void init_display_legacy();
 
 // void init_display();

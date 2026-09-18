@@ -432,7 +432,7 @@ bool isBall()
 
 bool paradox(int color)
 {
-    // return false;
+    return false;
     ballAngle = sensor.Locator.getBallAngleLocal();
     lineAngle = sensor.LineSensor.getAngleDelayed();
     int gateAngle = (int)sensor.Cam.gate(color).center_angle;
@@ -502,7 +502,8 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
 
     ballAngle = sensor.Locator.getBallAngleLocal();
     
-    int gateAngle = (int)sensor.Cam.gate(color).center_angle;
+    // int gateAngle = (int)sensor.Cam.gate(color).center_angle;
+    int gateAngle = (int)goodAngle(-sensor.IMU.getYaw());
     lineAngle = (useLine ? sensor.LineSensor.getAngleDelayed() : 360);
 
     int offset_angle = (int)goodAngle(gateAngle - offset);
@@ -536,9 +537,9 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
                 moveAngle = gateAngle;
                 drv.drive(moveAngle, (int)deltaAngle, 80);
 
-                if (sensor.Cam.gate(color).distance < 30 && isBall()) {
-                    kicker.kick();
-                }
+                // if (sensor.Cam.gate(color).distance < 30 && isBall()) {
+                //     kicker.kick();
+                // }
             }
             else {
                 #ifdef OTLADKA_petrovich
@@ -1007,8 +1008,8 @@ void playForwardGoyda(int color)
             continue;
         }
 
-        int cam_angle = sensor.Cam.gate(color).center_angle;
-        int cam_dist = sensor.Cam.gate(color).distance;
+        // int cam_angle = sensor.Cam.gate(color).center_angle;
+        // int cam_dist = sensor.Cam.gate(color).distance;
 
         int st = sensor.Locator.getStrength();
         int ballAngle = sensor.Locator.getBallAngleLocal();
@@ -1016,7 +1017,7 @@ void playForwardGoyda(int color)
 
         int robotAngle = sensor.IMU.getYaw();
 
-        int deltaAngle = sensor.Cam.gate(color).center_angle * 0.3;
+        // int deltaAngle = sensor.Cam.gate(color).center_angle * 0.3;
         
         petrovich_iter(color, 0);
     }

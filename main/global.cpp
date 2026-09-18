@@ -13,14 +13,14 @@ static const char *I2C_tag = "I2C";
 // i2c_master_bus_handle_t i2c_bus_handle = NULL;
 
 
-void start_i2c_legacy(void) {
+void start_i2c_legacy(int sda_gpio, int scl_gpio) {
 	i2c_config_t conf;
 	conf.mode = I2C_MODE_MASTER;
 	// conf.sda_io_num = (gpio_num_t)CONFIG_SDA_GPIO;
 	// conf.scl_io_num = (gpio_num_t)CONFIG_SCL_GPIO;
 
-	conf.sda_io_num = (gpio_num_t) CONFIG_SCL_GPIO;
-	conf.scl_io_num = (gpio_num_t) CONFIG_SDA_GPIO;
+	conf.sda_io_num = (gpio_num_t) sda_gpio;
+	conf.scl_io_num = (gpio_num_t) scl_gpio;
 
 	
 	conf.sda_pullup_en = GPIO_PULLUP_ENABLE;

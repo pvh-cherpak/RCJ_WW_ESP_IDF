@@ -55,6 +55,7 @@ public:
 
         ESP_LOGI("sensor init", "start Locator init");
         Locator.init(config.locator_offset, config.inverse_locator); 
+        Locator.init(config.locator_offset, config.inverse_locator); 
 
         ESP_LOGI("sensor init", "start Camera init");
         Cam.init(config.CAM_GPIO, -30);
@@ -76,6 +77,8 @@ public:
         
         // if (cfg.robotType == 1) 
         //     BallSensor.update();
+        if (cfg.robotType == 2) // forward
+            LightGates.update();
         // if (cfg.robotType == 2)
         //     BallSensor.update();
         if (cfg.robotType == 1)
