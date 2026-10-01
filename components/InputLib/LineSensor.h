@@ -21,7 +21,7 @@ struct LineSensor_config_t
     adc_channel_t ADC_chanel;
     bool stupid_pin;
     bool inversed_without_offset;
-    bool al_seners = false;
+    bool rabotaet[16];
     int offset = 0;
 };
 
