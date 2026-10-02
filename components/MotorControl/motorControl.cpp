@@ -27,41 +27,6 @@ Kicker kicker;
 #define PWM_RESOLUTION      LEDC_TIMER_10_BIT  // Разрешение 10 бит (значения от 0 до 1023)
 #define MAX_DUTY            1023               // Максимальное значение для 10 бит
 
-// Массив со всеми пинами
-const int motor_pins[8] = {
-    MOTOR1_IN1, MOTOR1_IN2,
-    MOTOR2_IN1, MOTOR2_IN2,
-    MOTOR3_IN1, MOTOR3_IN2,
-    MOTOR4_IN1, MOTOR4_IN2
-};
-
-// Функция инициализации ШИМ (LEDC)
-void motors_init() {
-    // 1. Настраиваем таймер LEDC
-    ledc_timer_config_t ledc_timer = {
-        .speed_mode       = LEDC_LOW_SPEED_MODE,
-        .duty_resolution  = PWM_RESOLUTION,
-        .timer_num        = LEDC_TIMER_0,
-        .freq_hz          = PWM_FREQ_HZ,
-        .clk_cfg          = LEDC_AUTO_CLK
-    };
-    ledc_timer_config(&ledc_timer);
-
-    // 2. Настраиваем 8 каналов LEDC (по 1 для каждого пина IN)
-    for (int i = 0; i < 8; i++) {
-        ledc_channel_config_t ledc_channel = {
-            .gpio_num       = motor_pins[i],
-            .speed_mode     = LEDC_LOW_SPEED_MODE,
-            .channel        = (ledc_channel_t)i,
-            .intr_type      = LEDC_INTR_DISABLE,
-            .timer_sel      = LEDC_TIMER_0,
-            .duty           = 0, // Исходная скважность - 0 (моторы стоят)
-            .hpoint         = 0
-        };
-        ledc_channel_config(&ledc_channel);
-    }
-}
-
 /**
  * Функция управления конкретным мотором.
  * @param motor_id Номер мотора от 0 до 3
@@ -135,7 +100,28 @@ void set_motor_speed(int motor_id, int speed, DecayMode decayMode = DecayMode::S
 
 void MotorControl::init()
 {
-    motors_init();
+    ledc_timer_config_t ledc_timer = {
+        .speed_mode       = LEDC_LOW_SPEED_MODE,
+        .duty_resolution  = PWM_RESOLUTION,
+        .timer_num        = LEDC_TIMER_0,
+        .freq_hz          = PWM_FREQ_HZ,
+        .clk_cfg          = LEDC_AUTO_CLK
+    };
+    ledc_timer_config(&ledc_timer);
+
+    // 2. Настраиваем 8 каналов LEDC (по 1 для каждого пина IN)
+    for (int i = 0; i < 8; i++) {
+        ledc_channel_config_t ledc_channel = {
+            .gpio_num       = motor_pins[i],
+            .speed_mode     = LEDC_LOW_SPEED_MODE,
+            .channel        = (ledc_channel_t)i,
+            .intr_type      = LEDC_INTR_DISABLE,
+            .timer_sel      = LEDC_TIMER_0,
+            .duty           = 0, // Исходная скважность - 0 (моторы стоят)
+            .hpoint         = 0
+        };
+        ledc_channel_config(&ledc_channel);
+    }
 
     // ESP_LOGI(motor_tag, "initializing mcpwm gpio...");
     // gpio_reset_pin(M1_FW);
