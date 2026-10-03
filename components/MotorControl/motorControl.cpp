@@ -9,19 +9,6 @@ MotorControl drv;
 Dribbler dribbler;
 Kicker kicker;
 
-// Определяем пины для 4 моторов (DRV8833 - H-мост)
-#define MOTOR1_IN1 GPIO_NUM_33
-#define MOTOR1_IN2 GPIO_NUM_32
-
-#define MOTOR2_IN1 GPIO_NUM_26
-#define MOTOR2_IN2 GPIO_NUM_25
-
-#define MOTOR3_IN1 GPIO_NUM_18
-#define MOTOR3_IN2 GPIO_NUM_17
-
-#define MOTOR4_IN1 GPIO_NUM_19
-#define MOTOR4_IN2 GPIO_NUM_21
-
 // Настройки ШИМа
 #define PWM_FREQ_HZ         5000               // Частота ШИМ (5 кГц хорошо подходит для DC моторов)
 #define PWM_RESOLUTION      LEDC_TIMER_10_BIT  // Разрешение 10 бит (значения от 0 до 1023)

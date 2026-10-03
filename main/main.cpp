@@ -69,9 +69,9 @@ void sensor_init(uint8_t robot_type)
 
 	drv.~MotorControl();
 	if (robot_type == 1)
-		new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_26, GPIO_NUM_25 ,GPIO_NUM_2, GPIO_NUM_4, GPIO_NUM_17, GPIO_NUM_16);
+		new (&drv) MotorControl(GPIO_NUM_32, GPIO_NUM_33, GPIO_NUM_25, GPIO_NUM_26 ,GPIO_NUM_4, GPIO_NUM_2, GPIO_NUM_16, GPIO_NUM_17);
 	else if (robot_type == 2)
-		new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_26, GPIO_NUM_25, GPIO_NUM_18, GPIO_NUM_17, GPIO_NUM_21, GPIO_NUM_19);
+		new (&drv) MotorControl(GPIO_NUM_33, GPIO_NUM_32, GPIO_NUM_26, GPIO_NUM_25, GPIO_NUM_18, GPIO_NUM_17, GPIO_NUM_19, GPIO_NUM_21);
 	
 
 	if (robot_type == 1)
@@ -166,12 +166,19 @@ extern "C"
 			esp_restart();
 		}
 
+
+		if (robot_type == 2) {
+			kicker.init(GPIO_NUM_16, 1);
+			dribbler.init();
+		}
+		else if (robot_type == 1) {
+			kicker.init(GPIO_NUM_23, 0);
+		}
+
 		sensor_init(robot_type);
 
 		drv.init();
-
 		drv.drive(0, 0, 0, 0);
-		// while(1){vTaskDelay(1000 / portTICK_PERIOD_MS);}
 		
 		menu.init();
 		menu.clearDisplay();
@@ -187,22 +194,6 @@ extern "C"
 			vTaskDelay(1000);
 			esp_restart();
 		}
-
-		// BTDebug.init();
-
-		
-
-		if (robot_type == 2) {
-			dribbler.init();
-			kicker.init(GPIO_NUM_16, 1);
-		}
-		else if (robot_type == 1) {
-			kicker.init(GPIO_NUM_23, 0);
-		}
-
-		//err_log.init();
-		// real_dist.init();
-		
 		
 
 		int GPIO_A, GPIO_B, GPIO_KEY;
@@ -218,9 +209,6 @@ extern "C"
 			GPIO_B = 13;
 			GPIO_KEY = 15;
 		}
-
-		// drv.drive(50, 50, 50, 50);
-		// while (true) {}
 
 		// while (true) {
 		// 	sensor.LineSensor.update();
@@ -255,29 +243,6 @@ extern "C"
 		// 	vTaskDelay(pdMS_TO_TICKS(100));
 		// }
 
-		
-
-		float FwBallAnglIntegral = 0;
-		float FwBallAnglPrev = 0;
-		float Fw_kd = 3.0;
-		float Fw_ki = 0;
-		float Fw_kp = 0.55;
-
-		// while (true)
-		// {
-		// 	sensor.Locator.update();
-		// 	int moveAngle = sensor.Locator.BallAngleLocal;
-		// 	Fw_kd = abs(moveAngle) > 40 ? 0 : 3;
-		// 	float robotAnglSpeed;
-
-		// 	float ballAnfl_err = moveAngle;
-		// 	robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
-		// 	FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
-		// 	FwBallAnglPrev = ballAnfl_err;
-
-		// 	drv.drive(moveAngle, (int)(robotAnglSpeed), 60);
-		// 	vTaskDelay(10 / portTICK_PERIOD_MS);
-		// }
 		
 
 		start_menu(robot_type, GPIO_A, GPIO_B, GPIO_KEY);
