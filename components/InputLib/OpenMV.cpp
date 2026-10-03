@@ -1,4 +1,5 @@
 #include "OpenMV.h"
+#include "crc.hpp"
 #include <esp_timer.h>
 
 const double DEG_TO_RAD = acos(-1) / 180;
@@ -73,12 +74,12 @@ void OpenMVCommunication_t::init(int GPIO, int provorot)
 
 const int CAM_UART_BUFFER_SIZE = 2048; // модуль, по которому берутся индексы
 const int CAM_UART_READ_LIMIT = 1024 + 512;  // если пришло больше - чистим буфер
-const int CAM_MSG_SIZE = 30;
+const int CAM_MSG_SIZE = 32;
 
 inline int fit(int index)
 {
     // лёгкая версия, но не очень надёжная
-    if (index > CAM_UART_BUFFER_SIZE)
+    if (index >= CAM_UART_BUFFER_SIZE)
         index -= CAM_UART_BUFFER_SIZE;
     if (index < 0)
         index += CAM_UART_BUFFER_SIZE;
@@ -86,6 +87,12 @@ inline int fit(int index)
     //index = (index % CAM_UART_BUFFER_SIZE + CAM_UART_BUFFER_SIZE) % CAM_UART_BUFFER_SIZE;
 
     return index;
+}
+
+uint16_t parse_uint16_le(const uint8_t* data) {
+    uint16_t num = data[1];
+    num = (num << 8) | data[0];
+    return num;
 }
 
 uint8_t data[CAM_UART_BUFFER_SIZE * 2]; // нужен запас для записи данных
@@ -148,9 +155,11 @@ void OpenMVCommunication_t::update()
         {
             msg[i] = data[fit(pos_start + i)];
         }
-        //parseCorners(&msg[0]);
-        parseData(&msg[0]);
-        // calculate_global_values();
+
+        uint16_t crc_code = parse_uint16_le(&msg[CAM_MSG_SIZE - 4]);
+        if (ww::crc::Verify(&msg[0], CAM_MSG_SIZE - 4, crc_code)) {
+            parseData(&msg[0]);
+        }
 
         // ищем, не было ли уже обнаружено новое начало сообщения
         for (int i = pos_start; i != pos_write; i = fit(i + 1))
