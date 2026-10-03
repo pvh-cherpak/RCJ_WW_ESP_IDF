@@ -1,6 +1,9 @@
 build/
 
 thresholds.txt
+sdkconfig
+sdkconfig.old
+dependencies.lock
 
 ### VisualStudioCode ###
 .vscode/
