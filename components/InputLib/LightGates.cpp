@@ -4,8 +4,10 @@
 
 static const char *TAG = "LightGates";
 
-esp_err_t LightGates_t::init(gpio_num_t pin_num) {
+esp_err_t LightGates_t::init(gpio_num_t pin_num, bool isInverted, int threshold) {
     lightPin = pin_num;
+    this->isInverted = isInverted;
+    this->isBallThreshold = threshold;
 
     // 1. Автоматически определяем Unit и Channel по номеру GPIO
     esp_err_t err = adc_oneshot_io_to_channel(lightPin, &adc_unit_light, &adc_channel_light);
@@ -39,7 +41,10 @@ esp_err_t LightGates_t::init(gpio_num_t pin_num) {
 }
 
 void LightGates_t::update() {
-    if (adc_light == nullptr) return;
+    if (adc_light == nullptr) {
+        ESP_LOGW(TAG, "ADC read failed: ADC unit not initialized");
+        return;
+    }
 
     int luminosity = 0;
     esp_err_t err = adc_oneshot_read(adc_light, adc_channel_light, &luminosity);
@@ -49,7 +54,10 @@ void LightGates_t::update() {
     }
 
     currentLuminosity = luminosity;
-    ESP_LOGV(TAG, "lumin: %d", luminosity);
+    if (isInverted) {
+        luminosity = 4095 - luminosity; // Инвертируем значение, если нужно
+    }
+    //ESP_LOGI(TAG, "lumin: %d", luminosity);
     isBallValue = (luminosity <= isBallThreshold);
 
     if (isBallValue) {

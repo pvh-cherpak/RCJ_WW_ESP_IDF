@@ -136,11 +136,11 @@ void OpenMVCommunication_t::update()
 
     pos_write = fit(pos_write);
 
-    ESP_LOGI("OpenMV", "pos_write = %d, pos_start = %d", pos_write, pos_start);
+    //ESP_LOGV("OpenMV", "pos_write = %d, pos_start = %d", pos_write, pos_start);
 
     if (pos_start != -1 && fit(pos_write - pos_start) >= CAM_MSG_SIZE)
     {
-        ESP_LOGI("OpenMV", "READ DATA, pos_start = %d", pos_start);
+        //ESP_LOGI("OpenMV", "READ DATA, pos_start = %d", pos_start);
 
         // сохраняем нужные данные в массив для сообщения и парсим
         pos_start = fit(pos_start + 2);
@@ -184,9 +184,9 @@ int16_t from_direct_code(int16_t num)
 void OpenMVCommunication_t::parseData(uint8_t *data)
 {
     
-    ESP_LOGI("OpenMV", "Parsed %d bytes:", 24);
+    ESP_LOGV("OpenMV", "Parsed %d bytes:", 24);
     for (int i = 0; i < 24; ++i) {      
-        ESP_LOGI("OpenMV", "byte[%d] = 0x%02X", i, data[i]);
+        ESP_LOGV("OpenMV", "byte[%d] = 0x%02X", i, data[i]);
     }
     cam_data.Gates[0].left_angle = from_direct_code((data[0] << 8) | data[1]);
     cam_data.Gates[0].center_angle = from_direct_code((data[2] << 8) | data[3]);

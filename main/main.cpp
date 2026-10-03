@@ -76,9 +76,9 @@ void sensor_init(uint8_t robot_type)
 
 	if (robot_type == 1)
 	{ //keeper
-		conf.LineSensor_config = {false, {GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, (gpio_num_t)-1, (gpio_num_t)-1, ADC_UNIT_2, ADC_CHANNEL_6, false, true, {1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1}, 0};
+		conf.LineSensor_config = {false, {GPIO_NUM_13, GPIO_NUM_12, GPIO_NUM_15, GPIO_NUM_27}, (gpio_num_t)-1, (gpio_num_t)-1, ADC_UNIT_2, ADC_CHANNEL_6, false, false, {1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1}, 0};
 
-		conf.locator_offset = 0;
+		conf.locator_offset = 180;
 		conf.inverse_locator = false;
 
 		conf.IMU_active = true;
@@ -238,7 +238,7 @@ extern "C"
 		// vTaskDelay(pdMS_TO_TICKS(5000));
 		// dribble(170);
 		// while (true){
-		// 	sensor.update();
+		// 	sensor.LightGates.update();
 		// 	ESP_LOGI("ball", "%d", sensor.LightGates.ballCatched());
 		// 	vTaskDelay(pdMS_TO_TICKS(100));
 		// }

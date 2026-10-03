@@ -16,6 +16,7 @@ private:
     int isBallThreshold = 300;
     int64_t holdTimeUs = 500000; // 500 ms удержания состояния захвата
     int currentLuminosity = 0;
+    bool isInverted = false;
     
     bool isBallValue = false;
     int64_t lastIsBallTime = 0;
@@ -29,7 +30,7 @@ public:
      * @param threshold Порог освещенности (меньше порога - мяч в воротах)
      * @param hold_time_us Время в микросекундах, в течение которого мяч считается пойманным
      */
-    esp_err_t init(gpio_num_t pin_num = GPIO_NUM_36);
+    esp_err_t init(gpio_num_t pin_num = GPIO_NUM_36, bool isInverted = false, int threshold = 300);
 
     void update();
     bool isBall() const;

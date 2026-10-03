@@ -31,7 +31,7 @@ float isBallStrength = 120;
 int drive2ballSpeed = 50;
 int move2gateSpeed = 60;
 float goRoundBallDiap = 20;
-float goRoundBallCoefFw = 2.0f; //0.5f
+float goRoundBallCoefFw = 2.5f;
 int timeBallHeld = 0;
 int gateMovePause = 1000;
 float goRoundObstacleCoef = 7.f;
@@ -83,9 +83,9 @@ float rightIntegral = 0;
 float rightPrev = 0;
 
 // PID мяча осторожный (близко)
-const float gb_kp = 2;
+const float gb_kp = 1;
 const float gb_ki = 0;
-const float gb_kd = 0.5;
+const float gb_kd = 0;
 float gkBallIntegral = 0;
 float gkBallPrev = 0;
 
@@ -507,18 +507,19 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
 
     ballAngle = sensor.Locator.getBallAngleLocal();
     
-    // int gateAngle = (int)sensor.Cam.gate(color).center_angle;
-    int gateAngle = sensor.IMU.getYaw();
+    int gateAngle = (int)sensor.Cam.gate(color).center_angle;
+    // int gateAngle = sensor.IMU.getYaw();
     lineAngle = (useLine ? sensor.LineSensor.getAngleDelayed() : 360);
 
     int offset_angle = (int)goodAngle(gateAngle - offset);
 
-    // menu.writeLineClean(1, std::to_string(sensor.Cam.gate(color).distance) + " px");
+    menu.writeLineClean(1, std::to_string(gateAngle) + " " + std::to_string(ballAngle) + " ");
     // menu.writeLineClean(2, "");
     // menu.writeLineClean(3, "");
 
     if (!paradox(color)) {
-        deltaAngle = -goodAngle(offset_angle) * 0.25f;
+        deltaAngle = goodAngle(offset_angle) * 0.25f;
+        // menu.writeLineClean(2, std::to_string(deltaAngle) + " ");
         if (lineAngle != 360) {
             // menu.writeLineClean(2, "LINE!!! " + std::to_string(lineAngle));
             drv.drive(goodAngle(lineAngle + 180), (int)deltaAngle, 50);
@@ -529,7 +530,7 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
         else {
             int angle_err = goodAngle(ballAngle - gateAngle);
             static bool gate_in_front;
-            gate_in_front = gate_in_front || (abs(angle_err) <= 10); // включение атаки
+            gate_in_front = gate_in_front || (abs(angle_err) <= 15); // включение атаки
             gate_in_front = gate_in_front && (abs(angle_err) <= 15); // условие продолжения атаки
 
             ESP_LOGI("gates", "%f", moveAngle);
@@ -543,9 +544,9 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
                 moveAngle = gateAngle;
                 drv.drive(moveAngle, (int)deltaAngle, 80);
 
-                // if (sensor.Cam.gate(color).distance < 30 && isBall()) {
-                //     kicker.kick();
-                // }
+                if (sensor.Cam.gate(color).distance < 50 && isBall()) {
+                    kicker.kick();
+                }
             }
             else {
                 #ifdef OTLADKA_petrovich
@@ -559,11 +560,9 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
                     moveAngle = goodAngle(ballAngle - constrain(sensor.Locator.getStrength() * goRoundBallCoefFw, 0, 90));
                 }
 
-                int speed = 90;
-                if (abs(ballAngle) < 30){
-                    speed = 50;
-                    if(abs(ballAngle) < 20)
-                        speed = 50;
+                int speed = 80;
+                if (abs(ballAngle) < 40){
+                    speed = 40;
                 }
                 drv.drive(moveAngle, (int)deltaAngle, speed);
             }
@@ -705,8 +704,8 @@ void playGoalkeeperCamera(int color)
 
         if (sensor.Locator.getStrength() < 5)
         {
-            // menu.writeLineClean(1, "No ball");
-            drv.drive(0, 0, 0, 0);
+            // menu.writeLineClean(2, "No ball");
+            drv.drive(0, -30, 0);
             continue;
         }
 
@@ -714,7 +713,7 @@ void playGoalkeeperCamera(int color)
         {
             kfTimer = millis();
             killerFeature(1 ^ color);
-            // Serial.println("KILLER!!!");
+            // Serial.println("KILL`ER!!!");
             continue;
         }
 
@@ -782,7 +781,6 @@ void playGoalkeeperCamera(int color)
         int robotAngle = sensor.IMU.getYaw();
 
         float lineX, lineY;
-        //getLineDirection_Delayed(lineX, lineY, true);
         sensor.LineSensor.getDirectionDelayed(lineX, lineY);
 
         int gateAngle = goodAngle(sensor.Cam.gate(color).center_angle /* + 180*/);
@@ -790,13 +788,15 @@ void playGoalkeeperCamera(int color)
         int cam_height = sensor.Cam.gate(color).height;
         int cam_dist = sensor.Cam.gate(color).distance;
 
-        // if (globalGateAngle < -135 || globalGateAngle > 135)
-        // {
-        //     leftBallDir = Vector2(-1.5f, 0);
-        //     rightBallDir = Vector2(1.5f, 0);
-        // }
+        // menu.writeLineClean(1, "B " + 
+        //     std::to_string(ballAngle) + " " + 
+        //     std::to_string(globalGateAngle) + " " +
+        //     std::to_string(cam_dist));
 
-        // menu.writeLineClean(1, "GK " + std::to_string(globalGateAngle) + "  " + std::to_string(cam_dist));
+        // menu.writeLineClean(2, "G " + 
+        //     std::to_string(gateAngle) + " " + 
+        //     std::to_string(globalGateAngle) + " " +
+        //     std::to_string(cam_dist));
 
         if (cam_height > 0)
         {
@@ -940,13 +940,13 @@ void playGoalkeeperCamera(int color)
             s[0] = '|';
         if (abs(goodAngle(ballAngle + robotAngle)) < 60)
             s[3] = '_';
-        menu.writeLineClean(2, s);
+        menu.writeLineClean(3, s);
         
         // if (sensor.Locator.getStrength() < 30 && abs(goodAngle(ballAngle + robotAngle)) < 60){
-            ballSpeed = gb_kp2 * ball_err + gkBallIntegral2 * gb_ki2 + gb_kd2 * (ball_err - gkBallPrev2);
+        //     ballSpeed = gb_kp2 * ball_err + gkBallIntegral2 * gb_ki2 + gb_kd2 * (ball_err - gkBallPrev2);
         // }
         // else{
-        //     ballSpeed = gb_kp * ball_err + gkBallIntegral * gb_ki + gb_kd * (ball_err - gkBallPrev);
+            ballSpeed = gb_kp * ball_err + gkBallIntegral * gb_ki + gb_kd * (ball_err - gkBallPrev);
         // }
         // if (ball_strength > prevBallStrength){
         //     ballSpeed += constrain((ball_strength - prevBallStrength) * gk_st_kd, -50, 50);
@@ -1011,9 +1011,9 @@ void playForwardGoyda(int color)
 
         sensor.update();
 
-        if (sensor.Locator.getStrength() < 5)
+        if (sensor.Locator.getStrength() < 2)
         {
-            drv.drive(0, 0, 0, 0);
+            drv.drive(0, 30, 0);
             // dribbler.smart_dribble(0);
             //return;
             continue;
