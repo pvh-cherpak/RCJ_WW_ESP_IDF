@@ -45,6 +45,14 @@ private:
     const gpio_num_t M4_FW;
     const gpio_num_t M4_BW;
 
+    // Массив со всеми пинами
+    const int motor_pins[8] = {
+        M1_FW, M1_BW,
+        M2_FW, M2_BW,
+        M3_FW, M3_BW,
+        M4_FW, M4_BW
+    };
+
     static const gpio_num_t DRB = GPIO_NUM_25;
 
 public:
