@@ -85,7 +85,7 @@ float rightPrev = 0;
 // PID мяча осторожный (близко)
 const float gb_kp = 1;
 const float gb_ki = 0;
-const float gb_kd = 0;
+const float gb_kd = 0.2;
 float gkBallIntegral = 0;
 float gkBallPrev = 0;
 
@@ -114,6 +114,7 @@ float limitGateIntegral = 150;
 float limitGateSpeed = 70;
 
 // Launch killer feature
+int ballSeenTime = 0;
 float ballMoveTime = 0;
 float lastBallAngle = 0;
 const float ballNoMotionDiap = 10;
@@ -682,6 +683,15 @@ int LookAtBallRotationSpeed(int ball_angle){
     return (ball_angle) * 0.4f;
 }
 
+int gateRotateSpeedGk(int angle) {
+    static constexpr int kP = 0.5;
+    static constexpr int kD = 0.1;
+    static int prev_angle = 0;
+    int result = angle * kP + (angle - prev_angle) * kD;
+    prev_angle = angle;
+    return result;
+}
+
 void playGoalkeeperCamera(int color)
 {
     menu.clearDisplay();
@@ -702,11 +712,21 @@ void playGoalkeeperCamera(int color)
 
         sensor.update();
 
-        if (sensor.Locator.getStrength() < 5)
+        int robotAngle = sensor.IMU.getYaw();
+
+        if (sensor.Locator.getStrength() < 2)
         {
-            menu.writeLineClean(1, "No ball");
-            drv.drive(0, -30, 0);
-            continue;
+            // if (millis() - ballSeenTime < 500) {
+            //     ballAngle = goodAngle(lastBallAngle - robotAngle);
+            //     menu.writeLineClean(1, "Old ball " + std::to_string(ballAngle));
+            // } else {
+                // menu.writeLineClean(1, "No ball");
+                drv.drive(0, -10, 0);
+                continue;
+            // }
+        } else {
+            ballAngle = sensor.Locator.getBallAngleLocal();
+            // menu.writeLineClean(1, "OK " + std::to_string(ballAngle));
         }
 
         if (stateGame != 0)
@@ -718,67 +738,8 @@ void playGoalkeeperCamera(int color)
         }
 
         float global_x, global_y;
-        // int get_pos_callback = getGlobalPosition_2gates(global_x, global_y, color);
-        // BTDebug.send();
-        // if (get_pos_callback == 0)
-        // {
-        //     menu.writeLineClean(3, "GP X " + std::to_string(global_x));
-        //     menu.writeLineClean(4, "GP Y " + std::to_string(global_y));
-        // }
-        // else if (get_pos_callback == 1)
-        // {
-        //     menu.writeLineClean(3, "FAILED: no gate");
-        //     menu.writeLineClean(4, "");
-        // }
-        // else if (get_pos_callback == 2)
-        // {
-        //     menu.writeLineClean(3, "FAILED: parallel");
-        //     menu.writeLineClean(4, "");
-        // }
         Vector2 rightBallDir(1.0, 0.0);
         Vector2 leftBallDir(-1.0, 0.0);
-
-        // if (global_x > 35){
-        //     rightBallDir = Vector2(0, -0.5f);
-        //     if (global_y < -65) {
-        //         leftBallDir = Vector2(0, 1);
-        //     }
-        //     else {
-        //         leftBallDir = Vector2(-1.2f, 0);
-        //     }
-        // }
-
-        // if (global_x < -35){
-        //     leftBallDir = Vector2(0, -0.5f);
-        //     if (global_y < -65) {
-        //         rightBallDir = Vector2(0, 1);
-        //     }
-        //     else {
-        //         rightBallDir = Vector2(1.2f, 0);
-        //     }
-        // }
-
-        // std::string s;
-        // if (leftBallDir.y < 0){
-        //     s += "v   ";
-        // }
-        // else if (leftBallDir.y > 0){
-        //     s += "^   ";
-        // }
-        // else
-        //     s += "    ";
-        // if (rightBallDir.y < 0){
-        //     s += "v   ";
-        // }
-        // else if (rightBallDir.y > 0){
-        //     s += "^   ";
-        // }
-        // else
-        //     s += "    ";
-        // menu.writeLineClean(5, s);
-
-        ballAngle = sensor.Locator.getBallAngleLocal();
-        int robotAngle = sensor.IMU.getYaw();
 
         float lineX, lineY;
         sensor.LineSensor.getDirectionDelayed(lineX, lineY);
@@ -788,10 +749,10 @@ void playGoalkeeperCamera(int color)
         int cam_height = sensor.Cam.gate(color).height;
         int cam_dist = sensor.Cam.gate(color).distance;
 
-        menu.writeLineClean(2, "G " + 
-            // std::to_string(ballAngle) + " " + 
-            std::to_string(globalGateAngle) + " " +
-            std::to_string(cam_dist));
+        // menu.writeLineClean(2, "G " + 
+        //     // std::to_string(ballAngle) + " " + 
+        //     std::to_string(globalGateAngle) + " " +
+        //     std::to_string(cam_dist));
 
         if (cam_height > 0)
         {
@@ -808,6 +769,7 @@ void playGoalkeeperCamera(int color)
         lineAngle = sensor.LineSensor.getAngleDelayed();
 
         int ball_strength = sensor.Locator.getStrength();
+        ballSeenTime = millis();
 
         if (abs(goodAngle(ballAngle + robotAngle - lastBallAngle)) > ballNoMotionDiap)
         {
@@ -834,12 +796,12 @@ void playGoalkeeperCamera(int color)
         if (lineAngle != 360 && (abs(globalGateAngle)) <= 135 &&
             ((robotAngle > 0 && lineAngle > 0) || (robotAngle < 0 && lineAngle < 0)))
         {
-            menu.writeLineClean(1, "Line");
+            // menu.writeLineClean(1, "Line");
             // speedX = (int)(-lineX * 80);
             // speedY = (int)(-lineY * 80);
             //deltaAngle = -robotAngle * 0.25;
             deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
-            drv.drive(goodAngle(lineAngle + 180), LookAtBallRotationSpeed(ballAngle), 100);
+            drv.drive(goodAngle(lineAngle + 180), LookAtBallRotationSpeed(goodAngle(gateAngle - 180)), 100);
             continue;
         }
         else
@@ -864,37 +826,31 @@ void playGoalkeeperCamera(int color)
             //                       4.62172e-8 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist - 2.788e-12 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist),
             //                      0, 100);
 
-            bool leftCorner = globalGateAngle >= 0 && globalGateAngle < 135;
+            bool gateCorner = abs(globalGateAngle) < 135;
 
-            if (!leftCorner) {
-                if (cam_dist < 13) {
+            if (!gateCorner) {
+                if (cam_dist < 15) {
                     speedY = 80;
                 } else if (cam_dist < 18) {
                     speedY = 40;
+                } else if (cam_dist < 22) {
+                    speedY = 20;
                 } else if (cam_dist < 25) {
                     speedY = 0;
                 } else {
                     int err = cam_dist - 25;
-                    if (err < 10) {
-                        speedY = -err * 4;
-                    } else {
-                        speedY = -err * 7;
-                    }
+                    speedY = -err * 5;
                 }
             } else {
-                if (cam_dist < 7) {
-                    speedY = 50;
-                } else if (cam_dist < 9) {
-                    speedY = 40;
+                if (cam_dist < 9) {
+                    speedY = 70;
+                } else if (cam_dist < 11) {
+                    speedY = 20;
                 } else if (cam_dist < 14) {
                     speedY = 0;
                 } else {
                     int err = cam_dist - 14;
-                    if (err < 10) {
-                        speedY = -err * 4;
-                    } else {
-                        speedY = -err * 7;
-                    }
+                    speedY = -err * 7;
                 }
             }
 
@@ -973,7 +929,7 @@ void playGoalkeeperCamera(int color)
 
         // menu.writeLineClean(2, "sp " + std::to_string(speedX) + ";" + std::to_string(speedY));
 
-        deltaAngle = LookAtBallRotationSpeed(goodAngle(gateAngle - 180) * 0.5);
+        deltaAngle = gateRotateSpeedGk(goodAngle(gateAngle - 180));
 
         // prevBallStrength = ball_strength;
 
