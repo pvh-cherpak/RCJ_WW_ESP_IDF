@@ -1,4 +1,5 @@
 #include "logics.h"
+#include "ball_tracker.hpp"
 #include "esp_timer.h"
 #include "vector2.h"
 #include "RealDist.h"
@@ -97,6 +98,10 @@ float gkBallIntegral2 = 0;
 float gkBallPrev2 = 0;
 
 float gkReactOnBallDiap = 0;
+
+// Трекер угла мяча по локатору (глобальный угол + аппроксимация).
+// ballMoveTime / lastGateAngle не трогаем, это отдельная логика.
+BallTracker gkBallTracker;
 
 // Вратарь, возвращение к воротам по камере с PID (не используется)
 int lastGateAngle = 180;
@@ -685,6 +690,7 @@ int LookAtBallRotationSpeed(int ball_angle){
 void playGoalkeeperCamera(int color)
 {
     menu.clearDisplay();
+    gkBallTracker.reset();
     while (true)
     {
         // sensor.update();
@@ -702,12 +708,21 @@ void playGoalkeeperCamera(int color)
 
         sensor.update();
 
-        if (sensor.Locator.getStrength() < 5)
+        int nowMs = millis();
+        int rawBallAngle = sensor.Locator.getBallAngleLocal();
+        int rawBallStrength = sensor.Locator.getStrength();
+        int yawNow = sensor.IMU.getYaw();
+        gkBallTracker.update(rawBallAngle, rawBallStrength, yawNow, nowMs);
+        BallEstimate ballEst = gkBallTracker.get(yawNow, nowMs);
+
+        if (!ballEst.usable)
         {
             menu.writeLineClean(1, "No ball");
             drv.drive(0, -30, 0);
             continue;
         }
+        // Дальше ballAngle — предсказанный трекером локальный угол.
+        // Сырой локатор больше не используем для движения.
 
         if (stateGame != 0)
         {
@@ -777,8 +792,8 @@ void playGoalkeeperCamera(int color)
         //     s += "    ";
         // menu.writeLineClean(5, s);
 
-        ballAngle = sensor.Locator.getBallAngleLocal();
-        int robotAngle = sensor.IMU.getYaw();
+        ballAngle = ballEst.local;
+        int robotAngle = yawNow;
 
         float lineX, lineY;
         sensor.LineSensor.getDirectionDelayed(lineX, lineY);
@@ -946,6 +961,16 @@ void playGoalkeeperCamera(int color)
         // else{
             ballSpeed = gb_kp * ball_err + gkBallIntegral * gb_ki + gb_kd * (ball_err - gkBallPrev);
         // }
+        if (ballEst.state == BallTrackState::COASTING)
+        {
+            // Предсказание протухает: к концу COASTING тормозим боковое движение.
+            float fade = 1.f - (float)ballEst.age_ms / 700.f;
+            if (fade < 0.2f)
+                fade = 0.2f;
+            if (fade > 1.f)
+                fade = 1.f;
+            ballSpeed *= fade;
+        }
         // if (ball_strength > prevBallStrength){
         //     ballSpeed += constrain((ball_strength - prevBallStrength) * gk_st_kd, -50, 50);
         // }
