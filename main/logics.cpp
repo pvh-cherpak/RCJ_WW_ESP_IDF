@@ -704,7 +704,7 @@ void playGoalkeeperCamera(int color)
 
         if (sensor.Locator.getStrength() < 5)
         {
-            // menu.writeLineClean(2, "No ball");
+            menu.writeLineClean(1, "No ball");
             drv.drive(0, -30, 0);
             continue;
         }
@@ -788,15 +788,10 @@ void playGoalkeeperCamera(int color)
         int cam_height = sensor.Cam.gate(color).height;
         int cam_dist = sensor.Cam.gate(color).distance;
 
-        // menu.writeLineClean(1, "B " + 
-        //     std::to_string(ballAngle) + " " + 
-        //     std::to_string(globalGateAngle) + " " +
-        //     std::to_string(cam_dist));
-
-        // menu.writeLineClean(2, "G " + 
-        //     std::to_string(gateAngle) + " " + 
-        //     std::to_string(globalGateAngle) + " " +
-        //     std::to_string(cam_dist));
+        menu.writeLineClean(2, "G " + 
+            // std::to_string(ballAngle) + " " + 
+            std::to_string(globalGateAngle) + " " +
+            std::to_string(cam_dist));
 
         if (cam_height > 0)
         {
@@ -808,8 +803,6 @@ void playGoalkeeperCamera(int color)
             drv.driveXY(0, 0, 20);
             // menu.writeLineClean(1, "No gates");
             continue;
-            // gateAngle = lastGateAngle - robotAngle;
-            // cam_height = 110;
         }
 
         lineAngle = sensor.LineSensor.getAngleDelayed();
@@ -841,7 +834,7 @@ void playGoalkeeperCamera(int color)
         if (lineAngle != 360 && (abs(globalGateAngle)) <= 135 &&
             ((robotAngle > 0 && lineAngle > 0) || (robotAngle < 0 && lineAngle < 0)))
         {
-            // menu.writeLineClean(2, "Line");
+            menu.writeLineClean(1, "Line");
             // speedX = (int)(-lineX * 80);
             // speedY = (int)(-lineY * 80);
             //deltaAngle = -robotAngle * 0.25;
@@ -871,36 +864,41 @@ void playGoalkeeperCamera(int color)
             //                       4.62172e-8 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist - 2.788e-12 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist),
             //                      0, 100);
 
-            int err = -(cam_dist - 20) * 10;
-            if (err < -90)
-                err = -90;
-            if (cam_dist < 10)
-                err = 50;
-            else if (cam_dist < 18)
-                err = 50;
-            else if (cam_dist < 20)
-                err = 25;
-            else if (cam_dist < 22)
-                err = 0;
-            
-            speedY = err;
-            if (speedY < -90)
-                speedY = -90;
-            // int err = speedY = 0;
+            bool leftCorner = globalGateAngle >= 0 && globalGateAngle < 135;
 
-            // speedY = (int)(err * gate_kp + (err - gatePrev) * gate_kd + gateIntegral);
+            if (!leftCorner) {
+                if (cam_dist < 13) {
+                    speedY = 80;
+                } else if (cam_dist < 18) {
+                    speedY = 40;
+                } else if (cam_dist < 25) {
+                    speedY = 0;
+                } else {
+                    int err = cam_dist - 25;
+                    if (err < 10) {
+                        speedY = -err * 4;
+                    } else {
+                        speedY = -err * 7;
+                    }
+                }
+            } else {
+                if (cam_dist < 7) {
+                    speedY = 50;
+                } else if (cam_dist < 9) {
+                    speedY = 40;
+                } else if (cam_dist < 14) {
+                    speedY = 0;
+                } else {
+                    int err = cam_dist - 14;
+                    if (err < 10) {
+                        speedY = -err * 4;
+                    } else {
+                        speedY = -err * 7;
+                    }
+                }
+            }
 
-            // menu.writeLineClean(3, std::to_string(cam_dist) + " " + std::to_string(err) + " " + std::to_string(speedY));
-            // if (err < -2)
-            //     speedY = 0.07 * err * err + 5 * err - 3.5; zzzzzzzzzzzzzzzzz
-            // else if (err < 2)
-            //     speedY = 0;
-            // else
-            //     speedY = 40 + err * 7;
             speedY = (int)constrain(speedY, -limitGateSpeed, 100);
-            gatePrev = err;
-            gateIntegral += (err * gate_ki);
-            gateIntegral = constrain(gateIntegral, -limitGateIntegral, limitGateIntegral);
 
             // если мяч сзади он должен сюда заходить
             if (abs(ballAngle) > 80 && speedY <= 0)
@@ -975,7 +973,7 @@ void playGoalkeeperCamera(int color)
 
         // menu.writeLineClean(2, "sp " + std::to_string(speedX) + ";" + std::to_string(speedY));
 
-        deltaAngle = (int)(goodAngle(ballAngle) * 0.5);
+        deltaAngle = LookAtBallRotationSpeed(goodAngle(gateAngle - 180) * 0.5);
 
         // prevBallStrength = ball_strength;
 
@@ -984,20 +982,11 @@ void playGoalkeeperCamera(int color)
         int sp = sqrt(speedX * speedX + speedY * speedY);
         float angle = atan2(speedX, speedY) * RAD_TO_DEG;
         angle = goodAngle(angle + goodAngle(gateAngle - 180));
-        //drv.drive(angle, (int)deltaAngle, constrain(sp, 0, 100));
-        drv.drive(angle, LookAtBallRotationSpeed(ballAngle), constrain(sp, 0, 100));
+        drv.drive(angle, (int)deltaAngle, constrain(sp, 0, 100));
 
         if (isBall()){
             kicker.kick();
         }
-
-        // if (sp > 100)
-        // {
-        //     speedX = speedX * 100 / sp;
-        //     speedY = speedY * 100 / sp;
-        // }
-
-        // drv.driveXY(speedX, speedY, (int)deltaAngle);
     }
 }
 
