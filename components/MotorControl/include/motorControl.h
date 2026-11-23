@@ -6,6 +6,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 
 #include "driver/gpio.h"
 #include "driver/mcpwm.h"
@@ -34,6 +35,8 @@ class MotorControl
 {
 private:
     DecayMode decayMode = DecayMode::FAST_DECAY;
+    SemaphoreHandle_t drive_mutex = nullptr;
+    bool paused = false;
     void setDutyCycle(float duty, mcpwm_unit_t unit, mcpwm_timer_t timer);
 
     const gpio_num_t M1_FW;
@@ -65,6 +68,7 @@ public:
 
     void singleMotorControl(int motor, float speed);
     void brake();
+    void setPaused(bool value);
     void drive(float v1, float v2, float v3, float v4);
     void drive(float angle, int rotation_speed, int speed);
     void drive(float angle, int speed);

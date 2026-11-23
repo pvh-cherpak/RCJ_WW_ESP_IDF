@@ -19,6 +19,7 @@
 
 
 void button_click(void* arg, void* event);
+void button_press(void* arg, void* event);
 void button_double_click(void* arg, void* event);
 void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B, int encoder_key);
 void info_menu(button_handle_t &encoder_button);

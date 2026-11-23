@@ -87,6 +87,9 @@ void set_motor_speed(int motor_id, int speed, DecayMode decayMode = DecayMode::S
 
 void MotorControl::init()
 {
+    drive_mutex = xSemaphoreCreateMutex();
+    configASSERT(drive_mutex != nullptr);
+
     ledc_timer_config_t ledc_timer = {
         .speed_mode       = LEDC_LOW_SPEED_MODE,
         .duty_resolution  = PWM_RESOLUTION,
@@ -208,6 +211,10 @@ void MotorControl::brake()
 
 void MotorControl::drive(float v1, float v2, float v3, float v4)
 {
+    xSemaphoreTake(drive_mutex, portMAX_DELAY);
+    if (paused)
+        v1 = v2 = v3 = v4 = 0;
+
     if (v1 > 100)
         v1 = 100;
     if (v1 < -100)
@@ -232,6 +239,21 @@ void MotorControl::drive(float v1, float v2, float v3, float v4)
     singleMotorControl(2, -v2);
     singleMotorControl(3, -v3);
     singleMotorControl(4, -v4);
+    xSemaphoreGive(drive_mutex);
+}
+
+void MotorControl::setPaused(bool value)
+{
+    xSemaphoreTake(drive_mutex, portMAX_DELAY);
+    paused = value;
+    if (paused)
+    {
+        singleMotorControl(1, 0);
+        singleMotorControl(2, 0);
+        singleMotorControl(3, 0);
+        singleMotorControl(4, 0);
+    }
+    xSemaphoreGive(drive_mutex);
 }
 
 void MotorControl::drive(float angle, int rotation_speed, int speed)

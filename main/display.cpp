@@ -1,12 +1,25 @@
 #include "display.h"
 #include "global.h"
 #include "logics.h"
+#include <atomic>
 
 static const char *OLED_tag = "SSD1106";
 static SemaphoreHandle_t encoder_button_sem = xSemaphoreCreateBinary();
 static SemaphoreHandle_t encoder_double_click_sem = xSemaphoreCreateBinary();
 static SSD1306_t display;
 static Encoder_t encoder;
+static std::atomic<bool> game_active{false};
+static std::atomic<bool> game_paused{false};
+
+static void run_game(void (*play)(int), int color)
+{
+    game_paused.store(false);
+    drv.setPaused(false);
+    game_active.store(true);
+    play(color);
+    game_active.store(false);
+    drv.setPaused(false);
+}
 DisplayMenu_t menu;
 
 static const std::vector<std::string> start_menu_text =
@@ -149,6 +162,7 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B, int 
 
     iot_button_register_cb(encoder_button, BUTTON_SINGLE_CLICK, button_click, NULL);
     iot_button_register_cb(encoder_button, BUTTON_DOUBLE_CLICK, button_double_click, NULL);
+    iot_button_register_cb(encoder_button, BUTTON_PRESS_DOWN, button_press, NULL);
 
     int user_pointer_pos = 1;
     int menu_size = start_menu_text.size();
@@ -183,15 +197,15 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B, int 
                 //playForwardDribble2(0); // playForwardGoyda(0); // 
                 break;
             case 2:
-                playForwardDribble2(playColor);
+                run_game(playForwardDribble2, playColor);
                 // playGoalkeeperCamera(0);
                 break;
             case 3:
-                playGoalkeeperCamera(playColor);
+                run_game(playGoalkeeperCamera, playColor);
                 // playForwardGoyda(1); // playForwardDribble2(1); // 
                 break;
             case 4:
-                playForwardGoyda(playColor);
+                run_game(playForwardGoyda, playColor);
                 // playGoalkeeperCamera(1);
                 break;
             case 5:
@@ -536,10 +550,22 @@ void debug_menu(button_handle_t &encoder_button)
 
 void button_click(void *arg, void *event)
 {
-    xSemaphoreGiveFromISR(encoder_button_sem, NULL);
+    if (!game_active.load())
+        xSemaphoreGiveFromISR(encoder_button_sem, NULL);
+}
+
+void button_press(void *arg, void *event)
+{
+    if (!game_active.load())
+        return;
+
+    const bool paused = !game_paused.load();
+    game_paused.store(paused);
+    drv.setPaused(paused);
 }
 
 void button_double_click(void *arg, void *event)
 {
-    xSemaphoreGiveFromISR(encoder_double_click_sem, NULL);
+    if (!game_active.load())
+        xSemaphoreGiveFromISR(encoder_double_click_sem, NULL);
 }
