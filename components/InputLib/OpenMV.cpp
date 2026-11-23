@@ -98,7 +98,7 @@ void OpenMVCommunication_t::update()
 {
     size_t length = 0;
     (uart_get_buffered_data_len(uart_num, &length));
-    ESP_LOGI("OpenMV", "available data length=%d", length);
+    // ESP_LOGI("OpenMV", "available data length=%d", length);
     if (length > CAM_UART_READ_LIMIT)
     {
         ESP_LOGW("OpenMV", "Flush UART (%d bytes)", length);

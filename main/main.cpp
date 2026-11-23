@@ -168,11 +168,11 @@ extern "C"
 
 
 		if (robot_type == 2) {
-			kicker.init(GPIO_NUM_16, 1);
+			kicker.init(GPIO_NUM_16, 0);
 			dribbler.init();
 		}
 		else if (robot_type == 1) {
-			kicker.init(GPIO_NUM_23, 0);
+			kicker.init(GPIO_NUM_23, 1);
 		}
 
 		sensor_init(robot_type);

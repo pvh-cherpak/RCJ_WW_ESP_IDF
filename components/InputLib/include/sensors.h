@@ -64,21 +64,13 @@ public:
             LightGates.init(GPIO_NUM_36, 0, 300);
         }
         else if (cfg.robotType == 1)
-            LightGates.init(GPIO_NUM_36, 1, 1000);
+            LightGates.init(GPIO_NUM_36, 0, 300);
     }
     void update(){
         if(IMU_active)
             IMU.update();
         LineSensor.update(); Locator.update(); Cam.update();
-        
-        // if (cfg.robotType == 1) 
-        //     BallSensor.update();
-        if (cfg.robotType == 2) // forward
-            LightGates.update();
-        // if (cfg.robotType == 2)
-        //     BallSensor.update();
-        if (cfg.robotType == 1)
-            LightGates.update();
+        LightGates.update();
     }
     void testUpdate() {IMU.testUpdate(); LineSensor.testUpdate(); Locator.testUpdate();}
 };

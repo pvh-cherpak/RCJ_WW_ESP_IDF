@@ -106,7 +106,7 @@ class Kicker
 
     gpio_num_t pin = GPIO_NUM_0;
     int64_t kick_time = INT64_MAX;
-    int64_t kick_time_mcs = 200000;
+    int64_t kick_time_mcs = 50000;
     int64_t return_time_mcs = 200000;
     bool invert = 0;
 

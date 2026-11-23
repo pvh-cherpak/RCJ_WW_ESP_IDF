@@ -1110,13 +1110,20 @@ void goalPush(int color)
     }
 }
 
+bool isBallInFront(int angle_err)
+{
+    return abs(angle_err) <= 15;
+}
+
 float FwBallAnglIntegral = 0;
 float FwBallAnglPrev = 0;
-float Fw_kd = 3.0;
-float Fw_ki = 0;
-float Fw_kp = 0.35;
+float Fw_kd_if_front = 3.5; //3.0
+// float Fw_ki = 0;
+float Fw_kp_if_front = 0.35;
 
-#define OTLADKA_Dribble2
+float Fw_kp_not_in_front_of = 0.7; //0.35
+
+//#define OTLADKA_Dribble2
 #ifdef OTLADKA_Dribble2
     const char* drible2 = "f";
 #endif
@@ -1144,9 +1151,9 @@ void playForwardDribble2(int color)
         int st = sensor.Locator.getStrength();
         int ballAngle = sensor.Locator.getBallAngleLocal();
         static bool ball_is_too_futher = false;
-        if (sensor.Locator.getStrength() < 5)
+        if (sensor.Locator.getStrength() < 2)
         {
-            ESP_LOGW(drible2, "Ne vizhu miach");
+            //ESP_LOGW(drible2, "Ne vizhu miach");
             drv.drive(0, 20, 0);
             ball_is_too_futher = true;
             continue;
@@ -1169,12 +1176,12 @@ void playForwardDribble2(int color)
                 int speed;
                 moveAngle = ballAngle;
 
-                if(ball_is_too_futher){
-                    if(sensor.Locator.getStrength() < 35)
-                        ballAngle = goodAngle(ballAngle + 90);
-                    else
-                        ball_is_too_futher = false;
-                }
+                // if(ball_is_too_futher){
+                //     if(sensor.Locator.getStrength() < 35)
+                //         ballAngle = goodAngle(ballAngle + 90);
+                //     else
+                //         ball_is_too_futher = false;
+                // }
 
                 if (lineAngle == 360)
                 {
@@ -1183,13 +1190,20 @@ void playForwardDribble2(int color)
                     #endif
                     
                     float ballAnfl_err = ballAngle;
+                    if(isBallInFront(ballAnfl_err))
+                    {
+                        robotAnglSpeed = Fw_kp_if_front * ballAnfl_err;
+                    }
+                    else
+                    {
+                        robotAnglSpeed = Fw_kp_not_in_front_of * ballAnfl_err + Fw_kd_if_front * (ballAnfl_err - FwBallAnglPrev);
+                    }
                     // 
-                    robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
                     // 
-                    FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
+                    // FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
                     FwBallAnglPrev = ballAnfl_err;
 
-                    speed = sensor.Locator.getStrength() < 70 ? 100 : 50;  
+                    speed = sensor.Locator.getStrength() < 65 ? 100 : 30;  //70 
                 }
                 else
                 {
@@ -1208,11 +1222,20 @@ void playForwardDribble2(int color)
             #ifdef OTLADKA_Dribble2  
                 ESP_LOGW(drible2, "Mach zachvachen, podjzzaju");
             #endif
+
+            if (abs(cam_angle) < 30 && cam_dist <= 50){
+                dribbler.smart_dribble(0);
+                make_pause(100);
+                kicker.kick();
+                goto fwDribbleBegin;
+            }
+
+
             //menu.writeLineClean(0, "gate...");
-            dribbler.smart_dribble(85);
+            dribbler.smart_dribble(180);
             drv.driveXY(0, 20, 0); // чтобы лучше задриблить 
             int start = millis();
-            while (millis() - start < 300)
+            while (millis() - start < 500)
             {
                 sensor.update();
                 lineAngle = sensor.LineSensor.getAngleDelayed();
@@ -1223,12 +1246,10 @@ void playForwardDribble2(int color)
                 vTaskDelay(10 / portTICK_PERIOD_MS);
             }
             // drv.drive(0, 0, 0, 0);
-            make_pause(200);
+            make_pause(500);
             sensor.BallSensor.update();
             while (isBall())
             {
-                
-                //menu.writeLineClean(0, "gate");
                 sensor.update();
 
                 cam_angle = sensor.Cam.gate(color).center_angle;
@@ -1246,11 +1267,11 @@ void playForwardDribble2(int color)
                         sensor.update();
                         lineAngle = sensor.LineSensor.getAngleDelayed();
                         moveAngle = goodAngle(lineAngle + 180);
-                        speed = (lineAngle == 360) ? 0 : 60;
+                        speed = (lineAngle == 360) ? 0 : 50;
                         cam_angle = sensor.Cam.gate(color).center_angle;
                         deltaAngle = goodAngle(cam_angle + 180);
                         deltaAngle = abs(cam_angle) < 90 ? deltaAngle * 0.3 : deltaAngle * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
-                        deltaAngle = constrain(deltaAngle, -20, 20);
+                        deltaAngle = constrain(deltaAngle, -10, 10);
                         drv.drive(moveAngle, (int)(deltaAngle), speed);
                     }
                     #ifdef OTLADKA_Dribble2  
@@ -1264,13 +1285,17 @@ void playForwardDribble2(int color)
                         #endif
                         goto fwDribbleBegin;
                     }
+                    // make_pause(300);
 
                     sensor.update();
 
                     int delta_angle = goodAngle(cam_angle + 180) * 0.3; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
                     delta_angle = constrain(delta_angle, -10, 10);
 
-                    lineAngle = sensor.LineSensor.getAngleDelayed();
+                    lineAngle = sensor.LineSensor.getAngleDelayed();   
+                    #ifdef OTLADKA_Dribble2  
+                        ESP_LOGI(drible2, "gate: %d, dist: %d, line: %d", cam_angle, cam_dist, lineAngle);
+                    #endif
                     if (lineAngle != 360)
                     {
                         #ifdef OTLADKA_Dribble2  
@@ -1284,7 +1309,7 @@ void playForwardDribble2(int color)
                             ESP_LOGW(drible2, "edu k vorotam");
                         #endif
                         
-                        drv.drive(cam_angle, delta_angle, 75);
+                        drv.drive(cam_angle, delta_angle, 45);
                     }
                     cam_dist = sensor.Cam.gate(color).distance;
                     // Serial.println(cam_dist);
@@ -1296,9 +1321,7 @@ void playForwardDribble2(int color)
                         // return;
                         drv.drive(0, 0, 0, 0);
                         sensor.update();
-                        dribbler.smart_dribble(80);
-
-                        make_pause(100);
+                        dribbler.smart_dribble(180);
 
                         cam_angle = sensor.Cam.gate(color).center_angle;
 
@@ -1308,7 +1331,7 @@ void playForwardDribble2(int color)
                             cam_angle = sensor.Cam.gate(color).center_angle;
                             deltaAngle = goodAngle(cam_angle + 180); //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
                             deltaAngle = constrain(deltaAngle, -40, 40);
-                            drv.drive(0, (int)(deltaAngle * 0.5), 0);
+                            drv.drive(0, (int)(deltaAngle * 0.3), 0);
                         }
 
                         cam_angle = sensor.Cam.gate(color).center_angle;
@@ -1320,7 +1343,7 @@ void playForwardDribble2(int color)
                         }
 
                         // может это в goalDriveBack?
-                        dribbler.smart_dribble(100);
+                        dribbler.smart_dribble(180);
                         //make_pause(500);
 
                         // if (abs(sensor.IMU.getYaw()) < 135 || cam_dist < 30)
@@ -1380,23 +1403,31 @@ void MPU_zakrut(int color)
         sensor.LineSensor.update();
 
         if (sign > 0){
-            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 80 ? 25 : 80;
-            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 80 ? 100 : 0);
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 18 : 80; //80
+            if (abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60)
+                dribbler.smart_dribble(180);
+            else
+                kicker.kick();
+            //dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 80 ? 100 : 0);
         }
         else if (sign < 0){
-            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 70 ? 25 : 80;
-            dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 70 ? 100 : 0);
+            rotateSpeed = abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 50 ? 18 : 80; //70
+            if (abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 60)
+                dribbler.smart_dribble(180);
+            else
+                kicker.kick();
+            //dribbler.smart_dribble(abs(goodAngle(sensor.IMU.Yaw - start_angle)) < 70 ? 100 : 0);
         }
 
         lineAngle = sensor.LineSensor.getAngleDelayed();
         if (lineAngle == 360){
-            if (goodAngle(start_cam_angle + start_angle) < 20)
+            //if (goodAngle(start_cam_angle + start_angle) < 20)
                 drv.drive(0, rotateSpeed * sign, 0);
-            else
-                drv.drive(-sign * 90 - sensor.IMU.Yaw, rotateSpeed * sign, 70); //50
+            //else
+                //drv.drive(-sign * 90 - sensor.IMU.Yaw, rotateSpeed * sign, 70); //50
         }
         else
-            drv.drive(lineAngle, rotateSpeed * sign, -80);
+            drv.drive(goodAngle(lineAngle + 180), 0, 80);
         // if (omnicam().gates[color].center_angle > 0){
         //     drive(0, -40, 0);
         // }
@@ -1439,9 +1470,6 @@ void MPU_zakrut(int color)
     // }
 
     vTaskDelay(100 / portTICK_PERIOD_MS);
-    
-    // ESP_LOGI("debug", "exit 2");
-    menu.writeLineClean(0, "exit 2");
 }
 
 void vyravnivanije(int color)
