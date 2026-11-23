@@ -49,6 +49,21 @@ void goalPush(int color);
 
 void playForwardDribble2(int color);
 
+// our_color — цвет своих ворот, как в playForwardDribble2.
+void playForwardKicker(int our_color);
+
+bool isGateCornerForKicking(const OmniCamBlobInfo_t& gate);
+
+bool gateIsCloseAndFree(int color);
+
+int AccurateRotationToKick(const OmniCamBlobInfo_t& gate);
+
+int AngleErrorToRange(int cur, int from, int to, int perfect);
+
+int AngleErrorToRotationSpeed(int err);
+
+void goalKicker(int color);
+
 void MPU_zakrut(int color);
 
 void vyravnivanije(int color);
