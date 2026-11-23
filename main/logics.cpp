@@ -2,6 +2,8 @@
 #include "esp_timer.h"
 #include "vector2.h"
 #include "RealDist.h"
+#include <algorithm>
+#include <cmath>
 
 //[Header("Управляющие переменные")]
 float timer = 0;
@@ -85,14 +87,14 @@ float rightPrev = 0;
 // PID мяча осторожный (близко)
 const float gb_kp = 1;
 const float gb_ki = 0;
-const float gb_kd = 0;
+const float gb_kd = 0.2;
 float gkBallIntegral = 0;
 float gkBallPrev = 0;
 
 // PID мяча молния маквин (подалбше)
-const float gb_kp2 = 5;
+const float gb_kp2 = 3;
 const float gb_ki2 = 0;
-const float gb_kd2 = 10;
+const float gb_kd2 = 3;
 float gkBallIntegral2 = 0;
 float gkBallPrev2 = 0;
 
@@ -111,9 +113,10 @@ float gateIntegral = 0;
 float gatePrev = 0;
 
 float limitGateIntegral = 150;
-float limitGateSpeed = 70;
+float limitGateSpeed = 90;
 
 // Launch killer feature
+int ballSeenTime = 0;
 float ballMoveTime = 0;
 float lastBallAngle = 0;
 const float ballNoMotionDiap = 10;
@@ -507,8 +510,8 @@ void petrovich_iter(int color, int offset = 0, bool useLine = true)
 
     ballAngle = sensor.Locator.getBallAngleLocal();
     
-    int gateAngle = (int)sensor.Cam.gate(color).center_angle;
-    // int gateAngle = sensor.IMU.getYaw();
+    // int gateAngle = (int)sensor.Cam.gate(color).center_angle;
+    int gateAngle = -sensor.IMU.getYaw();
     lineAngle = (useLine ? sensor.LineSensor.getAngleDelayed() : 360);
 
     int offset_angle = (int)goodAngle(gateAngle - offset);
@@ -682,6 +685,15 @@ int LookAtBallRotationSpeed(int ball_angle){
     return (ball_angle) * 0.4f;
 }
 
+int gateRotateSpeedGk(int angle) {
+    static constexpr int kP = 0.5;
+    static constexpr int kD = 0.1;
+    static int prev_angle = 0;
+    int result = angle * kP + (angle - prev_angle) * kD;
+    prev_angle = angle;
+    return result;
+}
+
 void playGoalkeeperCamera(int color)
 {
     menu.clearDisplay();
@@ -702,11 +714,21 @@ void playGoalkeeperCamera(int color)
 
         sensor.update();
 
-        if (sensor.Locator.getStrength() < 5)
+        int robotAngle = sensor.IMU.getYaw();
+
+        if (sensor.Locator.getStrength() < 2)
         {
-            // menu.writeLineClean(2, "No ball");
-            drv.drive(0, -30, 0);
-            continue;
+            // if (millis() - ballSeenTime < 500) {
+            //     ballAngle = goodAngle(lastBallAngle - robotAngle);
+            //     menu.writeLineClean(1, "Old ball " + std::to_string(ballAngle));
+            // } else {
+                // menu.writeLineClean(1, "No ball");
+                drv.drive(0, -10, 0);
+                continue;
+            // }
+        } else {
+            ballAngle = sensor.Locator.getBallAngleLocal();
+            // menu.writeLineClean(1, "OK " + std::to_string(ballAngle));
         }
 
         if (stateGame != 0)
@@ -718,67 +740,8 @@ void playGoalkeeperCamera(int color)
         }
 
         float global_x, global_y;
-        // int get_pos_callback = getGlobalPosition_2gates(global_x, global_y, color);
-        // BTDebug.send();
-        // if (get_pos_callback == 0)
-        // {
-        //     menu.writeLineClean(3, "GP X " + std::to_string(global_x));
-        //     menu.writeLineClean(4, "GP Y " + std::to_string(global_y));
-        // }
-        // else if (get_pos_callback == 1)
-        // {
-        //     menu.writeLineClean(3, "FAILED: no gate");
-        //     menu.writeLineClean(4, "");
-        // }
-        // else if (get_pos_callback == 2)
-        // {
-        //     menu.writeLineClean(3, "FAILED: parallel");
-        //     menu.writeLineClean(4, "");
-        // }
         Vector2 rightBallDir(1.0, 0.0);
         Vector2 leftBallDir(-1.0, 0.0);
-
-        // if (global_x > 35){
-        //     rightBallDir = Vector2(0, -0.5f);
-        //     if (global_y < -65) {
-        //         leftBallDir = Vector2(0, 1);
-        //     }
-        //     else {
-        //         leftBallDir = Vector2(-1.2f, 0);
-        //     }
-        // }
-
-        // if (global_x < -35){
-        //     leftBallDir = Vector2(0, -0.5f);
-        //     if (global_y < -65) {
-        //         rightBallDir = Vector2(0, 1);
-        //     }
-        //     else {
-        //         rightBallDir = Vector2(1.2f, 0);
-        //     }
-        // }
-
-        // std::string s;
-        // if (leftBallDir.y < 0){
-        //     s += "v   ";
-        // }
-        // else if (leftBallDir.y > 0){
-        //     s += "^   ";
-        // }
-        // else
-        //     s += "    ";
-        // if (rightBallDir.y < 0){
-        //     s += "v   ";
-        // }
-        // else if (rightBallDir.y > 0){
-        //     s += "^   ";
-        // }
-        // else
-        //     s += "    ";
-        // menu.writeLineClean(5, s);
-
-        ballAngle = sensor.Locator.getBallAngleLocal();
-        int robotAngle = sensor.IMU.getYaw();
 
         float lineX, lineY;
         sensor.LineSensor.getDirectionDelayed(lineX, lineY);
@@ -788,13 +751,8 @@ void playGoalkeeperCamera(int color)
         int cam_height = sensor.Cam.gate(color).height;
         int cam_dist = sensor.Cam.gate(color).distance;
 
-        // menu.writeLineClean(1, "B " + 
-        //     std::to_string(ballAngle) + " " + 
-        //     std::to_string(globalGateAngle) + " " +
-        //     std::to_string(cam_dist));
-
         // menu.writeLineClean(2, "G " + 
-        //     std::to_string(gateAngle) + " " + 
+        //     // std::to_string(ballAngle) + " " + 
         //     std::to_string(globalGateAngle) + " " +
         //     std::to_string(cam_dist));
 
@@ -808,13 +766,12 @@ void playGoalkeeperCamera(int color)
             drv.driveXY(0, 0, 20);
             // menu.writeLineClean(1, "No gates");
             continue;
-            // gateAngle = lastGateAngle - robotAngle;
-            // cam_height = 110;
         }
 
         lineAngle = sensor.LineSensor.getAngleDelayed();
 
         int ball_strength = sensor.Locator.getStrength();
+        ballSeenTime = millis();
 
         if (abs(goodAngle(ballAngle + robotAngle - lastBallAngle)) > ballNoMotionDiap)
         {
@@ -841,12 +798,12 @@ void playGoalkeeperCamera(int color)
         if (lineAngle != 360 && (abs(globalGateAngle)) <= 135 &&
             ((robotAngle > 0 && lineAngle > 0) || (robotAngle < 0 && lineAngle < 0)))
         {
-            // menu.writeLineClean(2, "Line");
+            // menu.writeLineClean(1, "Line");
             // speedX = (int)(-lineX * 80);
             // speedY = (int)(-lineY * 80);
             //deltaAngle = -robotAngle * 0.25;
             deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
-            drv.drive(goodAngle(lineAngle + 180), LookAtBallRotationSpeed(ballAngle), 100);
+            drv.drive(goodAngle(lineAngle + 180), LookAtBallRotationSpeed(goodAngle(gateAngle - 180)), 100);
             continue;
         }
         else
@@ -871,36 +828,35 @@ void playGoalkeeperCamera(int color)
             //                       4.62172e-8 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist - 2.788e-12 * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist * cam_dist),
             //                      0, 100);
 
-            int err = -(cam_dist - 20) * 10;
-            if (err < -90)
-                err = -90;
-            if (cam_dist < 10)
-                err = 50;
-            else if (cam_dist < 18)
-                err = 50;
-            else if (cam_dist < 20)
-                err = 25;
-            else if (cam_dist < 22)
-                err = 0;
-            
-            speedY = err;
-            if (speedY < -90)
-                speedY = -90;
-            // int err = speedY = 0;
+            bool gateCorner = abs(globalGateAngle) < 135;
 
-            // speedY = (int)(err * gate_kp + (err - gatePrev) * gate_kd + gateIntegral);
+            if (!gateCorner) {
+                if (cam_dist < 15) {
+                    speedY = 80;
+                } else if (cam_dist < 18) {
+                    speedY = 40;
+                } else if (cam_dist < 20) {
+                    speedY = 20;
+                } else if (cam_dist < 25) {
+                    speedY = 0;
+                } else {
+                    int err = cam_dist - 25;
+                    speedY = -err * 5;
+                }
+            } else {
+                if (cam_dist < 10) {
+                    speedY = 70;
+                } else if (cam_dist < 12) {
+                    speedY = 20;
+                } else if (cam_dist < 14) {
+                    speedY = 0;
+                } else {
+                    int err = cam_dist - 14;
+                    speedY = -err * 7;
+                }
+            }
 
-            // menu.writeLineClean(3, std::to_string(cam_dist) + " " + std::to_string(err) + " " + std::to_string(speedY));
-            // if (err < -2)
-            //     speedY = 0.07 * err * err + 5 * err - 3.5; zzzzzzzzzzzzzzzzz
-            // else if (err < 2)
-            //     speedY = 0;
-            // else
-            //     speedY = 40 + err * 7;
             speedY = (int)constrain(speedY, -limitGateSpeed, 100);
-            gatePrev = err;
-            gateIntegral += (err * gate_ki);
-            gateIntegral = constrain(gateIntegral, -limitGateIntegral, limitGateIntegral);
 
             // если мяч сзади он должен сюда заходить
             if (abs(ballAngle) > 80 && speedY <= 0)
@@ -975,7 +931,7 @@ void playGoalkeeperCamera(int color)
 
         // menu.writeLineClean(2, "sp " + std::to_string(speedX) + ";" + std::to_string(speedY));
 
-        deltaAngle = (int)(goodAngle(ballAngle) * 0.5);
+        deltaAngle = gateRotateSpeedGk(goodAngle(gateAngle - 180));
 
         // prevBallStrength = ball_strength;
 
@@ -984,20 +940,11 @@ void playGoalkeeperCamera(int color)
         int sp = sqrt(speedX * speedX + speedY * speedY);
         float angle = atan2(speedX, speedY) * RAD_TO_DEG;
         angle = goodAngle(angle + goodAngle(gateAngle - 180));
-        //drv.drive(angle, (int)deltaAngle, constrain(sp, 0, 100));
-        drv.drive(angle, LookAtBallRotationSpeed(ballAngle), constrain(sp, 0, 100));
+        drv.drive(angle, (int)deltaAngle, constrain(sp, 0, 100));
 
         if (isBall()){
             kicker.kick();
         }
-
-        // if (sp > 100)
-        // {
-        //     speedX = speedX * 100 / sp;
-        //     speedY = speedY * 100 / sp;
-        // }
-
-        // drv.driveXY(speedX, speedY, (int)deltaAngle);
     }
 }
 
@@ -1353,6 +1300,382 @@ void playForwardDribble2(int color)
                         //goalDriveBack(color);
 
                         goto fwDribbleBegin;
+                    }
+                }
+                else
+                {
+                    drv.drive(goodAngle(lineAngle + 180), 0, 80);
+                }
+            }
+        }
+    }
+}
+
+namespace
+{
+bool isGateVisible(const OmniCamBlobInfo_t &gate)
+{
+    return gate.center_angle != 360 && gate.left_angle != 360 &&
+           gate.right_angle != 360 && gate.width > 0;
+}
+} // namespace
+
+bool isGateCornerForKicking(const OmniCamBlobInfo_t &gate)
+{
+    return std::abs(goodAngle(gate.center_angle + sensor.IMU.getYaw())) > 30.0f;
+}
+
+bool gateIsCloseAndFree(int color)
+{
+    const auto& gate = sensor.Cam.gate(color);
+    if (!isGateVisible(gate) || gate.distance < 0 || gate.distance > 70)
+        return false;
+
+    return gate.width > (isGateCornerForKicking(gate) ? 20 : 40);
+}
+
+int AngleErrorToRange(int cur, int from, int to, int perfect)
+{
+    // cur - текущий угол удара
+    // [from, to] - диапазон, в который допустимо бить
+    // perfect - точка, в которую идеально бить
+    // (все это локальные углы, + по часовой)
+
+    int left_error = goodAngle(from - cur);
+    int right_error = goodAngle(to - cur);
+    if (left_error <= 0.0f && right_error >= 0.0f)
+        return goodAngle(perfect - cur);
+
+    return std::abs(left_error) < std::abs(right_error) ? left_error : right_error;
+}
+
+int AccurateRotationToKick(const OmniCamBlobInfo_t &gate)
+{
+    if (gate.left_angle > 0 || gate.right_angle < 0)
+        return gate.center_angle;
+
+    // в углу поля другое поведение, чтобы не попасть в штангу
+    bool gate_corner = isGateCornerForKicking(gate);
+
+    // минимальный угол до края области, чтобы попасть в неё с достаточной точностью
+    // увеличить, если промахивается (но не получится бить в узкие окна)
+    const int min_offset = gate_corner ? 5 : 5;
+    
+    // перекос в сторону дальнего угла
+    // увеличить, если при ударе сбоку часто попадает в ближнюю штангу
+    int asymmetric_offset = gate_corner
+        ? std::min(15, gate.width / 2)
+        : 0;
+
+    int global_gate_angle = goodAngle(gate.center_angle + sensor.IMU.getYaw());
+
+    int left_offset = min_offset;
+    int right_offset = min_offset;
+    if (global_gate_angle > 0)
+        left_offset += asymmetric_offset;
+    else
+        right_offset += asymmetric_offset;
+
+    if (gate.width >= left_offset + right_offset)
+    {
+        return AngleErrorToRange(
+            0,
+            gate.left_angle + left_offset,
+            gate.right_angle - right_offset,
+            gate.center_angle);
+    }
+
+    int left_limit, right_limit, perfect_angle;
+    if (global_gate_angle > 0)
+    {
+        right_limit = gate.right_angle - min_offset;
+        if (gate.width >= left_offset + min_offset) {
+            left_limit = gate.left_angle + left_offset;
+        } else if (gate.width >= min_offset + min_offset) {
+            left_limit = gate.left_angle + min_offset;
+        } else {
+            left_limit = right_limit;
+        }
+        
+        perfect_angle = right_limit;
+    } else {
+        left_limit = gate.left_angle + min_offset;
+        if (gate.width >= min_offset + right_offset) {
+            right_limit = gate.right_angle - right_offset;
+        } else if (gate.width >= min_offset + min_offset) {
+            right_limit = gate.right_angle - min_offset;
+        } else {
+            right_limit = left_limit;
+        }
+        
+        perfect_angle = left_limit;
+    }
+
+    return AngleErrorToRange(0, left_limit, right_limit, perfect_angle);
+}
+
+int AngleErrorToRotationSpeed(int err)
+{
+    // скорость поворота (сюда можно и поумнее регулятор)
+    int rotation_speed = err * 0.5f;
+    if (std::abs(rotation_speed) >= 15.0f)
+        return static_cast<int>(rotation_speed);
+    if (rotation_speed == 0.0f)
+        return 0;
+    return rotation_speed < 0 ? -10 : 10;
+}
+
+void goalKicker(int color)
+{
+    const int time_guard = millis();
+    const int kTimeLimit = 2000;
+    const int kAcceptableAngleErr = 10; // можно и поменьше мб
+    while (true)
+    {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        sensor.update();
+
+        const auto& gate = sensor.Cam.gate(color);
+        if (!isBall()) { break; }
+        if (sensor.LineSensor.getAngleDelayed() != 360) { break; }
+        if (millis() - time_guard > kTimeLimit) { break; }
+
+        if (!isGateVisible(gate)) { continue; }
+
+        int angle_err = AccurateRotationToKick(gate);
+        if (std::abs(angle_err) <= kAcceptableAngleErr)
+        {
+            drv.drive(0, 0, 0, 0);
+            kicker.kick();
+            return;
+        }
+
+        deltaAngle = constrain(AngleErrorToRotationSpeed(angle_err), -20, 20);
+        drv.drive(0, static_cast<int>(deltaAngle), 0);
+    }
+    drv.drive(0, 0, 0, 0);
+}
+
+#define OTLADKA_Kicker
+#ifdef OTLADKA_Kicker
+    const char* kick_log = "k";
+#endif
+void playForwardKicker(int our_color)
+{
+    srand(millis());
+    menu.clearDisplay();
+    int color = 1 ^ our_color;
+    
+    while (true)
+    {
+    fwKickerBegin:
+
+        #ifdef OTLADKA_Kicker
+            ESP_LOGI(kick_log, "-NEW ITERATION-");
+        #endif
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+
+        sensor.update();
+
+        int cam_angle = sensor.Cam.gate(color).center_angle;
+        int cam_dist = sensor.Cam.gate(color).distance;
+
+        int st = sensor.Locator.getStrength();
+        int ballAngle = sensor.Locator.getBallAngleLocal();
+        static bool ball_is_too_far = false;
+        if (sensor.Locator.getStrength() < 5)
+        {
+            ESP_LOGW(kick_log, "Ne vizhu miach");
+            drv.drive(0, 20, 0);
+            ball_is_too_far = true;
+            continue;
+        }
+        int lineAngle = sensor.LineSensor.getAngleDelayed();
+
+        if (!isBall())
+        {
+            //menu.writeLineClean(0, "ball");
+
+            dribbler.smart_dribble((abs(ballAngle) < 60) ? 75 : 0);
+
+            if (!paradox(color)) {
+                int robotAnglSpeed;
+                int speed;
+                moveAngle = ballAngle;
+
+                if(ball_is_too_far){
+                    if(sensor.Locator.getStrength() < 35)
+                        ballAngle = goodAngle(ballAngle + 90);
+                    else
+                        ball_is_too_far = false;
+                }
+
+                if (lineAngle == 360)
+                {
+                    #ifdef OTLADKA_Kicker
+                        ESP_LOGW(kick_log, "Mach poteryan, edu k machu");
+                    #endif
+                    
+                    int ballAnfl_err = ballAngle;
+                    // 
+                    robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
+                    // 
+                    FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
+                    FwBallAnglPrev = ballAnfl_err;
+
+                    speed = sensor.Locator.getStrength() < 70 ? 100 : 50;  
+                }
+                else
+                {
+                    #ifdef OTLADKA_Kicker
+                        ESP_LOGW(kick_log, "Mach poteryan, edu k machu no vizhu liniju");
+                    #endif
+                    moveAngle = goodAngle(lineAngle + 180);
+                    robotAnglSpeed = ballAngle * 0.3;
+                    speed = 80;
+                }
+                drv.drive(moveAngle, (int)(robotAnglSpeed), speed);
+            }
+        }
+        else
+        {
+            #ifdef OTLADKA_Kicker  
+                ESP_LOGW(kick_log, "Mach zachvachen, podjzzaju");
+            #endif
+            //menu.writeLineClean(0, "gate...");
+            dribbler.smart_dribble(85);
+            drv.driveXY(0, 20, 0); // чтобы лучше задриблить 
+            int start = millis();
+            while (millis() - start < 300)
+            {
+                sensor.update();
+                lineAngle = sensor.LineSensor.getAngleDelayed();
+                if (lineAngle != 360){
+                    drv.drive(goodAngle(lineAngle + 180), 0, 80);
+                    break;
+                }
+                vTaskDelay(10 / portTICK_PERIOD_MS);
+            }
+            // drv.drive(0, 0, 0, 0);
+            make_pause(200);
+            sensor.BallSensor.update();
+            while (isBall())
+            {
+                //menu.writeLineClean(0, "gate");
+                vTaskDelay(10 / portTICK_PERIOD_MS);
+                sensor.update();
+
+                // дополнительный переход чтобы не поворачиваться сначала спиной, а потом снова лицом
+                if (gateIsCloseAndFree(color)) {
+                    #ifdef OTLADKA_Kicker  
+                        ESP_LOGW(kick_log, "Kicker attack");
+                    #endif
+
+                    goalKicker(color);
+                    goto fwKickerBegin;
+                }
+
+                cam_angle = sensor.Cam.gate(color).center_angle;
+                cam_dist = sensor.Cam.gate(color).distance;
+                lineAngle = sensor.LineSensor.getAngleDelayed();
+                // dribbler.smart_dribble((abs(cam_angle) > 10 || cam_dist > 50) ? 50 : 0);
+
+                if (lineAngle == 360)
+                {
+                    #ifdef OTLADKA_Kicker  
+                        ESP_LOGW(kick_log, "Mach zachvachen, povorachivajus 1: %d", abs(cam_angle) < 130 && isBall());
+                    #endif
+                    while (abs(cam_angle) < 130 && isBall())
+                    {
+                        sensor.update();
+                        lineAngle = sensor.LineSensor.getAngleDelayed();
+                        moveAngle = goodAngle(lineAngle + 180);
+                        speed = (lineAngle == 360) ? 0 : 60;
+                        cam_angle = sensor.Cam.gate(color).center_angle;
+                        deltaAngle = goodAngle(cam_angle + 180);
+                        deltaAngle = abs(cam_angle) < 90 ? deltaAngle * 0.3 : deltaAngle * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+                        deltaAngle = constrain(deltaAngle, -20, 20);
+                        drv.drive(moveAngle, (int)(deltaAngle), speed);
+                    }
+                    #ifdef OTLADKA_Kicker  
+                        ESP_LOGW(kick_log, "POVERNUL 1");
+                    #endif
+
+                    if (!isBall())
+                    {
+                        #ifdef OTLADKA_Kicker  
+                            ESP_LOGW(kick_log, "POTERIALY MATCH");
+                        #endif
+                        goto fwKickerBegin;
+                    }
+
+                    sensor.update();
+
+                    int delta_angle = goodAngle(cam_angle + 180) * 0.3; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
+                    delta_angle = constrain(delta_angle, -10, 10);
+
+                    lineAngle = sensor.LineSensor.getAngleDelayed();
+                    if (lineAngle != 360)
+                    {
+                        #ifdef OTLADKA_Kicker  
+                            ESP_LOGW(kick_log, "edu k vorotam NO LINIJA");
+                        #endif
+                        drv.drive(goodAngle(lineAngle + 180), delta_angle, 100);
+                        continue;
+                    }
+                    else{
+                        #ifdef OTLADKA_Kicker  
+                            ESP_LOGW(kick_log, "edu k vorotam");
+                        #endif
+                        
+                        drv.drive(cam_angle, delta_angle, 75);
+                    }
+                    cam_dist = sensor.Cam.gate(color).distance;
+                    // Serial.println(cam_dist);
+                    if (abs(cam_angle) > 100 && cam_angle != 360 && cam_dist <= 30)
+                    {
+                        #ifdef OTLADKA_Kicker                      
+                            ESP_LOGW(kick_log, "---ATAKUJU---");
+                        #endif
+
+                        if (gateIsCloseAndFree(color)) {
+                            #ifdef OTLADKA_Kicker  
+                                ESP_LOGW(kick_log, "Kicker attack");
+                            #endif
+                            goalKicker(color);
+                            goto fwKickerBegin;
+                        }
+
+                        // return;
+                        drv.drive(0, 0, 0, 0);
+                        sensor.update();
+                        dribbler.smart_dribble(80);
+
+                        make_pause(100);
+
+                        cam_angle = sensor.Cam.gate(color).center_angle;
+
+                        while (abs(cam_angle) < 160 && isBall())
+                        {
+                            sensor.update();
+                            cam_angle = sensor.Cam.gate(color).center_angle;
+                            deltaAngle = goodAngle(cam_angle + 180);
+                            deltaAngle = constrain(deltaAngle, -40, 40);
+                            drv.drive(0, (int)(deltaAngle * 0.5), 0);
+                        }
+
+                        cam_angle = sensor.Cam.gate(color).center_angle;
+                        cam_dist = sensor.Cam.gate(color).distance;
+
+                        if (!isBall())
+                        {
+                            goto fwKickerBegin;
+                        }
+
+                        dribbler.smart_dribble(100);
+                        MPU_zakrut(color);
+
+                        goto fwKickerBegin;
                     }
                 }
                 else
