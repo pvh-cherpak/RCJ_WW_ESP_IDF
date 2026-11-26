@@ -4,6 +4,7 @@
 // #include "debug_data.h"
 #include "motorControl.h"
 #include "debug_log.h"
+#include "web_log.h"
 #include "pictures.h"
 
 /*
@@ -174,6 +175,12 @@ extern "C"
 		else if (robot_type == 1) {
 			kicker.init(GPIO_NUM_23, 1);
 		}
+
+#if ROBOT_WEB_LOG_ACTIVE
+        esp_err_t web_err = web_log_start(robot_type);
+        if (web_err != ESP_OK)
+            ESP_LOGW("web_log", "Web logging unavailable: %s", esp_err_to_name(web_err));
+#endif
 
 		sensor_init(robot_type);
 

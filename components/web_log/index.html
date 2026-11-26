@@ -1,0 +1,9 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Robot logs</title>
+<style>body{background:#151922;color:#ddd;font:15px monospace;margin:20px}button,input{padding:8px;margin:4px}pre{white-space:pre-wrap;overflow-wrap:anywhere}#status{color:#8bd}</style>
+<h1>Robot logs</h1><div id="status">Подключение…</div><button id="pause">Пауза</button><button id="clear">Очистить</button><button id="save">Скачать</button><input id="filter" placeholder="Фильтр"><pre id="logs"></pre>
+<script>
+let lines=[],paused=false;const output=document.getElementById('logs'),status=document.getElementById('status'),filter=document.getElementById('filter');
+function render(){if(!paused){output.textContent=lines.filter(x=>x.includes(filter.value)).join('\n');window.scrollTo(0,document.body.scrollHeight)}}
+function connect(){const ws=new WebSocket('ws://'+location.host+'/ws');ws.onopen=()=>status.textContent='Подключено';ws.onmessage=e=>{lines.push(...e.data.replace(/\x1b\[[0-9;]*m/g,'').split('\n'));if(lines.length>2000)lines.splice(0,lines.length-2000);render()};ws.onclose=()=>{status.textContent='Связь потеряна. Переподключение…';setTimeout(connect,1500)};ws.onerror=()=>ws.close()}
+document.getElementById('pause').onclick=e=>{paused=!paused;e.target.textContent=paused?'Продолжить':'Пауза';render()};document.getElementById('clear').onclick=()=>{lines=[];output.textContent=''};filter.oninput=render;document.getElementById('save').onclick=()=>{const u=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='robot.log';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};connect();
+</script></html>

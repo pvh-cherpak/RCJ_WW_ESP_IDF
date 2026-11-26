@@ -19,3 +19,5 @@ CONFIG_SDA_GPIO=21
 CONFIG_RESET_GPIO=-1
 CONFIG_I2C_PORT_0=y
 CONFIG_LEGACY_DRIVER=y
+# Development-only Wi-Fi log viewer is excluded from match builds.
+# CONFIG_ROBOT_WEB_LOG is not set

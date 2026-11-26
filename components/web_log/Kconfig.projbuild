@@ -1,0 +1,17 @@
+menu "Robot web logging"
+config ROBOT_WEB_LOG
+    bool "Enable Wi-Fi WebSocket log viewer (development only)"
+    default n
+    select HTTPD_WS_SUPPORT
+    help
+        Starts a Wi-Fi access point and captures ESP_LOG output in RAM.
+        Disable for matches. Keeper (ADC2 line sensor) is rejected at runtime.
+config ROBOT_WEB_LOG_SSID
+    string "Access point name"
+    depends on ROBOT_WEB_LOG
+    default "Robot-Debug"
+config ROBOT_WEB_LOG_PASSWORD
+    string "Access point password (8-63 characters)"
+    depends on ROBOT_WEB_LOG
+    default "robotdebug"
+endmenu
