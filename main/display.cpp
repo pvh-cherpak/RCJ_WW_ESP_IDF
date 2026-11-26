@@ -197,7 +197,7 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B, int 
                 //playForwardDribble2(0); // playForwardGoyda(0); // 
                 break;
             case 2:
-                run_game(playForwardDribble2, playColor);
+                run_game(playForwardKicker, playColor);
                 // playGoalkeeperCamera(0);
                 break;
             case 3:
