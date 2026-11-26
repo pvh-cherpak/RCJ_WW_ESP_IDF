@@ -523,7 +523,7 @@ static void kicker_returned_timer_cb(void*){
     kicker.state = 0;
 }
 
-void Kicker::kick(int64_t kick_time_mcs = default_kick_time_mcs){
+void Kicker::kick(int64_t kick_time_mcs){
     if (state == 0 && KickTimer != NULL){
         gpio_set_level(pin, !invert);
         state = 1;

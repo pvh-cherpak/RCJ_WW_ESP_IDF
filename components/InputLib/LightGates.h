@@ -14,7 +14,7 @@ private:
     adc_channel_t adc_channel_light = ADC_CHANNEL_0;
     
     int isBallThreshold = 300;
-    int64_t holdTimeUs = 500000; // 500 ms удержания состояния захвата
+    int64_t holdTimeUs = 100000; // 500 ms удержания состояния захвата
     int currentLuminosity = 0;
     bool isInverted = false;
     

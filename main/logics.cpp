@@ -1359,7 +1359,7 @@ int AccurateRotationToKick(const OmniCamBlobInfo_t &gate)
 
     // минимальный угол до края области, чтобы попасть в неё с достаточной точностью
     // увеличить, если промахивается (но не получится бить в узкие окна)
-    const int min_offset = gate_corner ? 5 : 5;
+    const int min_offset = gate_corner ? 10 : 10; //5
     
     // перекос в сторону дальнего угла
     // увеличить, если при ударе сбоку часто попадает в ближнюю штангу
@@ -1417,7 +1417,7 @@ int AccurateRotationToKick(const OmniCamBlobInfo_t &gate)
 int AngleErrorToRotationSpeed(int err)
 {
     // скорость поворота (сюда можно и поумнее регулятор)
-    int rotation_speed = err * 0.5f;
+    int rotation_speed = err * 0.2f;
     if (std::abs(rotation_speed) >= 15.0f)
         return static_cast<int>(rotation_speed);
     if (rotation_speed == 0.0f)
@@ -1429,7 +1429,7 @@ void goalKicker(int color)
 {
     const int time_guard = millis();
     const int kTimeLimit = 2000;
-    const int kAcceptableAngleErr = 10; // можно и поменьше мб
+    const int kAcceptableAngleErr = 5; // можно и поменьше мб
     while (true)
     {
         vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -1496,7 +1496,7 @@ void playForwardKicker(int our_color)
         {
             //menu.writeLineClean(0, "ball");
 
-            dribbler.smart_dribble((abs(ballAngle) < 60) ? 75 : 0);
+            dribbler.smart_dribble((abs(ballAngle) < 60) ? 30 : 0);
 
             if (!paradox(color)) {
                 int robotAnglSpeed;
@@ -1518,12 +1518,18 @@ void playForwardKicker(int our_color)
                     
                     int ballAnfl_err = ballAngle;
                     // 
-                    robotAnglSpeed = Fw_kp * ballAnfl_err + FwBallAnglIntegral + Fw_kd * (ballAnfl_err - FwBallAnglPrev);
+                    if(isBallInFront(ballAnfl_err))
+                    {
+                        robotAnglSpeed = Fw_kp_if_front * ballAnfl_err;
+                    }
+                    else
+                    {
+                        robotAnglSpeed = Fw_kp_not_in_front_of * ballAnfl_err + Fw_kd_if_front * (ballAnfl_err - FwBallAnglPrev);
+                    }
                     // 
-                    FwBallAnglIntegral += (ballAnfl_err)*Fw_ki;
                     FwBallAnglPrev = ballAnfl_err;
 
-                    speed = sensor.Locator.getStrength() < 70 ? 100 : 50;  
+                    speed = sensor.Locator.getStrength() < 65 ? 100 : 30;  //70 
                 }
                 else
                 {
@@ -1543,7 +1549,7 @@ void playForwardKicker(int our_color)
                 ESP_LOGW(kick_log, "Mach zachvachen, podjzzaju");
             #endif
             //menu.writeLineClean(0, "gate...");
-            dribbler.smart_dribble(85);
+            dribbler.smart_dribble(30);
             drv.driveXY(0, 20, 0); // чтобы лучше задриблить 
             int start = millis();
             while (millis() - start < 300)
@@ -1594,7 +1600,7 @@ void playForwardKicker(int our_color)
                         cam_angle = sensor.Cam.gate(color).center_angle;
                         deltaAngle = goodAngle(cam_angle + 180);
                         deltaAngle = abs(cam_angle) < 90 ? deltaAngle * 0.3 : deltaAngle * 0.5; //((cam_angle > 0) ? -(180 - cam_angle) : -(-180 - cam_angle)) * 0.5;
-                        deltaAngle = constrain(deltaAngle, -20, 20);
+                        deltaAngle = constrain(deltaAngle, -10, 10);
                         drv.drive(moveAngle, (int)(deltaAngle), speed);
                     }
                     #ifdef OTLADKA_Kicker  
@@ -1649,7 +1655,7 @@ void playForwardKicker(int our_color)
                         // return;
                         drv.drive(0, 0, 0, 0);
                         sensor.update();
-                        dribbler.smart_dribble(80);
+                        dribbler.smart_dribble(30);
 
                         make_pause(100);
 
@@ -1660,7 +1666,7 @@ void playForwardKicker(int our_color)
                             sensor.update();
                             cam_angle = sensor.Cam.gate(color).center_angle;
                             deltaAngle = goodAngle(cam_angle + 180);
-                            deltaAngle = constrain(deltaAngle, -40, 40);
+                            deltaAngle = constrain(deltaAngle, -20, 20);
                             drv.drive(0, (int)(deltaAngle * 0.5), 0);
                         }
 
