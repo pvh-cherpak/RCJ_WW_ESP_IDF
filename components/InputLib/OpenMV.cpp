@@ -150,6 +150,7 @@ void OpenMVCommunication_t::update()
         }
         //parseCorners(&msg[0]);
         parseData(&msg[0]);
+        last_frame_time_us = esp_timer_get_time();
         // calculate_global_values();
 
         // ищем, не было ли уже обнаружено новое начало сообщения

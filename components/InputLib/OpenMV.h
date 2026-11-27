@@ -61,6 +61,7 @@ public:
 public:
     void init(int GPIO, int provorot);
     void update();
+    int64_t lastFrameTimeUs() const { return last_frame_time_us; }
     OpenMVCommunication_t(IMU_t& IMUU);
     ~OpenMVCommunication_t();
     const OmniCamBlobInfo_t& gate(int color) { return (color ? Blue : Yellow); };
@@ -72,6 +73,7 @@ private:
     
     int dist_to_polygon(int angle, blob_t b);
 private:
+    int64_t last_frame_time_us = 0;
     OmniCamData_t cam_data;
     OmniCamData_t globa_cam_data;
     IMU_t& IMU;
