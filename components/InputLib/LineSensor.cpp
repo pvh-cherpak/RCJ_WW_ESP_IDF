@@ -14,6 +14,17 @@ const float angles_for_gk[16] = {
 void LineSensor_t::init(LineSensor_config_t config)
 {
   CONFIG = config;
+  if (!CONFIG.enabled) {
+    line_angle_delayed = 360;
+    line_dir_x = line_dir_y = 0;
+    is_line_detected = false;
+    for (int i = 0; i < 16; ++i) {
+      actual_value[i] = 0;
+      is_line_on_sensor[i] = false;
+      line_time[i] = portMAX_DELAY;
+    }
+    return;
+  }
 
   for (int i = 0; i < 16; i++)
     actual_value[i] = 0;
@@ -116,6 +127,7 @@ void LineSensor_t::init(LineSensor_config_t config)
 
 void LineSensor_t::calibrateGreen()
 {
+  if (!CONFIG.enabled) return;
   read_line_sensors();
   for (int i = 0; i < 16; i++)
     green_value[i] = actual_value[i];
@@ -123,6 +135,7 @@ void LineSensor_t::calibrateGreen()
 
 void LineSensor_t::calibrateWhite()
 {
+  if (!CONFIG.enabled) return;
   read_line_sensors();
   for (int i = 0; i < 16; i++)
     white_value[i] = std::max((int)white_value[i], actual_value[i]);
@@ -130,12 +143,14 @@ void LineSensor_t::calibrateWhite()
 
 void LineSensor_t::whiteTo0()
 {
+  if (!CONFIG.enabled) return;
   for (int i = 0; i < 16; i++)
     white_value[i] = 0;
 }
 
 void LineSensor_t::saveGreenWhite()
 {
+  if (!CONFIG.enabled) return;
   nvs_handle_t nvs_handle;
   ESP_ERROR_CHECK(nvs_open(NVS_WHITE_VALUE_GROUP, NVS_READWRITE, &nvs_handle));
   for (int i = 0; i < 16; i++)
@@ -232,6 +247,7 @@ void LineSensor_t::getLineDirection_Delayed(float &x, float &y)
 
 void LineSensor_t::read_line_sensors()
 {
+  if (!CONFIG.enabled) return;
   if (!CONFIG.use_new_driver)
   {
     for (int channel = 0; channel < 16; channel++)

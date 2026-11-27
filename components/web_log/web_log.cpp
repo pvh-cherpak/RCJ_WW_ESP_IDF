@@ -101,13 +101,18 @@ esp_err_t websocket(httpd_req_t *req)
 
 esp_err_t web_log_start(unsigned robot_type)
 {
-    // ESP32 Wi-Fi conflicts with the keeper's ADC2 line sensor.
-    if (robot_type != 2) return ESP_ERR_NOT_SUPPORTED;
+    // The keeper disables its ADC2 line sensor in sensor_init in this build.
+    if (robot_type != 1 && robot_type != 2) return ESP_ERR_NOT_SUPPORTED;
     if (server) return ESP_ERR_INVALID_STATE;
     wifi_config_t wifi = {};
-    const char *ssid = CONFIG_ROBOT_WEB_LOG_SSID;
+    const char *base_ssid = CONFIG_ROBOT_WEB_LOG_SSID;
+    const char *role = robot_type == 1 ? "goalkeeper" : "forward";
+    // Keep the role suffix intact within the 32-byte SSID limit.
+    char ssid[33];
+    const int base_limit = 32 - 1 - strlen(role);
+    snprintf(ssid, sizeof(ssid), "%.*s-%s", base_limit, base_ssid, role);
     const char *password = CONFIG_ROBOT_WEB_LOG_PASSWORD;
-    if (!strlen(ssid) || strlen(ssid) > 32 || strlen(password) < 8 || strlen(password) > 63)
+    if (!strlen(base_ssid) || strlen(password) < 8 || strlen(password) > 63)
         return ESP_ERR_INVALID_ARG;
     memcpy(wifi.ap.ssid, ssid, strlen(ssid));
     wifi.ap.ssid_len = strlen(ssid);

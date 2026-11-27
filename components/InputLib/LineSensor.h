@@ -23,6 +23,7 @@ struct LineSensor_config_t
     bool inversed_without_offset;
     bool rabotaet[16];
     int offset = 0;
+    bool enabled = true;
 };
 
 
@@ -67,8 +68,9 @@ public:
         (gpio_num_t)27}, (gpio_num_t)23, (gpio_num_t)22, ADC_UNIT_1, ADC_CHANNEL_3, false, false, {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}, 0}{}
     
     void init(LineSensor_config_t config);
-    void update(){read_line_sensors(); saveLineDirection(); calculateLineAngle();}
-    void testUpdate(){line_angle_delayed = rand() % 360; is_line_on_sensor[12]=!is_line_on_sensor[12]; ESP_LOGI("LineSensor TEST", "Angle: %d", line_angle_delayed);}
+    bool isEnabled() const { return CONFIG.enabled; }
+    void update(){if (!CONFIG.enabled) return; read_line_sensors(); saveLineDirection(); calculateLineAngle();}
+    void testUpdate(){if (!CONFIG.enabled) return; line_angle_delayed = rand() % 360; is_line_on_sensor[12]=!is_line_on_sensor[12]; ESP_LOGI("LineSensor TEST", "Angle: %d", line_angle_delayed);}
     // int getAngle();
 
     void calibrateGreen();

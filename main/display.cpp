@@ -1,7 +1,11 @@
 #include "display.h"
 #include "global.h"
 #include "logics.h"
+#include <algorithm>
+#include <array>
 #include <atomic>
+#include <cmath>
+#include "esp_timer.h"
 
 static const char *OLED_tag = "SSD1106";
 static SemaphoreHandle_t encoder_button_sem = xSemaphoreCreateBinary();
@@ -33,7 +37,7 @@ static const std::vector<std::string> another_menu_text =
     {"-Another  menu-", "Line calib", "Dribbler: ", "50505050", "kick", "mpu calib", "dist calib", "deVEL"};
 
 static const std::vector<std::string> debug_menu_text =
-    {"-Debug  menu-", "Zakrut", "Penalty K", "Penalty D"};
+    {"-Debug  menu-", "Zakrut", "Penalty K", "Penalty D", "Gate sweep"};
 
 static std::vector<std::string> start_menu_output_text = start_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
@@ -244,13 +248,15 @@ void info_menu(button_handle_t &encoder_button)
         // menu.writeLineClean(6, "Dist " + std::to_string(sensor.Cam.Yellow.distance));
 
         menu.writeLineClean(2, "MPU angle: " + std::to_string(sensor.IMU.getYaw()), false);
-        menu.writeLineClean(3, "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed()), false);
+        menu.writeLineClean(3, sensor.LineSensor.isEnabled()
+            ? "Line angle: " + std::to_string(sensor.LineSensor.getAngleDelayed())
+            : "Line angle: WIFI mod", false);
         menu.writeLineClean(4, "Ball: " + std::to_string(sensor.Locator.getBallAngleLocal()) + " " + std::to_string(sensor.Locator.getStrength()) + (isBall() ? " B" : " -"), false);
         int gateAngle = sensor.Cam.Yellow.clos_angle;
         int gateDist = sensor.Cam.Yellow.distance;
         int gateWidth = sensor.Cam.Yellow.width;
-        menu.writeLineClean(5, "Y: " + std::to_string(gateAngle) + " " + std::to_string(sensor.Cam.Yellow.distance) + " " + std::to_string(sensor.Cam.Yellow.center_distance), false);
-        menu.writeLineClean(6, "B: " + std::to_string(sensor.Cam.Blue.clos_angle) + " " + std::to_string(sensor.Cam.Blue.distance) + " " + std::to_string(sensor.Cam.Blue.center_distance), false);
+        menu.writeLineClean(5, "Y: " + std::to_string(sensor.Cam.Yellow.left_angle) + " " + std::to_string(sensor.Cam.Yellow.clos_angle) + " " + std::to_string(sensor.Cam.Yellow.right_angle), false);
+        menu.writeLineClean(6, "B: " + std::to_string(sensor.Cam.Blue.left_angle) + " " + std::to_string(sensor.Cam.Blue.clos_angle) + " " + std::to_string(sensor.Cam.Blue.right_angle), false);
         // menu.writeLineClean(6, "Y dist: " + std::to_string(real_dist.convertDist(gateDist, gateAngle)));
         //ESP_LOGI("Sensor", "BallAngle: %d", sensor.Locator.getBallAngleLocal());
 
@@ -496,6 +502,203 @@ void calibrateRealDist(int color){
     real_dist.updatePoints(place_distances, (int*)angles, (int*)pixel_dist);
 }
 
+namespace {
+
+constexpr int gateSweepStep = 10;
+constexpr int gateSweepSteps = 360 / gateSweepStep;
+constexpr int gateSweepSamples = 3;
+constexpr double gateSweepRad = 3.141592653589793 / 180.0;
+constexpr char gateSweepTag[] = "GateSweep";
+
+struct GateSweepMean
+{
+    std::array<double, 3> angles{};
+    int samples = 0;
+    int positions = 0;
+    double x = 0;
+    double depth = 0;
+    double pixels = 0;
+};
+
+// The initial heading points perpendicular to the goal line, toward the goal.
+// Coordinates are in goal widths, with +x to the right when facing the goal.
+static void addGateSweepPosition(GateSweepMean &mean,
+                                 const std::array<int, 3> &angles, int initialYaw)
+{
+    int left = goodAngle(angles[0] - initialYaw);
+    int right = goodAngle(angles[2] - initialYaw);
+    if (std::abs(left) >= 85 || std::abs(right) >= 85 || std::abs(left - right) < 2)
+        return;
+
+    const double leftRay = std::tan(std::min(left, right) * gateSweepRad);
+    const double rightRay = std::tan(std::max(left, right) * gateSweepRad);
+    const double depth = 1.0 / (rightRay - leftRay);
+    mean.x -= (leftRay + rightRay) * depth / 2.0;
+    mean.depth += depth;
+    ++mean.positions;
+}
+
+static void gateSweep(int color)
+{
+    // The menu runs on the main task, which has a small stack.
+    static std::array<GateSweepMean, gateSweepSteps> means;
+    means.fill({});
+    sensor.update();
+    const int initialYaw = sensor.IMU.getYaw();
+    ESP_LOGI(gateSweepTag, "BEGIN color=%s yaw0=%d position_in_goal_widths",
+             colors[color].c_str(), initialYaw);
+
+    bool stopped = false;
+    for (int step = 0; step < gateSweepSteps && !stopped; ++step)
+    {
+        const int heading = step * gateSweepStep;
+        const int targetYaw = goodAngle(initialYaw + heading);
+        const int64_t turnDeadline = esp_timer_get_time() + 3000000;
+        int64_t settledSince = 0;
+        bool turnTimedOut = false;
+        auto &mean = means[step];
+        std::array<int, 3> angleReference{};
+        int64_t lastFrame = sensor.Cam.lastFrameTimeUs();
+        menu.writeLineClean(0, "Sweep " + std::to_string(heading) + " deg");
+        while (mean.samples < gateSweepSamples)
+        {
+            if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE ||
+                xSemaphoreTake(encoder_double_click_sem, 0) == pdTRUE)
+            {
+                stopped = true;
+                break;
+            }
+
+            sensor.update();
+            const int64_t now = esp_timer_get_time();
+            const int yaw = sensor.IMU.getYaw();
+            const int error = goodAngle(targetYaw - yaw);
+            const int64_t frame = sensor.Cam.lastFrameTimeUs();
+
+            if (std::abs(error) > 2)
+            {
+                if (now >= turnDeadline)
+                {
+                    turnTimedOut = true;
+                    break;
+                }
+                const int speed = std::clamp(std::abs(error), 15, 30);
+                drv.drive(0, error > 0 ? speed : -speed, 0);
+                settledSince = 0;
+                mean = {};
+            }
+            else
+            {
+                drv.drive(0, 0, 0);
+                if (settledSince == 0)
+                    settledSince = now;
+
+                if (now - settledSince >= 500000)
+                {
+                    const auto &gate = sensor.Cam.gate(color);
+                    if (frame != lastFrame && frame >= settledSince + 500000 &&
+                        gate.height > 0 && std::abs(gate.left_angle) <= 180 &&
+                        std::abs(gate.center_angle) <= 180 && std::abs(gate.right_angle) <= 180)
+                    {
+                        const std::array<int, 3> angles = {
+                            goodAngle(gate.left_angle + yaw),
+                            goodAngle(gate.center_angle + yaw),
+                            goodAngle(gate.right_angle + yaw)
+                        };
+                        if (mean.samples == 0)
+                            angleReference = angles;
+                        for (size_t i = 0; i < angles.size(); ++i)
+                            mean.angles[i] += goodAngle(angles[i] - angleReference[i]);
+                        ++mean.samples;
+                        mean.pixels += gate.distance;
+                        addGateSweepPosition(mean, angles, initialYaw);
+                        ESP_LOGI(gateSweepTag, "SAMPLE step=%d n=%d yaw=%d L=%d C=%d R=%d px=%d",
+                                 heading, mean.samples, yaw, angles[0], angles[1], angles[2], gate.distance);
+                    }
+                    if (now - settledSince >= 1700000)
+                        break;
+                }
+                else if (now >= turnDeadline)
+                {
+                    turnTimedOut = true;
+                    break;
+                }
+            }
+            lastFrame = frame;
+            vTaskDelay(pdMS_TO_TICKS(10) > 0 ? pdMS_TO_TICKS(10) : 1);
+        }
+        drv.drive(0, 0, 0);
+
+        if (stopped || turnTimedOut || mean.samples < 2)
+        {
+            mean = {};
+            ESP_LOGW(gateSweepTag, "SKIP step=%d reason=%s", heading,
+                     stopped ? "cancelled" : turnTimedOut ? "turn_timeout" : "insufficient_frames");
+            stopped = stopped || turnTimedOut;
+            continue;
+        }
+
+        for (size_t i = 0; i < mean.angles.size(); ++i)
+            mean.angles[i] = std::remainder(angleReference[i] + mean.angles[i] / mean.samples, 360.0);
+        mean.pixels /= mean.samples;
+        if (mean.positions >= 2)
+        {
+            mean.x /= mean.positions;
+            mean.depth /= mean.positions;
+            ESP_LOGI(gateSweepTag, "POS step=%d n=%d x/W=%.3f depth/W=%.3f",
+                     heading, mean.positions, mean.x, mean.depth);
+        }
+        ESP_LOGI(gateSweepTag, "MEAN step=%d n=%d L=%.2f C=%.2f R=%.2f px=%.2f",
+                 heading, mean.samples, mean.angles[0], mean.angles[1], mean.angles[2], mean.pixels);
+    }
+
+    std::array<double, 3> delta{};
+    double pixelDelta = 0;
+    double xDelta = 0;
+    double depthDelta = 0;
+    int valid = 0;
+    int validPositions = 0;
+    for (size_t i = 0; i < means.size(); ++i)
+    {
+        const auto &a = means[i];
+        if (a.samples == 0)
+            continue;
+        ++valid;
+        if (a.positions >= 2)
+            ++validPositions;
+        for (size_t j = 0; j < i; ++j)
+        {
+            const auto &b = means[j];
+            if (b.samples == 0)
+                continue;
+            for (size_t k = 0; k < delta.size(); ++k)
+                delta[k] = std::max(delta[k], std::abs(std::remainder(a.angles[k] - b.angles[k], 360.0)));
+            pixelDelta = std::max(pixelDelta, std::abs(a.pixels - b.pixels));
+            if (a.positions >= 2 && b.positions >= 2)
+            {
+                xDelta = std::max(xDelta, std::abs(a.x - b.x));
+                depthDelta = std::max(depthDelta, std::abs(a.depth - b.depth));
+            }
+        }
+    }
+    if (valid >= 2)
+        ESP_LOGI(gateSweepTag, "DELTA steps=%d L=%.2f C=%.2f R=%.2f px=%.2f",
+                 valid, delta[0], delta[1], delta[2], pixelDelta);
+    if (validPositions >= 2)
+        ESP_LOGI(gateSweepTag, "POS_DELTA steps=%d x/W=%.3f depth/W=%.3f",
+                 validPositions, xDelta, depthDelta);
+
+    menu.clearDisplay();
+    menu.writeLineClean(0, stopped ? "Sweep stopped" : "Sweep done");
+    menu.writeLineClean(1, "Valid " + std::to_string(valid) + "/36");
+    menu.writeLineClean(2, valid >= 2 ? "dCenter " + std::to_string(std::lround(delta[1])) + " deg"
+                                      : "No angle delta");
+    menu.writeLineClean(3, "Click to return");
+    xSemaphoreTake(encoder_button_sem, portMAX_DELAY);
+}
+
+} // namespace
+
 void debug_menu(button_handle_t &encoder_button)
 {
     int user_pointer_pos = 1;
@@ -531,6 +734,17 @@ void debug_menu(button_handle_t &encoder_button)
                 break;
             case 3:
                 penaltyDribbler(playColor);
+                break;
+            case 4:
+                menu.clearDisplay();
+                menu.writeLineClean(0, "Face " + colors[playColor]);
+                menu.writeLineClean(1, "Square to goal");
+                menu.writeLineClean(2, "Click to start");
+                menu.writeLineClean(3, "Click to stop");
+                xSemaphoreTake(encoder_button_sem, portMAX_DELAY);
+                xSemaphoreTake(encoder_double_click_sem, 0);
+                gateSweep(playColor);
+                menu.drawFullMenu(debug_menu_text);
                 break;
                 
             default:

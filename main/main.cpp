@@ -92,6 +92,9 @@ void sensor_init(uint8_t robot_type)
 		conf.IMU_active = true;
 	}
 
+#if ROBOT_WEB_LOG_ACTIVE
+    if (robot_type == 1) conf.LineSensor_config.enabled = false;
+#endif
 	sensor.init(conf);
 }
 
