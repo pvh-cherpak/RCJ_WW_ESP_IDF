@@ -1,7 +1,11 @@
 #include "display.h"
 #include "global.h"
 #include "logics.h"
+#include "logics_regulators.h"
+#include "esp_timer.h"
 #include <atomic>
+#include <cstdio>
+#include <cinttypes>
 
 static const char *OLED_tag = "SSD1106";
 static SemaphoreHandle_t encoder_button_sem = xSemaphoreCreateBinary();
@@ -33,7 +37,7 @@ static const std::vector<std::string> another_menu_text =
     {"-Another  menu-", "Line calib", "Dribbler: ", "50505050", "kick", "mpu calib", "dist calib", "deVEL"};
 
 static const std::vector<std::string> debug_menu_text =
-    {"-Debug  menu-", "Zakrut", "Penalty K", "Penalty D"};
+    {"-Debug  menu-", "Zakrut", "Penalty K", "Penalty D", "PID AutoTune", "PD Step Tune", "SysId Yaw Log"};
 
 static std::vector<std::string> start_menu_output_text = start_menu_text; // хранит another_menu_text с учётом изменяемых переменных
 static std::vector<std::string> another_menu_output_text = another_menu_text; // хранит another_menu_text с учётом изменяемых переменных
@@ -201,7 +205,9 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B, int 
                 // playGoalkeeperCamera(0);
                 break;
             case 3:
-                run_game(playGoalkeeperCamera, playColor);
+                // run_game(playGoalkeeperCamera, playColor);
+                 run_game(playGoalkeeperCamera, playColor);
+                
                 // playForwardGoyda(1); // playForwardDribble2(1); // 
                 break;
             case 4:
@@ -228,7 +234,7 @@ void start_menu(uint8_t robot_type, int encoder_GPIO_A, int encoder_GPIO_B, int 
     }
 }
 
-void info_menu(button_handle_t &encoder_button)
+void  info_menu(button_handle_t &encoder_button)
 {
     menu.clearDisplay();
     menu.writeLineClean(0, "---Info menu---", true);
@@ -496,6 +502,118 @@ void calibrateRealDist(int color){
     real_dist.updatePoints(place_distances, (int*)angles, (int*)pixel_dist);
 }
 
+static void run_heading_autotune(bool useStepTest)
+{
+    constexpr int rotationStep = 30;
+    HeadingRegulator regulator;
+    HeadingStepAutoTuner stepTuner;
+    menu.clearDisplay();
+    menu.writeLineClean(0, useStepTest ? "PD Step Tune" : "PID AutoTune", true);
+    menu.writeLineClean(1, "Tuning...");
+    menu.writeLineClean(4, "Click to cancel");
+
+    drv.driveXY(0, 0, 0);
+    if (useStepTest)
+    {
+        sensor.IMU.update();
+        stepTuner.start(sensor.IMU.getYaw(), esp_timer_get_time());
+    }
+    else
+    {
+        regulator.startAutoTune(rotationStep, esp_timer_get_time());
+    }
+
+    while ((useStepTest ? stepTuner.status() : regulator.autoTuneStatus()) ==
+           HeadingRegulator::AutoTuneStatus::Running)
+    {
+        if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
+        {
+            drv.driveXY(0, 0, 0);
+            return;
+        }
+
+        sensor.IMU.update();
+        const int yaw = sensor.IMU.getYaw();
+        const auto nowUs = esp_timer_get_time();
+        const int rotation = useStepTest ? stepTuner.update(yaw, nowUs)
+                                         : regulator.updateAutoTune(yaw, nowUs);
+        drv.driveXY(0, 0, rotation);
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    drv.driveXY(0, 0, 0);
+
+    HeadingRegulator::PIDGains gains{};
+    if (useStepTest ? stepTuner.getGains(gains) : regulator.getAutoTuneGains(gains))
+    {
+        char line[17];
+        std::snprintf(line, sizeof(line), "Kp %.6g", gains.kp);
+        menu.writeLineClean(3, line);
+        std::snprintf(line, sizeof(line), "Ki %.6g", gains.ki);
+        menu.writeLineClean(4, line);
+        std::snprintf(line, sizeof(line), "Kd %.6g", gains.kd);
+        menu.writeLineClean(5, line);
+    }
+    else
+    {
+        menu.writeLineClean(1, "Tuning failed");
+    }
+    menu.writeLineClean(6, "Click to exit");
+    xSemaphoreTake(encoder_button_sem, portMAX_DELAY);
+}
+
+static void run_yaw_sysid_log()
+{
+    constexpr int commands[] = {16, -16, 25, -25, 35, -35};
+    constexpr int64_t pulseUs = 350'000;
+    constexpr int64_t coastUs = 450'000;
+    constexpr int maxPulseAngle = 15;
+
+    drv.driveXY(0, 0, 0);
+    menu.clearDisplay();
+    menu.writeLineClean(0, "SysId Yaw Log", true);
+    menu.writeLineClean(1, "Logging to UART");
+    menu.writeLineClean(4, "Click to cancel");
+
+    std::puts("SYSID_BEGIN");
+    const int64_t startUs = esp_timer_get_time();
+    for (const int command : commands)
+    {
+        sensor.IMU.update();
+        const int initialYaw = sensor.IMU.getYaw();
+        const int64_t pulseStartUs = esp_timer_get_time();
+        int64_t coastStartUs = 0;
+
+        while (true)
+        {
+            if (xSemaphoreTake(encoder_button_sem, 0) == pdTRUE)
+            {
+                drv.driveXY(0, 0, 0);
+                std::puts("SYSID_CANCEL");
+                return;
+            }
+
+            sensor.IMU.update();
+            const int yaw = sensor.IMU.getYaw();
+            const int64_t nowUs = esp_timer_get_time();
+            if (coastStartUs == 0 &&
+                (nowUs - pulseStartUs >= pulseUs || std::abs(goodAngle(yaw - initialYaw)) >= maxPulseAngle))
+                coastStartUs = nowUs;
+
+            const int rotation = coastStartUs == 0 ? command : 0;
+            drv.driveXY(0, 0, rotation);
+            std::printf("SYSID,%" PRId64 ",%d,%d\n", nowUs - startUs, rotation, yaw);
+            if (coastStartUs != 0 && nowUs - coastStartUs >= coastUs)
+                break;
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+    }
+    drv.driveXY(0, 0, 0);
+    std::puts("SYSID_END");
+    menu.writeLineClean(1, "Log complete");
+    menu.writeLineClean(4, "Click to exit");
+    xSemaphoreTake(encoder_button_sem, portMAX_DELAY);
+}
+
 void debug_menu(button_handle_t &encoder_button)
 {
     int user_pointer_pos = 1;
@@ -531,6 +649,17 @@ void debug_menu(button_handle_t &encoder_button)
                 break;
             case 3:
                 penaltyDribbler(playColor);
+                break;
+            case 4:
+            case 5:
+                run_heading_autotune(user_pointer_pos == 5);
+                menu.drawFullMenu(debug_menu_text);
+                menu.setChosenItem(0);
+                break;
+            case 6:
+                run_yaw_sysid_log();
+                menu.drawFullMenu(debug_menu_text);
+                menu.setChosenItem(0);
                 break;
                 
             default:

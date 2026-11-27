@@ -38,6 +38,7 @@ void petrovich_iter(int color, int offset, bool useLine);
 void goOverObstacleOmni(float generalSpeed, float generalAngle, float rot_angle, float critDist, bool rotate);
 
 void playGoalkeeperCamera(int color);
+void playGoalkeeperCameraFacingGoal(int color);
 
 void playForwardGoyda(int color);
 
