@@ -15,3 +15,7 @@ dependencies.lock
 backtarve.bat
 
 .devcontainer/
+
+# Local soccer simulator builds and replays
+/build-sim*/
+*.rcj

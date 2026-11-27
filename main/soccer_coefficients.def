@@ -1,0 +1,12 @@
+// Name, default, minimum, maximum. Included by the controller and profile loader.
+SOCCER_COEFFICIENT(keeperRound,        0.72f, 0, 100)
+SOCCER_COEFFICIENT(keeperReverseLimit, 90,    0, 100)
+SOCCER_COEFFICIENT(keeperBallP,        0.9f,  0, 100)
+SOCCER_COEFFICIENT(keeperBallD,        0.05f, 0, 100)
+SOCCER_COEFFICIENT(keeperGateP,        0.5f,  0, 100)
+SOCCER_COEFFICIENT(keeperGateD,        0.1f,  0, 100)
+SOCCER_COEFFICIENT(clearRound,         2.5f,  0, 100)
+SOCCER_COEFFICIENT(forwardFrontP,      0.35f, 0, 100)
+SOCCER_COEFFICIENT(forwardTurnP,       0.7f,  0, 100)
+SOCCER_COEFFICIENT(forwardTurnD,       3.5f,  0, 100)
+SOCCER_COEFFICIENT(keeperSearchP,      0.4f,  0, 100)
