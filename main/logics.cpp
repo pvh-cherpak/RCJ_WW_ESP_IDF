@@ -686,8 +686,8 @@ int LookAtBallRotationSpeed(int ball_angle){
 }
 
 int gateRotateSpeedGk(int angle) {
-    static constexpr int kP = 0.5;
-    static constexpr int kD = 0.1;
+    static constexpr float kP = 0.5f;
+    static constexpr float kD = 0.1f;
     static int prev_angle = 0;
     int result = angle * kP + (angle - prev_angle) * kD;
     prev_angle = angle;
@@ -714,7 +714,9 @@ void playGoalkeeperCamera(int color)
 
         sensor.update();
 
-        int robotAngle = sensor.IMU.getYaw();
+        // Keep the movement controller in its original, rear-facing frame.
+        // Convert translation commands back to the robot frame before driving.
+        int robotAngle = goodAngle(sensor.IMU.getYaw() - 180);
 
         if (sensor.Locator.getStrength() < 2)
         {
@@ -723,11 +725,16 @@ void playGoalkeeperCamera(int color)
             //     menu.writeLineClean(1, "Old ball " + std::to_string(ballAngle));
             // } else {
                 // menu.writeLineClean(1, "No ball");
-                drv.drive(0, -10, 0);
+                int rotationSpeed = -10;
+                if (sensor.Cam.gate(color).height > 0) {
+                    rotationSpeed = LookAtBallRotationSpeed(
+                        goodAngle(sensor.Cam.gate(color).center_angle));
+                }
+                drv.drive(0, rotationSpeed, 0);
                 continue;
             // }
         } else {
-            ballAngle = sensor.Locator.getBallAngleLocal();
+            ballAngle = goodAngle(sensor.Locator.getBallAngleLocal() + 180);
             // menu.writeLineClean(1, "OK " + std::to_string(ballAngle));
         }
 
@@ -746,7 +753,7 @@ void playGoalkeeperCamera(int color)
         float lineX, lineY;
         sensor.LineSensor.getDirectionDelayed(lineX, lineY);
 
-        int gateAngle = goodAngle(sensor.Cam.gate(color).center_angle /* + 180*/);
+        int gateAngle = goodAngle(sensor.Cam.gate(color).center_angle + 180);
         int globalGateAngle = goodAngle(gateAngle + robotAngle);
         int cam_height = sensor.Cam.gate(color).height;
         int cam_dist = sensor.Cam.gate(color).distance;
@@ -769,6 +776,9 @@ void playGoalkeeperCamera(int color)
         }
 
         lineAngle = sensor.LineSensor.getAngleDelayed();
+        if (lineAngle != 360) {
+            lineAngle = goodAngle(lineAngle + 180);
+        }
 
         int ball_strength = sensor.Locator.getStrength();
         ballSeenTime = millis();
@@ -789,7 +799,7 @@ void playGoalkeeperCamera(int color)
 
         if (millis() - ballMoveTime >= 5000)
         {
-            drv.driveXY(0, 70, 0);
+            drv.driveXY(0, -70, 0);
             make_pause(100);
             stateGame = 1;
             continue;
@@ -803,7 +813,7 @@ void playGoalkeeperCamera(int color)
             // speedY = (int)(-lineY * 80);
             //deltaAngle = -robotAngle * 0.25;
             deltaAngle = -(int)goodAngle(180 - gateAngle) * 0.25;
-            drv.drive(goodAngle(lineAngle + 180), LookAtBallRotationSpeed(goodAngle(gateAngle - 180)), 100);
+            drv.drive(lineAngle, LookAtBallRotationSpeed(goodAngle(gateAngle - 180)), 100);
             continue;
         }
         else
@@ -873,7 +883,7 @@ void playGoalkeeperCamera(int color)
                     moveAngle = ballAngle - constrain(ball_strength * goRoundBallCoefGk, 0, 90);
                 }
                 moveAngle = goodAngle(moveAngle);
-                drv.drive(moveAngle, (int)deltaAngle, (int)(50));
+                drv.drive(goodAngle(moveAngle + 180), (int)deltaAngle, (int)(50));
                 //Debug.Log("go round");
                 continue;
             }
@@ -939,10 +949,11 @@ void playGoalkeeperCamera(int color)
         // speedY = constrain(speedY, -50, 50);
         int sp = sqrt(speedX * speedX + speedY * speedY);
         float angle = atan2(speedX, speedY) * RAD_TO_DEG;
-        angle = goodAngle(angle + goodAngle(gateAngle - 180));
+        angle = goodAngle(goodAngle(angle + goodAngle(gateAngle - 180)) + 180);
         drv.drive(angle, (int)deltaAngle, constrain(sp, 0, 100));
 
-        if (isBall()){
+        // Do not kick into our own goal when facing it.
+        if (isBall() && abs(goodAngle(sensor.Cam.gate(color).center_angle)) > 90) {
             kicker.kick();
         }
     }
