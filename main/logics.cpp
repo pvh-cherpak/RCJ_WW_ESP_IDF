@@ -86,7 +86,7 @@ float rightIntegral = 0;
 float rightPrev = 0;
 
 // PID мяча осторожный (близко)
-const float gb_kp = 1.4;
+const float gb_kp = 1.8;
 const float gb_ki = 0;
 const float gb_kd = 0.1;
 float gkBallIntegral = 0;
@@ -770,6 +770,9 @@ void playGoalkeeperCamera(int color)
         const int globalBallAngle = goodAngle(localBallAngle + yaw);
         ballAngle = goodAngle(localBallAngle + 180);
         lineAngle = sensor.LineSensor.getAngleDelayed();
+
+            // lineAngle = 360;
+
         if (lineAngle != 360)
             lineAngle = goodAngle(lineAngle + 180);
 
@@ -796,6 +799,7 @@ void playGoalkeeperCamera(int color)
         {
             const int driveAngle = lineAngle;
             drv.drive(driveAngle, rotation, 100);
+            // kicker.kick(500);
             logDrive("line", driveAngle, 100);
             continue;
         }
@@ -804,9 +808,11 @@ void playGoalkeeperCamera(int color)
         speedY = 0;
         const int camDist = goal.distance;
         const float absGoalAngle = std::abs(globalGoalAngle);
-        const bool gateCorner = absGoalAngle < 135;
-        if (lineAngle != 360 && absGoalAngle > 160)
+        const bool gateCorner = absGoalAngle < 125;
+        if (lineAngle != 360 && absGoalAngle > 160){
+            kicker.kick(1000);
             speedY = 40;
+        }
         else if (!gateCorner || true)
         {
             if (camDist < 19)
@@ -820,28 +826,28 @@ void playGoalkeeperCamera(int color)
             else
                 speedY = -(camDist - 23) * 5;
         }
-        // else
-        // {
-        //     if (camDist < 10)
-        //         speedY = 70;
-        //     else if (camDist < 12)
-        //         speedY = 20;
-        //     else if (camDist < 14)
-        //         speedY = 0;
-        //     else
-        //         speedY = -(camDist - 14) * 7;
-        // }
+        else
+        {
+            if (camDist < 10)
+                speedY = 40;
+            else if (camDist < 12)
+                speedY = 20;
+            else if (camDist < 15)
+                speedY = 0;
+            else
+                speedY = -(camDist - 14) * 7;
+        }
         speedY = constrain(speedY, -limitGateSpeed, 100);
 
-        if (abs(ballAngle) > 80 && speedY <= 0)
-        {
-            const int offset = constrain(ballStrength * goRoundBallCoefGk, 0, 90);
-            moveAngle = goodAngle(ballAngle + (ballAngle > 0 ? offset : -offset));
-            const int driveAngle = goodAngle(moveAngle + 180);
-            drv.drive(driveAngle, rotation, 50);
-            logDrive("orbit", driveAngle, 50);
-            continue;
-        }
+                            if (abs(ballAngle) > 80 && speedY <= 0)
+                            {
+                                const int offset = constrain(ballStrength * goRoundBallCoefGk, 0, 90);
+                                moveAngle = goodAngle(ballAngle + (ballAngle > 0 ? offset : -offset));
+                                const int driveAngle = goodAngle(moveAngle + 180);
+                                drv.drive(driveAngle, rotation, 50);
+                                logDrive("orbit", driveAngle, 50);
+                                continue;
+                            }
 
         const float goalRelativeBallAngle = std::remainder(globalBallAngle - goalRearHeading, 360.0f);
         const float maxBallError = maxGoalkeeperAngle;
@@ -857,7 +863,7 @@ void playGoalkeeperCamera(int color)
         gkBallPrev2 = ballError;
         prevIntegralTime = nowMs;
 
-        speedX += ballSpeed;
+                        speedX += ballSpeed;
 
         // speedX = 0;
 
