@@ -18,9 +18,14 @@ int HeadingRegulator::update(float currentAngle, std::int64_t nowUs)
     constexpr float startTurningAngle = 5.0f;
     constexpr float stopTurningAngle = 4.0f;
     constexpr float rateFilterTimeSeconds = 0.05f;
-    constexpr float proportionalGain = 1.0f;
-    constexpr float dampingGain = 0.08f;
-    constexpr long maxRotation = 70;
+    constexpr float nearAngle = 12.0f;
+    constexpr float farAngle = 55.0f;
+    constexpr float nearProportionalGain = 0.65f;
+    constexpr float farProportionalGain = 1.0f;
+    constexpr float nearDampingGain = 0.12f;
+    constexpr float farDampingGain = 0.06f;
+    constexpr float nearMaxRotation = 22.0f;
+    constexpr float farMaxRotation = 60.0f;
 
     if (!haveTarget)
         return 0;
@@ -30,7 +35,6 @@ int HeadingRegulator::update(float currentAngle, std::int64_t nowUs)
         const float dt = (nowUs - previousUpdateUs) * 1e-6f;
         const float measuredRate = std::remainder(currentAngle - previousAngle, 360.0f) / dt;
         angularRate += (dt / (rateFilterTimeSeconds + dt)) * (measuredRate - angularRate);
-        angularRate = measuredRate;
     }
     previousAngle = currentAngle;
     previousUpdateUs = nowUs;
@@ -45,19 +49,21 @@ int HeadingRegulator::update(float currentAngle, std::int64_t nowUs)
     if (!turning)
         return 0;
 
-    long rotation = std::lround(proportionalGain * error - dampingGain * angularRate);
-    
-    if(abs(error) > 25)
-        rotation = (error < 0 ? -40 : 40) - (0.16 * angularRate);
-    if(abs(error) > 55)
-        rotation = error < 0 ? -60 : 60;
-    return static_cast<int>(std::clamp(rotation, -maxRotation, maxRotation));
+    // Blend both commands for a smooth transition as the robot approaches the target.
+    const float farWeight = std::clamp((absError - nearAngle) / (farAngle - nearAngle), 0.0f, 1.0f);
+    const float nearRotation = std::clamp(nearProportionalGain * error - nearDampingGain * angularRate,
+                                          -nearMaxRotation, nearMaxRotation);
+    const float farProportionalRotation = std::clamp(farProportionalGain * error,
+                                                     -farMaxRotation, farMaxRotation);
+    const float farRotation = std::clamp(farProportionalRotation - farDampingGain * angularRate,
+                                         -farMaxRotation, farMaxRotation);
+    return std::lround(nearRotation + farWeight * (farRotation - nearRotation));
 }
 
 int HeadingRegulator::updateSimplePD(float currentAngle, std::int64_t nowUs)
 {
     constexpr float proportionalGain = 0.65f;
-    constexpr float derivativeGain = 0.08f;
+    constexpr float derivativeGain = 0.12f;
     constexpr long maxRotation = 45;
 
     if (!haveTarget)

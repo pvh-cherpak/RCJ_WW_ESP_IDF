@@ -22,6 +22,9 @@ public:
     // Returns a signed motor rotation command. Time is monotonic, in microseconds.
     int update(float currentAngle, std::int64_t nowUs);
 
+    float getTargetAngle() const { return targetAngle; }
+    float getAngularRate() const { return angularRate; }
+
     // Simple PD using the target supplied by setTarget().
     int updateSimplePD(float currentAngle, std::int64_t nowUs);
 
